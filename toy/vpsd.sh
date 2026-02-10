@@ -128,32 +128,65 @@ modify_telegram_config(){
 
 # ================== 定时任务管理 ==================
 setup_cron_job(){
+  enable_cron_service
+
   echo -e "${green}定时任务设置:${re}"
-  echo -e "${green}1) 每天发送一次 Docker 信息 (0点)${re}"
-  echo -e "${green}2) 每周发送一次 Docker 信息 (周一 0点)${re}"
-  echo -e "${green}3) 每月发送一次 Docker 信息 (1号 0点)${re}"
-  echo -e "${green}4) 删除当前任务(仅本脚本相关)${re}"
-  echo -e "${green}5) 查看当前任务${re}"
-  echo -e "${green}6) 返回菜单${re}"
-  read -rp "请选择 [1-6]: " cron_choice
+  echo -e "${green}1) 每天发送一次 (0点)${re}"
+  echo -e "${green}2) 每周发送一次 (周一 0点)${re}"
+  echo -e "${green}3) 每月发送一次 (1号 0点)${re}"
+  echo -e "${green}4) 每5分钟一次${re}"
+  echo -e "${green}5) 每10分钟一次${re}"
+  echo -e "${green}6) 自定义时间 (Cron表达式) ⭐${re}"
+  echo -e "${green}7) 删除当前任务${re}"
+  echo -e "${green}8) 查看当前任务${re}"
+  echo -e "${green}0) 返回菜单${re}"
+
+  read -rp "请选择: " cron_choice
 
   CRON_CMD="bash $SCRIPT_PATH send"
 
   case $cron_choice in
-    1) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * * $CRON_CMD") | crontab -
-       echo -e "${green}✅ 已设置每天 0 点发送一次 Docker 信息${re}" ;;
-    2) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * 1 $CRON_CMD") | crontab -
-       echo -e "${green}✅ 已设置每周一 0 点发送一次 Docker 信息${re}" ;;
-    3) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 1 * * $CRON_CMD") | crontab -
-       echo -e "${green}✅ 已设置每月 1 日 0 点发送一次 Docker 信息${re}" ;;
-    4) crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
-       echo -e "${red}❌ 已删除本脚本相关的定时任务${re}" ;;
-    5) echo -e "${yellow}当前已配置的定时任务:${re}"
-       crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "没有找到和本脚本相关的定时任务" ;;
-    6) return ;;
-    *) echo "无效选择" ;;
+    1) CRON_TIME="0 0 * * *" ;;
+    2) CRON_TIME="0 0 * * 1" ;;
+    3) CRON_TIME="0 0 1 * *" ;;
+    4) CRON_TIME="*/5 * * * *" ;;
+    5) CRON_TIME="*/10 * * * *" ;;
+
+    6)
+      echo -e "${yellow}请输入 Cron 表达式${re}"
+      echo -e "${yellow}格式: 分 时 日 月 周${re}"
+      echo -e "${yellow}示例: 30 3 * * * (每天03:30)${re}"
+      read -rp "Cron: " CRON_TIME
+
+      count=$(echo "$CRON_TIME" | awk '{print NF}')
+      if [ "$count" -ne 5 ]; then
+        echo -e "${red}❌ 格式错误，必须5段${re}"
+        return
+      fi
+      ;;
+
+    7)
+      crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
+      echo -e "${red}❌ 已删除任务${re}"
+      return
+      ;;
+
+    8)
+      echo -e "${yellow}当前任务:${re}"
+      crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "暂无任务"
+      return
+      ;;
+
+    0) return ;;
+    *) echo "无效选择"; return ;;
   esac
+
+  # 覆盖旧任务
+  (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "$CRON_TIME $CRON_CMD") | crontab -
+
+  echo -e "${green}✅ 定时任务设置成功: $CRON_TIME${re}"
 }
+
 
 pause_return(){
   read -p "$(echo -e ${green}请选择:${re}) " temp
@@ -168,7 +201,7 @@ uninstall_script(){
         crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
         rm -f "$SCRIPT_PATH"
         rm -f "$TG_CONFIG_FILE"
-        rm -rf /opt/vpsd
+        rm -rf /opt/vpsdocker
         echo -e "${green}✅ 卸载完成,相关数据和定时任务已删除${re}"
         exit 0
     else
