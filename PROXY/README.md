@@ -19,4 +19,4 @@
 
 ###  一键脚本
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/proxy/main/proxy.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh)
