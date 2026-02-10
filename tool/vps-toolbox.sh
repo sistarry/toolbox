@@ -361,7 +361,7 @@ execute_choice() {
         51) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockercompose.sh) ;;
         52) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockcompback.sh) ;;
         53) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh) ;;
-        54) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/store.sh) ;;
+        54) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
         55) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh) ;;
         56) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/jkgl.sh) ;;
         57) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ytdlpweb.sh) ;;
