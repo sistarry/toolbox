@@ -29,7 +29,7 @@ while true; do
             ;;
         2)
             echo -e "${GREEN}执行 Rclone备份...${NC}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rclone.sh)
             read -p "$(echo -e ${GREEN}按回车继续...${NC})"
             ;;
         3)
