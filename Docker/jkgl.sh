@@ -18,32 +18,32 @@ menu() {
     case $choice in
         1)
             echo -e "${GREEN}正在安装 V0 哪吒监控...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/nezhav0Argo.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhav0Argo.sh)
             pause
             ;;
         2)
             echo -e "${GREEN}正在安装 V1 哪吒监控...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/aznezha.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/aznezha.sh)
             pause
             ;;
         3)
             echo -e "${GREEN}正在安装 Komari 监控...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/app-store/main/komarigl.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/komarigl.sh)
             pause
             ;;
         4)
             echo -e "${GREEN} 哪吒闭SSH ...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/app-store/main/nezhassh.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhassh.sh)
             pause
             ;;
         5)
             echo -e "${GREEN}正在安装哪吒 Agent管理...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/NezhaAgent.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NezhaAgent.sh)
             pause
             ;;
         6)
             echo -e "${GREEN}正在安装 Komari Agent管理...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/KomariAgent.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KomariAgent.sh)
             pause
             ;;
         0)
