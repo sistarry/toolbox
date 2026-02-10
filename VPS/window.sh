@@ -85,7 +85,7 @@ while true; do
     echo -e "${YELLOW}3) V6DD 安装 Windows 10${RESET}"
     echo -e "${YELLOW}4) 重启系统${RESET}"
     echo -e "${YELLOW}0) 退出${RESET}"
-    echo -ne "请输入编号: "
+    echo -ne "${GREEN}请输入编号: ${RESET}"
     read choice
     case $choice in
         1) install_tools ;;
