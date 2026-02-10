@@ -6,7 +6,7 @@ set -e
 #################################
 ROOT="/root"
 SCRIPT_PATH="$ROOT/toolboxupdate.sh"
-SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/update.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/tool/update.sh"
 CONF="/etc/toolbox-update.conf"
 LOG_FILE="/var/log/toolbox-update.log"
 CRON_TAG="# toolbox-auto-update"
@@ -89,22 +89,22 @@ run_update() {
 
     # 更新各脚本
     update_one "vps-toolbox" "vps-toolbox.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/tool/install.sh"
 
     update_one "proxy" "proxy.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/proxy/main/proxy.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh"
 
     update_one "oracle" "oracle.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/oracle/main/oracle.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh"
 
     update_one "store" "store.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/app-store/main/store.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
 
     update_one "Alpine" "Alpine.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/Alpine.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh"
 
     update_one "panel" "panel.sh" \
-    "https://raw.githubusercontent.com/Polarisiu/panel/main/panel.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh"
 
     if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
         MSG="🚀 脚本已更新
