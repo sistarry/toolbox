@@ -5,4 +5,4 @@
 
 ### 一键脚本
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/Alpine.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh)
