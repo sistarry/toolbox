@@ -8,7 +8,7 @@ RESET="\033[0m"
 
 # ================== 脚本路径 ==================
 SCRIPT_PATH="/root/vps-toolbox.sh"
-SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/vps-toolbox.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/tool/vps-toolbox.sh"
 BIN_LINK_DIR="/usr/local/bin"
 
 # ================== 首次运行自动安装 ==================
