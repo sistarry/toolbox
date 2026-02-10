@@ -145,7 +145,7 @@ setup_cron_job() {
     echo -e "${GREEN}4) 删除本脚本相关定时任务${RESET}"
     echo -e "${GREEN}5) 查看当前任务${RESET}"
     echo -e "${GREEN}6) 返回菜单${RESET}"
-    read -rp "请选择 [1-6]: " cron_choice
+    read -p "$(echo -e ${GREEN}请选择: ${RESET}) " cron_choice
 
     CRON_CMD="bash $SCRIPT_PATH --cron"
 
