@@ -10,7 +10,7 @@ re="\033[0m"
 # ================== 基础配置 ==================
 SCRIPT_PATH="/opt/vpsd/docker_info.sh"
 TG_CONFIG_FILE="/opt/vpsd/.vps_tgd_config"
-SCRIPT_URL="https://raw.githubusercontent.com/iu683/uu/main/uu.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpsd.sh"
 
 # ================== 下载或更新脚本 ==================
 download_script(){
