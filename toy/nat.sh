@@ -16,22 +16,22 @@ menu() {
     case $choice in
         1)
             echo -e "${GREEN}正在运行 PVE管理...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/toy/main/pvegl.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/pvegl.sh)
             pause
             ;;
         2)
             echo -e "${GREEN}正在运行 LXC 小鸡脚本...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/toy/main/lxc.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/lxc.sh)
             pause
             ;;
         3)
             echo -e "${GREEN}正在运行 Docker 小鸡脚本...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/toy/main/dockerlxc.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dockerlxc.sh)
             pause
             ;;
         4)
             echo -e "${GREEN}正在运行 Incus 小鸡脚本...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/toy/main/incus.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/incus.sh)
             pause
             ;;
         0)
