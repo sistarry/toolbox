@@ -263,28 +263,69 @@ setup_cron_job(){
   echo -e "${green}1) 每天发送一次 VPS 信息 (0点)${re}"
   echo -e "${green}2) 每周发送一次 VPS 信息 (周一 0点)${re}"
   echo -e "${green}3) 每月发送一次 VPS 信息 (1号 0点)${re}"
-  echo -e "${green}4) 删除当前任务(仅本脚本相关)${re}"
-  echo -e "${green}5) 查看当前任务${re}"
-  echo -e "${green}6) 返回菜单${re}"
-  read -p "$(echo -e ${GREEN}请选择: ${RESET})" cron_choice
+  echo -e "${green}4) 自定义时间 (Cron表达式)${re}"
+  echo -e "${green}5) 删除当前任务(仅本脚本相关)${re}"
+  echo -e "${green}6) 查看当前任务${re}"
+  echo -e "${green}0) 返回菜单${re}"
+
+  read -p "$(echo -e ${green}请选择: ${re})" cron_choice
 
   CRON_CMD="bash $SCRIPT_PATH send"
 
   case $cron_choice in
-    1) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * * $CRON_CMD") | crontab - 
-       echo -e "${green}✅ 已设置每天 0 点发送一次 VPS 信息${re}" ;;
-    2) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * 1 $CRON_CMD") | crontab - 
-       echo -e "${green}✅ 已设置每周一 0 点发送一次 VPS 信息${re}" ;;
-    3) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 1 * * $CRON_CMD") | crontab - 
-       echo -e "${green}✅ 已设置每月 1 日 0 点发送一次 VPS 信息${re}" ;;
-    4) crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
-       echo -e "${red}❌ 已删除本脚本相关的定时任务${re}" ;;
-    5) echo -e "${yellow}当前已配置的定时任务:${re}"
-       crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "没有找到和本脚本相关的定时任务" ;;
-    6) return ;;
-    *) echo "无效选择" ;;
+    1)
+      CRON_TIME="0 0 * * *"
+      ;;
+
+    2)
+      CRON_TIME="0 0 * * 1"
+      ;;
+
+    3)
+      CRON_TIME="0 0 1 * *"
+      ;;
+
+    4)
+      echo -e "${yellow}请输入 Cron 时间 (示例: 30 2 * * *  表示每天 02:30)${re}"
+      echo -e "${yellow}格式: 分 时 日 月 周${re}"
+      read -rp "Cron: " CRON_TIME
+
+      # 简单校验 5段
+      count=$(echo "$CRON_TIME" | awk '{print NF}')
+      if [ "$count" -ne 5 ]; then
+        echo -e "${red}❌ 格式错误，必须是5段${re}"
+        return
+      fi
+      ;;
+
+    5)
+      crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
+      echo -e "${red}❌ 已删除本脚本相关的定时任务${re}"
+      return
+      ;;
+
+    6)
+      echo -e "${yellow}当前已配置的定时任务:${re}"
+      crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "没有找到和本脚本相关的定时任务"
+      return
+      ;;
+
+    0)
+      return
+      ;;
+
+    *)
+      echo "无效选择"
+      return
+      ;;
   esac
+
+  # 写入任务（覆盖旧）
+  (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "$CRON_TIME $CRON_CMD") | crontab -
+
+  echo -e "${green}✅ 定时任务设置成功: $CRON_TIME${re}"
 }
+
 
 pause_return(){
   read -p "$(echo -e ${green}按回车返回菜单...${re})" temp
@@ -322,8 +363,8 @@ menu(){
     case $choice in
       1) collect_system_info; echo "$SYS_INFO"; pause_return ;;
       2) collect_system_info; send_to_telegram; pause_return ;;
-      3) modify_telegram_config; pause_return ;;
-      4) setup_cron_job; pause_return ;;
+      3) modify_telegram_config; pause_return; pause_return ;;
+      4) setup_cron_job; pause_return; pause_return ;;
       5) uninstall_script ;;
       0) exit 0 ;;
       *) echo -e "${red}无效选择${re}"; pause_return ;;
