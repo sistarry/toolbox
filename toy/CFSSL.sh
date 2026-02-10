@@ -335,7 +335,7 @@ while true; do
     echo -e "${GREEN}5) 查看站点信息${RESET}"
     echo -e "${GREEN}6) 卸载Nginx${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
-    read -p "请选择操作[0-6]: " choice
+    read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
     case "$choice" in
         1) install_nginx_certbot ;;
