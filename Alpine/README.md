@@ -9,7 +9,9 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/A
 ```
 
 
-###  脚本会自动安装两个快捷命令：
+## 使用说明
+
+### 快捷命令
 
   - `a`
   - `A`
