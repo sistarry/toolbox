@@ -326,7 +326,7 @@ menu(){
       4) setup_cron_job; pause_return ;;
       5) uninstall_script ;;
       0) exit 0 ;;
-      *) echo "无效选择"; pause_return ;;
+      *) echo -e "${red}无效选择${re}"; pause_return ;;
     esac
   done
 }
