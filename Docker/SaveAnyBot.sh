@@ -143,7 +143,7 @@ while true; do
     echo -e "${GREEN}6. 更新容器${RESET}"
     echo -e "${GREEN}7. 卸载${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
-    read -p "请选择操作: " choice
+    read -p "$(echo -e ${GREEN}请选择: ${RESET})" choice
     case $choice in
         1) start_bot ;;
         2) stop_bot ;;
@@ -155,6 +155,6 @@ while true; do
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
-    echo -e "\n按回车返回菜单..."
+    echo -e "${GREEN}按回车返回菜单...${RESET}"
     read -r
 done
