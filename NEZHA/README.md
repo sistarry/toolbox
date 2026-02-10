@@ -41,3 +41,50 @@
 </script>
 <script src="https://cdn.jsdelivr.net/gh/ziwiwiz/nezha-ui@main/traffic-progress.js"></script>
 ```
+
+### 看板娘
+```bash
+<script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/kbn.js"></script>
+```
+
+### 自定义代码
+```bash
+<script>
+    window.CustomBackgroundImage = 'https://cdn.nodeimage.com/i/P5Vkaab26o7hFAj0B8HTH7hjwm9kcxav.webp'; #桌面壁纸
+    window.CustomMobileBackgroundImage = 'https://t.alcy.cc/mp'; #移动壁纸
+    window.CustomLogo = 'https://cdn.nodeimage.com/i/ohcG05Hqlge38FWjyOGQ9KXZBSe4v3ix.webp'; #logo
+    window.CustomDesc = '📷已模糊的镜头,拉不会回那从前';
+    window.ShowNetTransfer = false;
+    window.ForceTheme = "dark";  #暗色
+    window.DisableAnimatedMan = true;
+    window.ForceUseSvgFlag = false;
+    window.CustomLinks = '[{\"link\":\"https://链接/\",\"name\":\"名称\"}]';
+</script>
+```
+
+### 美化字体(源自https://www.nodeseek.com/post-328904-1)
+```bash
+<!-- 引入霞鹜文楷字体 -->
+<script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.bootcdn.net/ajax/libs/lxgw-wenkai-screen-webfont/1.7.0/style.min.css';
+    document.head.appendChild(link);
+</script>
+<!-- 设置页面字体 -->
+<style>
+    * {
+        font-family: 'LXGW WenKai Screen'; /* 设置所有元素使用霞鹜文楷字体 */
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: 'LXGW WenKai Screen', sans-serif; /* 设置标题使用霞鹜文楷字体 */
+    }
+</style>
+
+```
+
+
+### 仪表盘给哪吒后台服务器ip添加itdog ping跳转(源自https://www.nodeseek.com/post-450069-1)
+```bash
+<script src="https://cdn.jsdelivr.net/gh/leuxinovo/nezha-ui@main/nezha-pingx.js"></script>
+```
