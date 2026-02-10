@@ -12,6 +12,9 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/Sur
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/Surge-terse.conf
 
 
-### Surge监控管理
+### Surge监控模块脚本
 
+```bash
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Surge/surge.sh)  #配合模块使用
+```
+
