@@ -1,13 +1,13 @@
 <script>
-    window.CustomBackgroundImage = 'https://cdn.nodeimage.com/i/P5Vkaab26o7hFAj0B8HTH7hjwm9kcxav.webp';
-    window.CustomMobileBackgroundImage = 'https://t.alcy.cc/mp';
-    window.CustomLogo = 'https://cdn.nodeimage.com/i/ohcG05Hqlge38FWjyOGQ9KXZBSe4v3ix.webp';
+    window.CustomBackgroundImage = 'https://';
+    window.CustomMobileBackgroundImage = 'https://';
+    window.CustomLogo = 'https://';
     window.CustomDesc = '📷已模糊的镜头,拉不会回那从前';
     window.ShowNetTransfer = false;
     window.ForceTheme = "dark";
     window.DisableAnimatedMan = true;
     window.ForceUseSvgFlag = false;
-    window.CustomLinks = '[{\"link\":\"https://kuma-mieru-wine.vercel.app/\",\"name\":\"kuma-mieru\"}]';
+    window.CustomLinks = '[{\"link\":\"https:///\",\"name\":\"名称\"}]';
 </script>
 <!-- 设置网络显示-->
 <script src="https://cdn.jsdelivr.net/gh/duya07/nezha-ui@main/netstatus-autoshow-2.js"></script>
@@ -1555,4 +1555,5 @@ a.flex.items-center.gap-1.text-sm.font-medium.opacity-50:hover::after {
     }
 </script>
 <script src="https://cdn.jsdelivr.net/gh/Polarisiu/nezha/kbn.js"></script>
+
 
