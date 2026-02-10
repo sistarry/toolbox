@@ -1,4 +1,4 @@
-# VPS Tools - 服务器工具箱
+# VPS Toolbox - 服务器工具箱
 
 Linux VPS 管理工具箱脚本，集成多种常用功能，方便快速管理服务器。
 
@@ -7,7 +7,7 @@ Linux VPS 管理工具箱脚本，集成多种常用功能，方便快速管理�
 执行以下命令即可一键下载安装并运行工具箱：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/install.sh)
 ```
 
 ## 使用说明
@@ -19,7 +19,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/u
   - `m`
   - `M`
 
-安装完成后，只需在终端输入 `m` 或 `M` 即可快速启动 VPS Tools 主菜单。
+安装完成后，只需在终端输入 `m` 或 `M` 即可快速启动 VPS Toolbox 主菜单。
 
 ### 功能分类
 
