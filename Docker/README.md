@@ -16,5 +16,5 @@
 ## 安装
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/store.sh) 
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) 
 
