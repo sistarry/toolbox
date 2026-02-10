@@ -13,11 +13,11 @@ menu() {
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/mhzt.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/mhzt.sh)
             pause
             ;;
         2)
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/mhztcs.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/mhztcs.sh)
             pause
             ;;
         0)
