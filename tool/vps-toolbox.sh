@@ -184,7 +184,7 @@ SUB_MENU[5]="54 应用管理|55 面板管理|56 监控管理|57 视频下载工�
 SUB_MENU[6]="62 NGINX V4反代|63 NGINX V6反代|64 Caddy反代|65 NginxProxyManager面板|66 雷池WAF"
 SUB_MENU[7]="67 系统清理|68 系统备份恢复|69 本地备份|70 一键重装系统|71 系统组件|72 开发环境|73 添加SWAP|74 DNS管理|75 工作区管理|76 系统监控|77 防火墙管理|78 Fail2ban|79 远程备份|80 集群管理|81 定时任务"
 SUB_MENU[8]="82 科技lion|83 老王工具箱|84 一点科技|85 BBRv3优化脚本|86 酷雪云脚本"
-SUB_MENU[9]="87 Alpine系统管理|89 甲骨文工具|90 github同步|91 NAT小鸡|92 VPS监控通知|93 脚本短链|94 网站部署|95 关闭V1SSH|96 卸载哪吒Agent |97 卸载komariAgent"
+SUB_MENU[9]="87 Alpine系统管理|89 甲骨文工具|90 github同步|91 NAT小鸡|92 VPS监控通知|93 脚本短链|94 网站部署|95 关闭V1SSH|96 卸载哪吒Agent |97 卸载komariAgent|100 Akile优先DNS"
 SUB_MENU[10]="88 更新脚本|98 自动更新|99 卸载脚本"
 
 # 显示一级菜单
@@ -405,6 +405,7 @@ execute_choice() {
         96) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/app-store/main/nzagent.sh) ;;
         97) sudo systemctl stop komari-agent && sudo systemctl disable komari-agent && sudo rm -f /etc/systemd/system/komari-agent.service && sudo systemctl daemon-reload && sudo rm -rf /opt/komari /var/log/komari ;;
         98) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/update.sh) ;;
+        100) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
         88)
             echo -e "${yellow}正在更新脚本...${reset}"
             # 下载最新版本覆盖本地脚本
