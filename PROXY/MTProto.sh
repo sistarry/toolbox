@@ -49,7 +49,7 @@ while true; do
             [[ -z $port ]] && port=$(random_port) && echo -e "${green}使用随机端口: $port${re}"
             port=$(check_port $port)
 
-            PORT=$port bash <(curl -Ls https://raw.githubusercontent.com/Polarisiu/proxy/main/mtp.sh)
+            PORT=$port bash <(curl -Ls https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/mtp.sh)
             echo -e "${green}MTProto 安装完成！端口: $port${re}"
             echo
             read -p "按回车返回菜单..."
