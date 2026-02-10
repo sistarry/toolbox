@@ -46,7 +46,7 @@ modify_config() {
     echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$CONFIG_FILE"
     chmod 600 "$CONFIG_FILE"
     echo -e "${GREEN}✅ 配置已更新${RESET}"
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 # ================== 收集网络信息 ==================
@@ -116,7 +116,7 @@ collect_network_info() {
 send_to_telegram() {
     if [ ! -f "$OUTPUT_FILE" ]; then
         echo "⚠️ 文件 $OUTPUT_FILE 不存在，请先收集网络信息。"
-        read -p "按回车返回菜单..."
+        read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
         return
     fi
     source "$CONFIG_FILE"
@@ -127,7 +127,7 @@ send_to_telegram() {
         -d text="$TG_MSG" >/dev/null
     echo -e "${GREEN}✅ 信息已发送到 Telegram${RESET}"
     rm -f "$OUTPUT_FILE"
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 # ================== 删除临时文件 ==================
@@ -163,7 +163,7 @@ setup_cron_job() {
         6) return ;;
         *) echo -e "${RED}无效选择${RESET}" ;;
     esac
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 # ================== 卸载脚本 ==================
