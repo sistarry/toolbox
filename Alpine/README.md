@@ -6,3 +6,14 @@
 ### 一键脚本
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh)
+
+## 使用说明
+
+### 快捷命令
+
+脚本会自动安装两个快捷命令：
+
+  - `a`
+  - `A`
+
+安装完成后，只需在终端输入 `a` 或 `A` 即可快速启动主菜单。
