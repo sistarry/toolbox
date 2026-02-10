@@ -13,11 +13,11 @@ menu() {
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/ngixv4.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv4.sh)
             pause
             ;;
         2)
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/ngixv6.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv6.sh)
             pause
             ;;
         0)
