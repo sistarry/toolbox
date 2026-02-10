@@ -153,10 +153,10 @@ while true; do
                 read -e -p "$(echo -e ${GREEN}请输入选择: ${RESET})" task_choice
 
                 case $task_choice in
-                    1) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh)" ;;
-                    2) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/clear.sh)" ;;
+                    1) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/uu.sh)" ;;
+                    2) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clear.sh)" ;;
                     3) run_commands_on_servers "timedatectl set-timezone Asia/Shanghai" ;;
-                    4) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/open_all_ports.sh)" ;;
+                    4) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/open_all_ports.sh)" ;;
                     5)
                         read -e -p "请输入自定义命令: " cmd
                         run_commands_on_servers "$cmd"
