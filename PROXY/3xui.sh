@@ -32,12 +32,12 @@ menu() {
                 ;;
             3)
                 echo -e "${GREEN}正在安装 Alpine 版本 3XUI...${RESET}"
-                bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/proxy/main/3xuiAlpine.sh)
+                bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh)
                 pause
                 ;;
             4)
                 echo -e "${GREEN}正在安装Docker 版本 3XUI...${RESET}"
-                bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/proxy/main/3xuidocker.sh)
+                bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/3xuidocker.sh)
                 pause
                 ;;
             0)
