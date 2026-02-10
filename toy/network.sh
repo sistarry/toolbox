@@ -201,14 +201,20 @@ setup_cron_job() {
 
 # ================== 卸载脚本 ==================
 uninstall_script() {
-    read -rp "确认卸载脚本及清理定时任务吗？(y/N): " confirm
-    [[ "$confirm" =~ ^[Yy]$ ]] || return
-    crontab -l 2>/dev/null | grep -v "bash $SCRIPT_PATH" | crontab -
-    rm -f "$SCRIPT_PATH" "$CONFIG_FILE" "$OUTPUT_FILE"
-    rm -rf /opt/vpsnetwork
-    echo -e "${GREEN}✅ 脚本已卸载${RESET}"
+    echo -e "${YELLOW}正在卸载脚本并清理定时任务...${RESET}"
+
+    # 清理定时任务（存在才处理）
+    if crontab -l >/dev/null 2>&1; then
+        crontab -l | grep -v "bash $SCRIPT_PATH" | crontab -
+    fi
+
+    # 删除文件和目录
+    rm -rf "$SCRIPT_PATH" "$CONFIG_FILE" "$OUTPUT_FILE" /opt/vpsnetwork
+
+    echo -e "${GREEN}✅ 脚本已卸载完成${RESET}"
     exit 0
 }
+
 
 # ================== 确保 cron 服务 ==================
 enable_cron_service(){
