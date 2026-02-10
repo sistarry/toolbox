@@ -50,10 +50,9 @@
 ### 自定义代码
 ```bash
 <script>
-    window.CustomBackgroundImage = 'https://cdn.nodeimage.com/i/P5Vkaab26o7hFAj0B8HTH7hjwm9kcxav.webp'; #桌面壁纸
-    window.CustomMobileBackgroundImage = 'https://t.alcy.cc/mp'; #移动壁纸
-    window.CustomLogo = 'https://cdn.nodeimage.com/i/ohcG05Hqlge38FWjyOGQ9KXZBSe4v3ix.webp'; #logo
-    window.CustomDesc = '📷已模糊的镜头,拉不会回那从前';
+    window.CustomBackgroundImage = 'https://'; #桌面壁纸
+    window.CustomMobileBackgroundImage = 'https://'; #移动壁纸
+    window.CustomLogo = 'https://'; #logo
     window.ShowNetTransfer = false;
     window.ForceTheme = "dark";  #暗色
     window.DisableAnimatedMan = true;
