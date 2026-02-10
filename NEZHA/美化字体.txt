@@ -1,0 +1,117 @@
+1.抖音美好体 (Douyin Sans)
+<!-- 引入抖音Sans字体(直接TTF引用) -->
+<style>
+    /* 使用@font-face定义字体 */
+    @font-face {
+        font-family: 'Douyin Sans';
+        src: url('https://cdn.jsdelivr.net/gh/bytedance/fonts@main/DouyinSans/DouyinSansBold.ttf') format('truetype');
+        font-weight: bold;
+        font-style: normal;
+        font-display: swap; /* 优化字体加载过程 */
+    }
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'Douyin Sans', sans-serif !important; /* 设置所有元素使用抖音Sans字体 */
+    }
+    
+    h1, h2, h3, h4, h5 {
+        font-family: 'Douyin Sans', sans-serif !important; /* 设置标题使用抖音Sans字体 */
+        font-weight: bold;
+    }
+</style>
+2.HarmonyOS Sans (鸿蒙字体)
+<!-- 引入HarmonyOS Sans字体 (B站CDN) -->
+<style>
+    /* 引入鸿蒙字体 Regular和Medium字重 */
+    @import url('https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css');
+    @import url('https://s1.hdslb.com/bfs/static/jinkela/long/font/medium.css');
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'HarmonyOS_Regular', 'HarmonyOS Sans SC', 'HarmonyOS Sans', sans-serif !important; /* 设置所有元素使用鸿蒙字体 */
+    }
+    
+    h1, h2, h3, h4, h5 {
+        font-family: 'HarmonyOS_Medium', 'HarmonyOS Sans SC', 'HarmonyOS Sans', sans-serif !important; /* 设置标题使用鸿蒙字体Medium字重 */
+    }
+    
+    /* 确保按钮、输入框等也使用该字体 */
+    button, input, select, textarea {
+        font-family: 'HarmonyOS_Regular', 'HarmonyOS Sans SC', 'HarmonyOS Sans', sans-serif !important;
+    }
+</style>
+3. OPPO Sans
+<!-- 引入OPPO Sans字体 -->
+<style>
+    /* 定义OPPO Sans字体 */
+    @font-face {
+        font-family: 'OPPO Sans';
+        font-weight: 400;
+        font-display: swap;
+        src: url('https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Regular.woff2') format('woff2');
+    }
+    
+    @font-face {
+        font-family: 'OPPO Sans';
+        font-weight: 500;
+        font-display: swap;
+        src: url('https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Medium.woff2') format('woff2');
+    }
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'OPPO Sans', sans-serif !important; /* 设置所有元素使用OPPO Sans字体 */
+    }
+    
+    h1, h2, h3, h4, h5 {
+        font-family: 'OPPO Sans', sans-serif !important; /* 设置标题使用OPPO Sans字体 */
+        font-weight: 500; /* 标题使用Medium字重 */
+    }
+</style>
+4. Mi Sans (小米字体)
+<!-- 引入Mi Sans字体 -->
+<style>
+    /* 引入小米字体 */
+    @import url('https://cdn-font.hyperos.mi.com/font/css?family=MiSans:400,500,600,700:Chinese_Simplify,Latin&display=swap');
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'MiSans', sans-serif !important; /* 设置所有元素使用小米字体 */
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: 'MiSans', sans-serif !important; /* 设置标题使用小米字体 */
+        font-weight: 600; /* 标题使用粗体 */
+    }
+</style>
+5. 华康金刚黑 (字节跳动商用字体)
+<!-- 引入华康金刚黑字体 -->
+<style>
+    /* 引入华康金刚黑 */
+    @import url('https://fonts.bytedance.com/dfd/api/v1/css?family=DFPKingGothicGB-Regular&display=swap');
+    @import url('https://fonts.bytedance.com/dfd/api/v1/css?family=DFPKingGothicGB-medium&display=swap');
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'DFPKingGothicGB-Regular', sans-serif !important; /* 设置所有元素使用华康金刚黑 */
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: 'DFPKingGothicGB-medium', sans-serif !important; /* 设置标题使用华康金刚黑中黑 */
+    }
+</style>
+6. Noto Sans SC (Google中文字体)
+<!-- 引入Noto Sans SC字体 -->
+<style>
+    /* 引入Google Noto Sans SC字体 */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+    
+    /* 设置页面字体 */
+    * {
+        font-family: 'Noto Sans SC', sans-serif !important; /* 设置所有元素使用Noto Sans SC */
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: 'Noto Sans SC', sans-serif !important; /* 设置标题使用Noto Sans SC */
+        font-weight: 700; /* 标题使用粗体 */
+    }
+</style>
+
