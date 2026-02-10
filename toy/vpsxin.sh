@@ -318,7 +318,7 @@ menu(){
     echo -e "${green}4) 设置定时任务${re}"
     echo -e "${green}5) 卸载${re}"
     echo -e "${green}0) 退出${re}"
-    read -rp "请选择操作: " choice
+    read -p "$(echo -e ${GREEN}请选择: ${RESET}) " choice
     case $choice in
       1) collect_system_info; echo "$SYS_INFO"; pause_return ;;
       2) collect_system_info; send_to_telegram; pause_return ;;
