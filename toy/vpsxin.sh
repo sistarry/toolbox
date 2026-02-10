@@ -8,8 +8,8 @@ white="\033[37m"
 re="\033[0m"
 
 # ================== 基础配置 ==================
-SCRIPT_PATH="/opt/vpsx/vpsxin.sh"
-TG_CONFIG_FILE="/opt/vpsx/.vps_tg_config"
+SCRIPT_PATH="/opt/vpsxinsi/vpsxin.sh"
+TG_CONFIG_FILE="/opt/vpsxinsi/.vps_tg_config"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpsxin.sh"
 
 # ================== 下载或更新脚本 ==================
