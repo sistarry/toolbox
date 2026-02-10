@@ -315,7 +315,7 @@ setup_cron_job(){
       ;;
 
     *)
-      echo "无效选择"
+      echo -e "${red}无效选择${re}"
       return
       ;;
   esac
