@@ -363,8 +363,8 @@ menu(){
     case $choice in
       1) collect_system_info; echo "$SYS_INFO"; pause_return ;;
       2) collect_system_info; send_to_telegram; pause_return ;;
-      3) modify_telegram_config; pause_return; pause_return ;;
-      4) setup_cron_job; pause_return; pause_return ;;
+      3) modify_telegram_config; pause_return ;; 
+      4) setup_cron_job; pause_return ;;
       5) uninstall_script ;;
       0) exit 0 ;;
       *) echo -e "${red}无效选择${re}"; pause_return ;;
