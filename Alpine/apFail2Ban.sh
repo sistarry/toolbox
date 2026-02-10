@@ -154,8 +154,6 @@ while true; do
     echo -e "${GREEN}5. 日志实时监控${RESET}"
     echo -e "${GREEN}6. 卸载 Fail2Ban${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
-    echo -e "${GREEN}---------------------------------${RESET}"
-
     read -p $'\033[32m请输入你的选择: \033[0m' choice
 
     case "$choice" in
