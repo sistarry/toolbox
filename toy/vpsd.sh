@@ -178,7 +178,7 @@ setup_cron_job(){
       ;;
 
     0) return ;;
-    *) echo "无效选择"; return ;;
+    *) echo -e "${red}无效选择${re}"; return ;;
   esac
 
   # 覆盖旧任务
