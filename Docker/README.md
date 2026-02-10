@@ -8,7 +8,7 @@
 
 - 安装/管理 Docker  
 - MySQL 数据管理  
-- 各类应用安装（Wallos、Kuma-Mieru、qBittorrent、音乐服务、图床等）  
+- 各类应用安装 
 - 脚本更新与卸载  
 
 ---
