@@ -10,4 +10,4 @@
 
 ### 一键脚本
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/oracle/main/oracle.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh)
