@@ -14,12 +14,12 @@ menu() {
     case $choice in
         1)
             echo -e "${GREEN}正在安装DnsmasqSNIproxy-One-click...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/unblock/main/Dnsmasqsniproxy.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Dnsmasqsniproxy.sh)
             pause
             ;;
         2)
             echo -e "${GREEN}正在安装DNS解锁脚本...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/unblock/main/DNSjiesuo.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DNSjiesuo.sh)
             pause
             ;;
         0)
