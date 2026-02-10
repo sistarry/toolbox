@@ -8,7 +8,7 @@ menu() {
     clear
     echo -e "${GREEN}=== Surge 面板管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 系统监控${RESET}"
-    echo -e "${GREEN}2) Docker 监控${RESET}"
+    echo -e "${GREEN}2) Docker监控${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
