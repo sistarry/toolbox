@@ -5,8 +5,8 @@
 
 ### 常用配置
 
-https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/Surge.conf
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/Surge.conf
 
 ### 简洁配置
 
-https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/Surge-terse.conf
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/Surge-terse.conf
