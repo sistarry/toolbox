@@ -144,7 +144,7 @@ while true; do
                 clear
                 send_stats "批量执行任务"
                 echo -e "${GREEN}===== 批量执行任务 =====${RESET}"
-                echo -e "${GREEN}1. 安装UU工具箱${RESET}"
+                echo -e "${GREEN}1. 安装工具箱${RESET}"
                 echo -e "${GREEN}2. 清理系统${RESET}"
                 echo -e "${GREEN}3. 设置上海时区${RESET}"
                 echo -e "${GREEN}4. 开放所有端口${RESET}"          
