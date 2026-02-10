@@ -8,7 +8,7 @@ RED="\033[31m"
 RESET="\033[0m"
 
 pause() {
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 show_menu() {
