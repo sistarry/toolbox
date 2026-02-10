@@ -11,4 +11,4 @@
 
 ###  一键脚本
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/panel/main/panel.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh)
