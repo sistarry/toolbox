@@ -28,3 +28,8 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dl.sh)
 ```
+
+### CF证书脚本
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/CFSSL.sh)
+```
