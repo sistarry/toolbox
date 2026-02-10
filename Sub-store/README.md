@@ -5,19 +5,19 @@
 
 ### clash配置
 
-[https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/sub-store-clash.yaml](https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/clash.yaml)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/clash.yaml
 
 ### Mihomo配置
 
-https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/convert.js
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/convert.js
 
 ### 检测落地ip信息
 
-https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/ipxx.js
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/ipxx.js
 
 ### 重命名脚本
 
-https://raw.githubusercontent.com/Polarisiu/iu/refs/heads/main/rename.js
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Sub-store/rename.js
 
 ### 测速脚本
 
