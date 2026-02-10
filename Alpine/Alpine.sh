@@ -14,7 +14,7 @@ ORANGE='\033[38;5;208m'
 
 # ================== 脚本路径 ==================
 SCRIPT_PATH="/root/Alpine.sh"
-SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/Alpine.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh"
 BIN_LINK_DIR="/usr/local/bin"
 
 # ================== 首次运行自动安装 ==================
@@ -60,15 +60,15 @@ menu() {
         1) apk update && apk add --no-cache bash curl wget vim tar sudo git 2>/dev/null \
               || (apt update && apt install -y curl wget vim tar sudo git) \
               || (yum install -y curl wget vim tar sudo git) ;;
-        2) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apsdk.sh) ;;
-        3) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apfeew.sh) ;;
-        4) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apFail2Ban.sh) ;;
-        5) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/aphuanyuan.sh) ;;
-        6) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apql.sh) ;;
-        7) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apcn.sh) ;;
-        8) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/aphome.sh) ;;
-        9) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/Alpinetool/main/apdocker.sh) ;;
-        10) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/proxy/main/aphy2.sh) ;;
+        2) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apsdk.sh) ;;
+        3) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apfeew.sh) ;;
+        4) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apFail2Ban.sh) ;;
+        5) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/aphuanyuan.sh) ;;
+        6) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apql.sh) ;;
+        7) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apcn.sh) ;;
+        8) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/aphome.sh) ;;
+        9) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apdocker.sh) ;;
+        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/aphy2.sh) ;;
         11) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/proxy/main/3xuiAlpine.sh) ;;
         12) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/proxy/main/proxy.sh) ;;
         13) bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/app-store/main/store.sh) ;;
