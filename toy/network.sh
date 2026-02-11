@@ -230,5 +230,4 @@ fi
 
 # ================== 初始化 ==================
 download_script
-setup_telegram
 menu
