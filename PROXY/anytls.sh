@@ -63,8 +63,9 @@ pause_return() {
 # 显示菜单
 show_menu() {
     clear
-    echo -e "${GREEN}1. 安装 anytls${RESET}"
-    echo -e "${GREEN}2. 卸载 anytls${RESET}"
+    echo -e "${GREEN}==== Anytls管理菜单 ====${RESET}"
+    echo -e "${GREEN}1. 安装Anytls${RESET}"
+    echo -e "${GREEN}2. 卸载Anytls${RESET}"
     echo -e "${GREEN}3. 修改端口${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
