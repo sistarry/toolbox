@@ -438,6 +438,7 @@ status_flow() {
 main_menu() {
   while true; do
     echo
+    echo -e "${GREEN}==== Socks5 管理菜单 ====${RESET}"
     echo -e "${GREEN}1) 安装 socks5${RESET}"
     echo -e "${GREEN}2) 修改 socks5 配置${RESET}"
     echo -e "${GREEN}3) 卸载 socks5${RESET}"
