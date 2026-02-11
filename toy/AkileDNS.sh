@@ -17,13 +17,25 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 #################################
-# 安装依赖
+# 依赖检测（只首次安装）
 #################################
-echo -e "${YELLOW}▶ 更新软件源...${RESET}"
-apt update -y
+need_install=false
 
-echo -e "${YELLOW}▶ 安装 curl wget dnsutils(dig)...${RESET}"
-apt install -y curl wget dnsutils
+check_cmd() {
+  command -v "$1" >/dev/null 2>&1 || need_install=true
+}
+
+check_cmd curl
+check_cmd wget
+check_cmd dig
+
+if $need_install; then
+  echo -e "${YELLOW}▶ 首次运行，安装依赖中...${RESET}"
+  apt update -y
+  apt install -y curl wget dnsutils
+else
+  echo -e "${GREEN}✔ 依赖已存在，跳过安装${RESET}"
+fi
 
 #################################
 # 下载并运行 akdns
@@ -32,8 +44,7 @@ echo -e "${YELLOW}▶ 下载 Akile DNS 优选脚本...${RESET}"
 
 TMP_SCRIPT="/tmp/akdns.sh"
 
-wget -qO "$TMP_SCRIPT" https://raw.githubusercontent.com/akile-network/aktools/main/akdns.sh
-
+wget -qO "$TMP_SCRIPT" "https://raw.githubusercontent.com/akile-network/aktools/main/akdns.sh"
 chmod +x "$TMP_SCRIPT"
 
 echo -e "${GREEN}▶ 启动 DNS 优选工具...${RESET}"
