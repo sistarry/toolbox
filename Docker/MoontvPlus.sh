@@ -91,7 +91,7 @@ services:
     container_name: moontv-core
     restart: on-failure
     ports:
-      - '${PORT}:3000'
+      - '127.0.0.1:${PORT}:3000'
     environment:
       - USERNAME=${USERNAME}
       - PASSWORD=${PASSWORD}
