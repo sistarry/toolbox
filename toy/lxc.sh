@@ -240,8 +240,8 @@ main_menu() {
         clear
         echo -e "${GREEN}======LXD菜单管理======${RESET}"
         echo -e "${GREEN}1. 环境检测${RESET}"
-        echo -e "${GREEN}2. 安装 LXD 主体${RESET}"
-        echo -e "${GREEN}3. 管理 LXC 小鸡${RESET}"
+        echo -e "${GREEN}2. 安装LXD主体${RESET}"
+        echo -e "${GREEN}3. 管理LXC小鸡${RESET}"
         echo -e "${GREEN}0. 退出${RESET}"
         read -p $'\033[32m请选择操作: \033[0m' menu
 
