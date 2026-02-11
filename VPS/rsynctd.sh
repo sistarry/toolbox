@@ -212,7 +212,7 @@ while true; do
     echo -e "${GREEN} 8) 更新脚本${RESET}"
     echo -e "${GREEN} 9) 卸载脚本${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
-    read -p "$(echo -e ${GREEN}请选择操作: ${RESET}) " c
+    read -p "$(echo -e ${GREEN} 请选择操作: ${RESET}) " c
 
     case $c in
         1) add_task ;;
