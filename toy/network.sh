@@ -23,8 +23,9 @@ download_script(){
 
 # ================== Telegram 配置 ==================
 setup_telegram(){
+    # 只有在发送 Telegram 或设置任务时才提示配置
     if [ ! -f "$CONFIG_FILE" ]; then
-        echo "第一次运行，需要配置 Telegram 参数"
+        echo "第一次使用 Telegram 功能，需要配置参数"
         read -rp "Bot Token: " TG_BOT_TOKEN
         read -rp "Chat ID: " TG_CHAT_ID
         read -rp "服务器名称: " SERVER_NAME
@@ -38,6 +39,7 @@ EOC
     fi
     source "$CONFIG_FILE"
 }
+
 
 modify_config(){
     echo "修改 Telegram 配置:"
@@ -208,7 +210,7 @@ menu(){
             1) view_network_info ;;
             2) setup_telegram; collect_network_info; send_to_telegram ;;
             3) modify_config ;;
-            4) setup_cron_job ;;
+            4) setup_telegram; setup_cron_job ;;
             5) uninstall_script ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
