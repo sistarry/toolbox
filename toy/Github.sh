@@ -8,7 +8,7 @@ BASE_DIR="$HOME/Github"
 CONFIG_FILE="$BASE_DIR/.ghupload_config"
 LOG_FILE="$BASE_DIR/github_upload.log"
 TMP_BASE="$BASE_DIR/github/tmp"
-UPLOAD_DIR="$BASE_DIR/github/upload"     # 默认值
+UPLOAD_DIR="$BASE_DIR/github/upload"
 DOWNLOAD_DIR="$BASE_DIR/github/download"
 SCRIPT_PATH="$BASE_DIR/gh_tool.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Github.sh"
@@ -48,8 +48,6 @@ BRANCH="$BRANCH"
 COMMIT_PREFIX="$COMMIT_PREFIX"
 TG_BOT_TOKEN="$TG_BOT_TOKEN"
 TG_CHAT_ID="$TG_CHAT_ID"
-UPLOAD_DIR="$UPLOAD_DIR"
-DOWNLOAD_DIR="$DOWNLOAD_DIR"
 EOC
 }
 
@@ -111,14 +109,6 @@ init_config() {
     read -p "请输入提交前缀 (默认 VPS-Upload): " COMMIT_PREFIX
     COMMIT_PREFIX=${COMMIT_PREFIX:-VPS-Upload}
 
-    read -p "上传目录 (默认 $UPLOAD_DIR): " input_up
-    UPLOAD_DIR=${input_up:-$UPLOAD_DIR}
-
-    read -p "下载目录 (默认 $DOWNLOAD_DIR): " input_down
-    DOWNLOAD_DIR=${input_down:-$DOWNLOAD_DIR}
-
-    mkdir -p "$UPLOAD_DIR" "$DOWNLOAD_DIR"
-
     read -p "是否配置 Telegram Bot 通知？(y/n): " TG_CHOICE
     if [[ "$TG_CHOICE" == "y" ]]; then
         read -p "请输入 TG Bot Token: " TG_BOT_TOKEN
@@ -150,21 +140,6 @@ change_repo() {
     echo -e "${GREEN}✅ 仓库地址已更新为: $REPO_URL${RESET}"
     read -p "按回车返回菜单..."
 }
-change_dirs() {
-    load_config
-
-    read -p "新的上传目录 ($UPLOAD_DIR): " up
-    read -p "新的下载目录 ($DOWNLOAD_DIR): " down
-
-    UPLOAD_DIR=${up:-$UPLOAD_DIR}
-    DOWNLOAD_DIR=${down:-$DOWNLOAD_DIR}
-
-    mkdir -p "$UPLOAD_DIR" "$DOWNLOAD_DIR"
-
-    save_config
-    echo -e "${GREEN}✅ 目录已更新${RESET}"
-    read -p "按回车返回菜单..."
-}
 
 # =============================
 # 上传文件到 GitHub
@@ -176,7 +151,6 @@ upload_files() {
     FILE_LIST=("$UPLOAD_DIR"/*)
     shopt -u nullglob
     TOTAL_FILES=${#FILE_LIST[@]}
-
     if [ "$TOTAL_FILES" -eq 0 ]; then
         echo -e "${YELLOW}上传目录为空${RESET}" | tee -a "$LOG_FILE"
         read -p "按回车返回菜单..."
@@ -184,35 +158,38 @@ upload_files() {
     fi
 
     TMP_DIR=$(mktemp -d -p "$TMP_BASE")
-
     echo -e "${GREEN}正在 clone 仓库...${RESET}"
     git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR/repo" >>"$LOG_FILE" 2>&1 || {
-        echo -e "${RED}❌ Git clone 失败${RESET}"
+        echo -e "${RED}❌ Git clone 失败${RESET}" | tee -a "$LOG_FILE"
+        send_tg "❌ VPS 上传失败：无法 clone 仓库"
         read -p "按回车返回菜单..."
         return
     }
 
-    # ⭐⭐⭐ 核心修复（镜像同步）
-    rsync -a --delete "$UPLOAD_DIR"/ "$TMP_DIR/repo/"
+    rsync -a --ignore-times "$UPLOAD_DIR"/ "$TMP_DIR/repo/"
 
-    cd "$TMP_DIR/repo" || return
+    cd "$TMP_DIR/repo" || { read -p "按回车返回菜单..."; return; }
 
-    git pull origin "$BRANCH" --no-rebase >>"$LOG_FILE" 2>&1
-
-    git add --all
+    git pull --rebase origin "$BRANCH" >>"$LOG_FILE" 2>&1 || true
+    git add -A
 
     if git diff-index --quiet HEAD --; then
-        echo -e "${YELLOW}⚠️ 没有文件变化，跳过提交${RESET}"
+        COMMIT_MSG="$COMMIT_PREFIX keep-alive $(date '+%Y-%m-%d %H:%M:%S')"
+        git commit --allow-empty -m "$COMMIT_MSG" >>"$LOG_FILE" 2>&1
     else
         COMMIT_MSG="$COMMIT_PREFIX $(date '+%Y-%m-%d %H:%M:%S')"
-        git commit -m "$COMMIT_MSG"
-        git push origin "$BRANCH"
-        echo -e "${GREEN}✅ 上传成功: $COMMIT_MSG${RESET}"
+        git commit -m "$COMMIT_MSG" >>"$LOG_FILE" 2>&1
     fi
 
+    if git push origin "$BRANCH" >>"$LOG_FILE" 2>&1; then
+        echo -e "${GREEN}✅ 上传成功: $COMMIT_MSG${RESET}" | tee -a "$LOG_FILE"
+        send_tg "✅ VPS 上传成功：$COMMIT_MSG，文件数：$TOTAL_FILES"
+    else
+        echo -e "${RED}❌ 上传失败${RESET}" | tee -a "$LOG_FILE"
+        send_tg "❌ VPS 上传失败：git push 出错"
+    fi
     read -p "按回车返回菜单..."
 }
-
 
 # =============================
 # 下载 GitHub 仓库
@@ -330,10 +307,9 @@ menu() {
     echo -e "${GREEN} 5) 删除定时任务${RESET}"
     echo -e "${GREEN} 6) 查看最近日志${RESET}"
     echo -e "${GREEN} 7) 修改仓库地址${RESET}"
-    echo -e "${GREEN} 8) 修改同步目录${RESET}"
-    echo -e "${GREEN} 9) 清理临时目录${RESET}"
-    echo -e "${GREEN}10) 更新${RESET}"
-    echo -e "${GREEN}11) 卸载${RESET}"
+    echo -e "${GREEN} 8) 清理临时目录${RESET}"
+    echo -e "${GREEN} 9) 更新${RESET}"
+    echo -e "${GREEN}10) 卸载${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p "$(echo -e ${GREEN}请输入选项: ${RESET})" opt
     case $opt in
@@ -344,10 +320,9 @@ menu() {
         5) remove_cron ;;
         6) show_log ;;
         7) change_repo ;;
-        8) change_dirs ;;
-        9) clean_tmp ;;
-        10) update_tool ;;
-        11) uninstall_tool ;;
+        8) clean_tmp ;;
+        9) update_tool ;;
+        10) uninstall_tool ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}"; read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})" ;;
     esac
