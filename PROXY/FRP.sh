@@ -10,9 +10,9 @@ NC='\033[0m' # 不带颜色
 show_menu() {
     clear
     echo -e "${GREEN}===== FRP 管理工具安装 =======${NC}"
-    echo -e "${GREEN}1.安装 FRP-Panel (带 Web 面板)${NC}"
-    echo -e "${GREEN}2.安装 FRP 工具 (快速部署 FRP 服务端/客户端)${NC}"
-    echo -e "${GREEN}3.安装 frpc-manager (客户端管理)${NC}"
+    echo -e "${GREEN}1.安装FRP-Panel(Web面板)${NC}"
+    echo -e "${GREEN}2.安装FRP工具(快速部署FRP服务端/客户端)${NC}"
+    echo -e "${GREEN}3.安装frpc-manager(客户端管理)${NC}"
     echo -e "${GREEN}0.退出${NC}"
     echo -n -e "${GREEN}请选择: ${NC}"
 }
