@@ -35,6 +35,7 @@ install_lsof() {
 # ================== 主菜单 ==================
 while true; do
     clear
+    echo -e "${green}==== MTProto 管理菜单 ====${re}"
     echo -e "${green}1. 安装 MTProto${re}"
     echo -e "${green}2. 卸载 MTProto${re}"
     echo -e "${green}0. 退出${re}"
