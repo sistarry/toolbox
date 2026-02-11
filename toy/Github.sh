@@ -176,6 +176,7 @@ upload_files() {
     FILE_LIST=("$UPLOAD_DIR"/*)
     shopt -u nullglob
     TOTAL_FILES=${#FILE_LIST[@]}
+
     if [ "$TOTAL_FILES" -eq 0 ]; then
         echo -e "${YELLOW}上传目录为空${RESET}" | tee -a "$LOG_FILE"
         read -p "按回车返回菜单..."
@@ -183,38 +184,35 @@ upload_files() {
     fi
 
     TMP_DIR=$(mktemp -d -p "$TMP_BASE")
+
     echo -e "${GREEN}正在 clone 仓库...${RESET}"
     git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR/repo" >>"$LOG_FILE" 2>&1 || {
-        echo -e "${RED}❌ Git clone 失败${RESET}" | tee -a "$LOG_FILE"
-        send_tg "❌ VPS 上传失败：无法 clone 仓库"
+        echo -e "${RED}❌ Git clone 失败${RESET}"
         read -p "按回车返回菜单..."
         return
     }
 
-    rsync -a --ignore-times "$UPLOAD_DIR"/ "$TMP_DIR/repo/"
+    # ⭐⭐⭐ 核心修复（镜像同步）
+    rsync -a --delete "$UPLOAD_DIR"/ "$TMP_DIR/repo/"
 
-    cd "$TMP_DIR/repo" || { read -p "按回车返回菜单..."; return; }
+    cd "$TMP_DIR/repo" || return
 
-    git pull --rebase origin "$BRANCH" >>"$LOG_FILE" 2>&1 || true
-    git add -A
+    git pull origin "$BRANCH" --no-rebase >>"$LOG_FILE" 2>&1
+
+    git add --all
 
     if git diff-index --quiet HEAD --; then
-        COMMIT_MSG="$COMMIT_PREFIX keep-alive $(date '+%Y-%m-%d %H:%M:%S')"
-        git commit --allow-empty -m "$COMMIT_MSG" >>"$LOG_FILE" 2>&1
+        echo -e "${YELLOW}⚠️ 没有文件变化，跳过提交${RESET}"
     else
         COMMIT_MSG="$COMMIT_PREFIX $(date '+%Y-%m-%d %H:%M:%S')"
-        git commit -m "$COMMIT_MSG" >>"$LOG_FILE" 2>&1
+        git commit -m "$COMMIT_MSG"
+        git push origin "$BRANCH"
+        echo -e "${GREEN}✅ 上传成功: $COMMIT_MSG${RESET}"
     fi
 
-    if git push origin "$BRANCH" >>"$LOG_FILE" 2>&1; then
-        echo -e "${GREEN}✅ 上传成功: $COMMIT_MSG${RESET}" | tee -a "$LOG_FILE"
-        send_tg "✅ VPS 上传成功：$COMMIT_MSG，文件数：$TOTAL_FILES"
-    else
-        echo -e "${RED}❌ 上传失败${RESET}" | tee -a "$LOG_FILE"
-        send_tg "❌ VPS 上传失败：git push 出错"
-    fi
     read -p "按回车返回菜单..."
 }
+
 
 # =============================
 # 下载 GitHub 仓库
