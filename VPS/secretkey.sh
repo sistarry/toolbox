@@ -68,12 +68,12 @@ restart_ssh() {
 # 菜单循环
 # ===============================
 while true; do
-    echo -e "${YELLOW}==== SSH 管理菜单 ====${RESET}"
+    echo -e "${GREEN}==== SSH 管理菜单 ====${RESET}"
     echo -e "${GREEN}1) 配置SSH密钥登录${RESET}"
     echo -e "${GREEN}2) 禁用root密码登录${RESET}"
     echo -e "${GREEN}3) 重启SSH服务${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
-    read -p "$(echo -e ${YELLOW}请选择操作:${RESET}) " choice
+    read -p "$(echo -e ${GREEN}请选择操作:${RESET}) " choice
 
     case $choice in
         1) setup_ssh_key ;;
