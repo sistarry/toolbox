@@ -200,7 +200,7 @@ EOF
 # 主循环
 while true; do
     show_menu
-    read -p "$(echo -e ${green}请选择:${plain}) : " choice
+    read -p "$(echo -e ${green} 请选择:${plain}) : " choice
     case $choice in
         1) install_rclone ;;
         2) uninstall_rclone ;;
