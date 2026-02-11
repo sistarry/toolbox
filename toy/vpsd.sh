@@ -78,14 +78,37 @@ EOF
 setup_telegram(){
   mkdir -p "$(dirname "$TG_CONFIG_FILE")"
   echo "第一次运行或缺少配置文件，需要配置 Telegram 参数"
-  echo "请输入 Telegram Bot Token:"
-  read -r TG_BOT_TOKEN
-  echo "请输入 Telegram Chat ID:"
-  read -r TG_CHAT_ID
-  echo "TG_BOT_TOKEN=\"$TG_BOT_TOKEN\"" > "$TG_CONFIG_FILE"
-  echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$TG_CONFIG_FILE"
+
+  read -rp "请输入 Telegram Bot Token: " TG_BOT_TOKEN
+  read -rp "请输入 Telegram Chat ID: " TG_CHAT_ID
+  read -rp "请输入服务器名称（用于 Telegram 消息显示）: " SERVER_NAME
+
+  cat > "$TG_CONFIG_FILE" <<EOC
+TG_BOT_TOKEN="$TG_BOT_TOKEN"
+TG_CHAT_ID="$TG_CHAT_ID"
+SERVER_NAME="$SERVER_NAME"
+EOC
+
   chmod 600 "$TG_CONFIG_FILE"
   echo -e "\n配置已保存到 $TG_CONFIG_FILE，下次运行可直接使用。"
+}
+
+modify_telegram_config(){
+  echo "修改 Telegram 配置："
+
+  read -rp "请输入新的 Telegram Bot Token: " TG_BOT_TOKEN
+  read -rp "请输入新的 Telegram Chat ID: " TG_CHAT_ID
+  read -rp "请输入服务器名称（用于 Telegram 消息显示）: " SERVER_NAME
+
+  mkdir -p "$(dirname "$TG_CONFIG_FILE")"
+  cat > "$TG_CONFIG_FILE" <<EOC
+TG_BOT_TOKEN="$TG_BOT_TOKEN"
+TG_CHAT_ID="$TG_CHAT_ID"
+SERVER_NAME="$SERVER_NAME"
+EOC
+
+  chmod 600 "$TG_CONFIG_FILE"
+  echo -e "${green}✅ Telegram 配置已更新${re}"
 }
 
 send_to_telegram(){
@@ -103,27 +126,18 @@ send_to_telegram(){
     return
   fi
 
+  # 在消息开头加服务器名称
+  MSG="🐳 [$SERVER_NAME]$SYS_INFO"
+
   curl -s -X POST "https://api.telegram.org/bot$TG_BOT_TOKEN/sendMessage" \
     -d chat_id="$TG_CHAT_ID" \
-    -d text="$SYS_INFO" >/dev/null 2>&1
+    -d text="$MSG" >/dev/null 2>&1
 
   if [ "$first_run" -eq 1 ]; then
     echo -e "${green}✅ 配置已保存，并已发送第一次 Docker 信息到 Telegram${re}"
   else
     echo -e "${green}✅ 信息已发送到 Telegram${re}"
   fi
-}
-
-modify_telegram_config(){
-  echo "请输入新的 Telegram Bot Token:"
-  read -r TG_BOT_TOKEN
-  echo "请输入新的 Telegram Chat ID:"
-  read -r TG_CHAT_ID
-  mkdir -p "$(dirname "$TG_CONFIG_FILE")"
-  echo "TG_BOT_TOKEN=\"$TG_BOT_TOKEN\"" > "$TG_CONFIG_FILE"
-  echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$TG_CONFIG_FILE"
-  chmod 600 "$TG_CONFIG_FILE"
-  echo -e "${green}✅ Telegram 配置已更新${re}"
 }
 
 # ================== 定时任务管理 ==================
