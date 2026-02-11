@@ -6,7 +6,7 @@ RESET="\033[0m"
 
 menu() {
     clear
-    echo -e "${GREEN}=== 1Panel v1开心版管理菜单 ===${RESET}"
+    echo -e "${GREEN}=== 1Panelv1开心版管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装部署v1${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
     echo -e "${GREEN}3) 卸载1Panelv1${RESET}"
