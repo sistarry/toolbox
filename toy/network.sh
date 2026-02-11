@@ -53,7 +53,6 @@ SERVER_NAME="$SERVER_NAME"
 EOC
     chmod 600 "$CONFIG_FILE"
     echo -e "${GREEN}✅ 配置已更新${RESET}"
-    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 # ================== 收集网络信息 ==================
@@ -191,7 +190,6 @@ enable_cron_service(){
 view_network_info(){
     collect_network_info
     cat "$OUTPUT_FILE"
-    read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
 
 # ================== 菜单 ==================
