@@ -156,10 +156,11 @@ show_info() {
 # 主菜单
 menu() {
     clear
-    echo -e "${green}1. 安装 TuicV5${reset}"
+    echo -e "${green}==== TuicV5 管理菜单 ====${reset}"
+    echo -e "${green}1. 安装TuicV5${reset}"
     echo -e "${green}2. 修改端口${reset}"
     echo -e "${green}3. 查看节点信息${reset}"
-    echo -e "${green}4. 卸载 Tuic${reset}"
+    echo -e "${green}4. 卸载Tuic${reset}"
     echo -e "${green}0. 退出${reset}"
     read -p "$(echo -e ${green}请选择:${reset}) " choice
     case $choice in
