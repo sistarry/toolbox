@@ -15,7 +15,7 @@ CONFIG_FILE="$APP_DIR/config.env"
 
 function menu() {
     clear
-    echo -e "${GREEN}=== new-api 管理菜单 ===${RESET}"
+    echo -e "${GREEN}=== NEW-API 管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装启动${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
     echo -e "${GREEN}3) 重启${RESET}"
