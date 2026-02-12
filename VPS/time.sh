@@ -93,7 +93,7 @@ show_menu() {
 # 主循环
 while true; do
     show_menu
-    echo -en "${GREEN}请输入选项: ${RESET}"
+    echo -en "${GREEN} 请输入选项: ${RESET}"
     read choice
     case "$choice" in 
         1)
