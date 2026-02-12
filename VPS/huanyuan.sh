@@ -179,7 +179,6 @@ while true; do
     echo -e "5. 还原初始更新源并更新缓存"
     echo -e "6. 国内/国外推荐源列表"
     echo -e "0. 退出"
-    echo -e "---------------------------${RESET}"
     
     read -rp "$(echo -e "${GREEN}请选择操作: ${RESET}")" choice
 
