@@ -197,9 +197,9 @@ menu(){
     while true; do
         clear
         echo -e "${GREEN}===== VPS 网络管理菜单 =====${RESET}"
-        echo -e "${GREEN}1) 只查看网络信息${RESET}"
-        echo -e "${GREEN}2) 查看并发送网络信息到 Telegram${RESET}"
-        echo -e "${GREEN}3) 修改 Telegram 配置${RESET}"
+        echo -e "${GREEN}1) 查看网络信息${RESET}"
+        echo -e "${GREEN}2) 发送网络信息到 Telegram${RESET}"
+        echo -e "${GREEN}3) 修改Telegram配置${RESET}"
         echo -e "${GREEN}4) 设置定时任务${RESET}"
         echo -e "${GREEN}5) 卸载脚本${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
