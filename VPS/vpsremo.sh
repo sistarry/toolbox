@@ -5,7 +5,7 @@ RED="\033[31m"
 RESET="\033[0m"
 
 LOCAL_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh"
-REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rsynctd.sh"
+REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/toy/Rrsync.sh"
 
 run_script() {
     url=$1
