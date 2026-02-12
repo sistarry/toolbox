@@ -94,10 +94,10 @@ show_client_config() {
 while true; do
     clear
     echo -e "${green}==== Hysteria2 管理菜单 ====${re}"
-    echo -e "${green}1. 安装 Hysteria2${re}"
-    echo -e "${green}2. 查看 Hysteria2状态${re}"
-    echo -e "${green}3. 更换 Hysteria2端口${re}"
-    echo -e "${green}4. 卸载 Hysteria2${re}"
+    echo -e "${green}1. 安装Hysteria2${re}"
+    echo -e "${green}2. 查看Hysteria2状态${re}"
+    echo -e "${green}3. 更换Hysteria2端口${re}"
+    echo -e "${green}4. 卸载Hysteria2${re}"
     echo -e "${green}0. 退出${re}"
     read -p "$(echo -e ${green}请选择:${re}) " sub_choice
     case $sub_choice in
