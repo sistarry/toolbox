@@ -29,7 +29,7 @@ menu() {
     echo -e "${GREEN} 1) 开启root密码登录${RESET}"
     echo -e "${GREEN} 2) 禁用root密码登录${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
-    read -p $'\033[32m请选择: \033[0m' choice
+    read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
         1) run_script "$ENABLE_URL" "开启 Root 登录" ;;
