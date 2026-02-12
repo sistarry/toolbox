@@ -1,44 +1,75 @@
 #!/bin/sh
 # =========================================
-# Alpine Linux 一键切换中文脚本
+# Alpine Linux 语言一键切换工具
+# 1=中文  2=English  3=查看状态
 # =========================================
 
 GREEN="\033[32m"
 RESET="\033[0m"
 
-info() { echo -e "${GREEN}[INFO] $1${RESET}"; }
-
-# -------------------------
-# 安装中文语言包
-# -------------------------
-info "安装中文语言包..."
-apk update
-apk add --no-cache musl-locales musl-locales-lang ttf-dejavu fontconfig
-
-# -------------------------
-# 配置系统语言环境
-# -------------------------
-info "配置系统语言环境..."
 PROFILE="/etc/profile"
 
-# 避免重复添加
-grep -q "zh_CN.UTF-8" "$PROFILE" || cat << 'EOF' >> "$PROFILE"
+info() { echo -e "${GREEN}[INFO] $1${RESET}"; }
+
+install_locale() {
+    apk add --no-cache musl-locales musl-locales-lang fontconfig ttf-dejavu >/dev/null 2>&1
+}
+
+clean_lang() {
+    sed -i '/LANG=/d' "$PROFILE"
+    sed -i '/LANGUAGE=/d' "$PROFILE"
+    sed -i '/LC_ALL=/d' "$PROFILE"
+    sed -i '/zh_CN/d' "$PROFILE"
+    sed -i '/en_US/d' "$PROFILE"
+}
+
+set_zh() {
+    info "切换中文环境..."
+    install_locale
+    clean_lang
+    cat >> "$PROFILE" <<EOF
 
 export LANG=zh_CN.UTF-8
 export LANGUAGE=zh_CN:zh
 export LC_ALL=zh_CN.UTF-8
 EOF
+    exec sh -l
+}
 
-# 立即生效
-. /etc/profile
+set_en() {
+    info "Switching to English..."
+    install_locale
+    clean_lang
+    cat >> "$PROFILE" <<EOF
 
-# -------------------------
-# 显示设置结果
-# -------------------------
-info "当前系统语言设置:"
-locale
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US:en
+export LC_ALL=en_US.UTF-8
+EOF
+    exec sh -l
+}
 
-info "测试中文显示:"
-echo "你好，Alpine!"
+show_status() {
+    echo
+    info "当前语言:"
+    locale | grep -E 'LANG=|LC_ALL='
+    echo
+}
 
-echo "[DONE] Alpine 已切换为中文环境。重启终端或系统可完全生效。"
+while true; do
+    echo -e "${GREEN}===切换字体菜单===${RESET}"
+    echo -e "${GREEN}1) 中文字体${RESET}"
+    echo -e "${GREEN}2) 英文字体${RESET}"
+    echo -e "${GREEN}3) 查看当前语言${RESET}"
+    echo -e "${GREEN}0) 退出${RESET}"
+    printf "${GREEN}请选择: ${RESET}"
+    read opt
+
+    case $opt in
+        1) set_zh ;;
+        2) set_en ;;
+        3) show_status ;;
+        0) exit 0 ;;
+        *) echo -e "${GREEN}无效选项${RESET}" ;;
+    esac
+done
