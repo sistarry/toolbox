@@ -11,6 +11,21 @@ re="\033[0m"
 SCRIPT_PATH="/opt/vpsdocker/docker_info.sh"
 TG_CONFIG_FILE="/opt/vpsdocker/.vps_tgd_config"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpsd.sh"
+# ================== 工具函数 ==================
+
+# 兼容 column（没有也能跑）
+print_table(){
+  if command -v column >/dev/null 2>&1; then
+    column -t
+  else
+    cat
+  fi
+}
+
+safe_text(){
+  sed 's/[&]/and/g'
+}
+
 
 # ================== 下载或更新脚本 ==================
 download_script(){
@@ -34,6 +49,7 @@ enable_cron_service(){
 
 # ================== Docker 信息收集 ==================
 collect_docker_info(){
+
   if ! command -v docker >/dev/null 2>&1; then
     SYS_INFO="❌ 未安装 Docker"
     return
@@ -41,14 +57,15 @@ collect_docker_info(){
 
   container_count=$(docker ps -q | wc -l)
 
-  # 容器运行情况
   running=$(docker ps --format '{{.Names}} ({{.Status}})' | sed 's/^/▶ /')
+  [ -z "$running" ] && running="无"
 
-  # 容器资源占用 (CPU/内存/网络)
-  container_stats=$(docker stats --no-stream --format "▶ {{.Name}} | CPU: {{.CPUPerc}} | 内存: {{.MemUsage}} | 网络: {{.NetIO}}")
+  container_stats=$(docker stats --no-stream \
+    --format "▶ {{.Name}} | CPU {{.CPUPerc}} | MEM {{.MemUsage}} | NET {{.NetIO}}")
+  [ -z "$container_stats" ] && container_stats="无"
 
-  # 镜像信息（含大小）
-  images=$(docker images --format '📦 {{.Repository}}:{{.Tag}} | 大小: {{.Size}}' | column -t)
+  images=$(docker images --format '📦 {{.Repository}}:{{.Tag}} | {{.Size}}' | print_table)
+  [ -z "$images" ] && images="无"
 
   current_time=$(date "+%Y-%m-%d %H:%M")
 
