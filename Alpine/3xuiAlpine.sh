@@ -8,7 +8,7 @@ plain="\033[0m"
 
 show_menu() {
     clear
-    echo -e "${green}===3X-UI 管理面板 ===${plain}"
+    echo -e "${green}===Alpine-3X-UI管理面板 ===${plain}"
     echo -e " ${green}1.安装${plain}"
     echo -e " ${green}2.卸载${plain}"
     echo -e " ${green}3.启动${plain}"
