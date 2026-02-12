@@ -57,7 +57,7 @@ show_status() {
 }
 
 while true; do
-    echo -e "${GREEN}===切换字体菜单===${RESET}"
+    echo -e "${GREEN}===Alpine-切换字体菜单===${RESET}"
     echo -e "${GREEN}1) 中文字体${RESET}"
     echo -e "${GREEN}2) 英文字体${RESET}"
     echo -e "${GREEN}3) 查看当前语言${RESET}"
