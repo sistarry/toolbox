@@ -26,13 +26,13 @@ menu() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}        root 密码登录管理           ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN} 1) 配置root密码登录${RESET}"
+    echo -e "${GREEN} 1) 设置root密码登录${RESET}"
     echo -e "${GREEN} 2) 管理root密码登录${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
-        1) run_script "$ENABLE_URL" "配置 Root 密码登录" ;;
+        1) run_script "$ENABLE_URL" "设置 Root 密码登录" ;;
         2) run_script "$DISABLE_URL" "管理 Root 密码登录" ;;
         0) exit 0 ;;
         *)
