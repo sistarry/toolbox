@@ -31,7 +31,6 @@ reinstall_os() {
     clear
     echo -e "${green}重装系统将无法恢复数据，请提前做好备份${re}"
     echo -e "${yellow}注意：NAT重装后SSH端口密码保持原端口密码不变${re}"
-    echo ""
     
     while true; do
         read -p $'\033[1;35m确定要重装吗？(y/n): \033[0m' confirm
