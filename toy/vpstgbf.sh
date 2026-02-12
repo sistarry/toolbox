@@ -214,7 +214,7 @@ setup_cron_job(){
         3) CRON_TIME="0 0 1 * *" ;;
         4) CRON_TIME="*/5 * * * *" ;;
         5) CRON_TIME="*/10 * * * *" ;;
-        6) read -rp "请输入 Cron 表达式 (分 时 日 月 周): " CRON_TIME ;;
+        6) read -rp "请输入 Cron 表达式: " CRON_TIME ;;
         7)
             crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab -
             rm -f "$CRON_DIRS_FILE"
