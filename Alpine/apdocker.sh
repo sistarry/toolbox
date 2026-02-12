@@ -244,7 +244,7 @@ main_menu() {
         IPV6_STATUS=$(cat /proc/sys/net/ipv6/conf/all/disable_ipv6)
         ipv6_display=$([ "$IPV6_STATUS" -eq 0 ] && echo "启用" || echo "禁用")
 
-        echo -e "${GREEN}====== Alpine Docker 管理 ======${RESET}"
+        echo -e "${GREEN}====== Alpine-Docker管理 ======${RESET}"
         echo -e "${YELLOW}Docker: $docker_status | 容器: $running_containers/$total_containers | IPv6: $ipv6_display${RESET}"
         echo -e "${GREEN} 1) 安装/更新Docker${RESET}"
         echo -e "${GREEN} 2) 安装/更新DockerCompose${RESET}"
