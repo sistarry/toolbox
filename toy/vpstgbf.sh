@@ -269,14 +269,12 @@ menu(){
             chmod +x "$SCRIPT_PATH"
             echo -e "${GREEN}脚本已更新${RESET}" ;;
         9)
-          read -rp "确认卸载脚本并删除所有定时任务? (y/N): " yn
-          if [[ "$yn" =~ ^[Yy]$ ]]; then
-              crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab -
-              rm -rf "$BASE_DIR"
-              echo -e "${RED}已卸载${RESET}"
-              exit 0
-          fi
-          ;;     
+            crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab -
+            rm -rf "$BASE_DIR"
+            rm -f "$SCRIPT_PATH"
+            echo -e "${RED}已卸载${RESET}"
+            exit 0
+            ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
