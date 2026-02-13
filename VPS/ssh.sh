@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # 读取用户输入
-read -p "$(echo -e ${GREEN}请输入远程用户名:${NC} ) " username
+read -p "$(echo -e ${GREEN}请输入远程用户名(root):${NC} ) " username
 read -p "$(echo -e ${GREEN}请输入远程服务器IP:${NC} ) " ip_address
 read -p "$(echo -e ${GREEN}请输入SSH端口（默认22）:${NC} ) " port
 port=${port:-22}
