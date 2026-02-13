@@ -379,14 +379,14 @@ remove_cron(){
 # 卸载脚本
 # =====================
 uninstall_script(){
-    read -p "确认卸载脚本及清理所有文件和定时任务吗？(y/N): " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        remove_cron
-        rm -rf "$BASE_DIR"
-        echo -e "${GREEN}✅ 脚本及所有备份文件已删除${RESET}"
-        exit 0
-    fi
+    remove_cron
+    rm -rf "$BASE_DIR"
+    rm -f "$INSTALL_PATH"
+
+    echo -e "${GREEN}✅ 脚本及所有备份文件和定时任务已全部卸载${RESET}"
+    exit 0
 }
+
 
 # =====================
 # 修改 GitHub 仓库地址
