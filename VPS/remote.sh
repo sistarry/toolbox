@@ -24,7 +24,7 @@ echo ""
 
 # 远程服务器配置
 read -p "请输入远程服务器IP: " REMOTE_IP
-read -p "请输入远程服务器用户名: " REMOTE_USER
+read -p "请输入远程服务器用户名(root): " REMOTE_USER
 read -p "请输入SSH端口 [默认: 22]: " SSH_PORT
 SSH_PORT=${SSH_PORT:-22}
 read -p "请输入远程备份目录: " REMOTE_BACKUP_DIR
