@@ -182,7 +182,7 @@ EOF
 #################################
 uninstall_manager() {
     echo -e "${RED}正在卸载管理器...${RESET}"
-    crontab -l 2>/dev/null | grep -v "$CRON_TAG" | crontab -
+    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" | crontab -
     echo -e "${GREEN}✅ 已删除所有定时任务${RESET}"
     [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器脚本${RESET}"
     [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE" && echo -e "${GREEN}✅ 已删除日志 ${LOG_FILE}${RESET}"
