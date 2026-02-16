@@ -11,7 +11,6 @@
 </script>
 <!-- 设置网络显示-->
 <script src="https://cdn.jsdelivr.net/gh/duya07/nezha-ui@main/netstatus-autoshow-2.js"></script>
-/* 隐藏迷你概览条 */
 <script>
   window.MiniStatsConfig = {
     hideMiniStats: true,       // true: 开启隐藏迷你概览条
@@ -1348,6 +1347,7 @@ a.flex.items-center.gap-1.text-sm.font-medium.opacity-50:hover::after {
 </script>
 <script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/kbn.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/ip.js"></script>
+
 
 
 
