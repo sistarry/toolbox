@@ -10,6 +10,7 @@
             transform:translateX(-50%);
             z-index:9999;
             font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+            transition: opacity 1s ease;
         }
         .ip-inner{
             position:relative;
@@ -22,6 +23,7 @@
             backdrop-filter:blur(16px);
             -webkit-backdrop-filter:blur(16px);
             box-shadow:0 8px 30px rgba(0,0,0,.15);
+            font-size:14px;
         }
         .ip-inner::before{
             content:"";
@@ -49,7 +51,6 @@
             background:#1a73e8;
         }
         .ip-text{
-            font-size:14px;
             font-weight:600;
             white-space:nowrap;
             background:linear-gradient(45deg,#ff0000,#ff7300,#fffb00,#48ff00,#00ffd5,#002bff,#7a00ff,#ff00c8,#ff0000);
@@ -58,9 +59,15 @@
             -webkit-text-fill-color:transparent;
             animation:glow 20s linear infinite;
         }
+        /* 移动端只显示 IP + 地址，隐藏 ISP */
         @media(max-width:600px){
-            .ip-inner{padding:6px 12px}
-            .ip-text{font-size:12px}
+            .ip-inner{
+                padding:6px 12px;
+                font-size:12px;
+            }
+            .ip-text{
+                font-size:12px;
+            }
         }
     `;
     document.head.appendChild(style);
@@ -92,12 +99,12 @@
                 <div class="ip-text" id="ip-val">Loading...</div>
             </div>`;
         document.body.appendChild(bar);
+        return bar;
     }
 
     function init(){
-        createBar();
+        const bar = createBar();
         const el=document.getElementById("ip-val");
-        const bar=document.getElementById("ip-bar");
 
         getIP().then(res=>{
             const ip=res.ip;
@@ -105,20 +112,31 @@
             const isp=res.isp;
 
             if(isIPv4(ip)){
-                el.textContent=loc?`Your IP: ${ip} · ${loc} · ${isp}`:`Your IP: ${ip}`;
+                // 移动端只显示 IP + 地址
+                const isMobile = window.innerWidth <= 600;
+                if(isMobile){
+                    el.textContent = loc ? `${ip} · ${loc}` : ip;
+                }else{
+                    el.textContent = loc ? `${ip} · ${loc} · ${isp}` : ip;
+                }
             }else{
-                el.textContent=loc?`IPv6 Network · ${loc} · ${isp}`:`IPv6 Network`;
+                el.textContent = loc ? `IPv6 Network · ${loc}` : "IPv6 Network";
             }
         }).catch(()=>{
             el.textContent="Unable to get IP";
         });
 
-        // ✅ 8秒后直接隐藏（不滑动）
+        // 5秒后淡出消失
         setTimeout(()=>{
             if(bar){
-                bar.style.display="none";
+                bar.style.opacity = "0";
+                bar.addEventListener("transitionend",()=>{
+                    if(bar && bar.parentNode){
+                        bar.parentNode.removeChild(bar);
+                    }
+                }, {once:true});
             }
-        },8000);
+        },5000);
     }
 
     if(document.readyState==="loading"){
