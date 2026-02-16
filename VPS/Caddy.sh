@@ -31,17 +31,39 @@ install_caddy() {
 uninstall_caddy() {
     if command -v caddy >/dev/null 2>&1; then
         echo -e "${GREEN}正在卸载 Caddy...${RESET}"
-        sudo systemctl stop caddy
+
+        # 停止服务
+        sudo systemctl stop caddy 2>/dev/null || true
+        sudo systemctl disable caddy 2>/dev/null || true
+        sudo systemctl daemon-reload
+
+        # 删除 apt 安装的 caddy
         sudo apt remove -y caddy
         sudo apt autoremove -y
+
+        # 删除源和 keyring
         sudo rm -f /etc/apt/sources.list.d/caddy-stable.list
         sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-        echo -e "${GREEN}Caddy 已卸载${RESET}"
+
+        # 删除 Caddy 系统数据和配置
+        sudo rm -rf /etc/caddy
+        sudo rm -rf /var/lib/caddy
+        sudo rm -rf /var/log/caddy
+        sudo rm -rf /usr/bin/caddy
+        sudo rm -rf /usr/local/bin/caddy
+
+        # 删除残留 systemd 服务文件（如果有）
+        sudo rm -f /etc/systemd/system/caddy.service
+        sudo rm -f /lib/systemd/system/caddy.service
+        sudo systemctl daemon-reload
+
+        echo -e "${GREEN}Caddy 已彻底卸载${RESET}"
     else
         echo -e "${RED}Caddy 未安装${RESET}"
     fi
     pause
 }
+
 
 reload_caddy() {
     sudo systemctl reload caddy
