@@ -1346,7 +1346,9 @@ a.flex.items-center.gap-1.text-sm.font-medium.opacity-50:hover::after {
         });
     }
 </script>
-<script src="https://cdn.jsdelivr.net/gh/Polarisiu/nezha/kbn.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/kbn.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/ip.js"></script>
+
 
 
 
