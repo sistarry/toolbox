@@ -181,7 +181,7 @@ SUB_MENU[2]="19 代理工具|20 FRP管理|21 BBR管理|22 TCP窗口调优|23 WAR
 SUB_MENU[3]="39 NodeQuality脚本|40 融合怪测试|41 YABS测试|42 网络质量体检脚本|43 简单回程测试|44 完整路由检测|45 流媒体解锁|46 三网延迟测速|47 解锁Instagram音频测试|48 检查25端口开放|49 网络工具"
 SUB_MENU[4]="50 Docker管理|51 DockerCompose管理|52 DockerCompose备份恢复|53 DockerCompose自动更新"
 SUB_MENU[5]="54 应用管理|55 面板管理|56 监控管理|57 视频下载工具|58 镜像加速|59 异次元数卡|60 小雅全家桶|61 qbittorrent"
-SUB_MENU[6]="62 NGINXV4反代|63 NGINXV6反代|64 Caddy反代|65 NginxProxyManager面板|66 雷池WAF"
+SUB_MENU[6]="62 NGINXV4反代|63 NGINXV6反代|64 Caddy反代|65 NginxProxyManager面板|66 证书备份与恢复"
 SUB_MENU[7]="67 系统清理|68 系统快照恢复|69 本地备份|70 重装系统|71 系统组件|72 开发环境|73 添加SWAP|74 DNS管理|75 工作区管理|76 系统监控|77 防火墙管理|78 Fail2ban|79 Rsync同步|80 解压文件|81 定时任务"
 SUB_MENU[8]="82 科技lion|83 老王工具箱|84 一点科技|85 BBRv3优化脚本|86 酷雪云脚本"
 SUB_MENU[9]="87 Alpine系统管理|89 甲骨文工具|90 文件目录备份|91 Rclone备份|92 NAT小鸡|93 VPS监控通知|94 脚本短链|95 网站部署|96 关闭V1SSH|97 卸载哪吒Agent |100 卸载komariAgent|101 GProxy加速|102 Akile优先DNS"
@@ -373,7 +373,7 @@ execute_choice() {
         63) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv6.sh) ;;
         64) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Caddy.sh) ;;
         65) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NginxProxy.sh) ;;
-        66) bash -c "$(curl -fsSLk https://waf-ce.chaitin.cn/release/latest/manager.sh)" ;;
+        66) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/SSLbackup.sh) ;;
         67) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clear.sh) ;;
         68) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/restore.sh) ;;
         69) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh) ;;
