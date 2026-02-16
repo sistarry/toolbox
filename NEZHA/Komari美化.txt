@@ -1,69 +1,58 @@
-自定义头部
 <!-- 隐藏底部文字版权部分 -->
 <style>
   footer, .site-footer {
     display: none !important;
   }
 </style>
+
+
+<!-- ip胶囊 -->
 <style>
-    /* --- 1. 核心容器：胶囊条 --- */
     #capsule-bar {
         position: fixed;
         bottom: 30px;
         left: 50%;
-        /* 初始状态：向下偏移 30px (沉在下面)，配合 opacity 实现慢慢上浮 */
         transform: translateX(-50%) translateY(30px);
-        z-index: 99999;
-        
+        z-index: 999999;
         display: flex;
         align-items: center;
-        padding: 8px clamp(10px, 2vw, 20px); 
+        padding: 8px clamp(10px, 2vw, 20px);
         gap: 8px;
-        
-        background: rgba(255, 255, 255, 0.95); 
-        backdrop-filter: blur(10px); /* 降低模糊度，以减少性能损耗 */
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        
         border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.6); /* 增强边框可见性 */
+        border: 1px solid rgba(255, 255, 255, 0.6);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-weight: 500;
         color: #1d1d1f;
-        font-size: clamp(11px, 2.5vw, 14px); 
+        font-size: clamp(11px, 2.5vw, 14px);
         white-space: nowrap;
-        max-width: 92vw; 
+        max-width: 92vw;
         overflow-x: hidden;
-        
-        /* --- 关键修改：极慢速过渡动画 --- */
-        opacity: 0;          
-        visibility: hidden;  
+        opacity: 0;
+        visibility: hidden;
         transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 1.5s;
-        pointer-events: none; 
+        pointer-events: none;
     }
-
-    /* 激活状态：回到原位 + 不透明 */
     #capsule-bar.active {
         opacity: 1;
         visibility: visible;
-        transform: translateX(-50%) translateY(0); 
-        pointer-events: auto; 
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
     }
-
     .capsule-icon {
-        width: 1.4em; 
+        width: 1.4em;
         height: 1.4em;
         flex-shrink: 0;
         color: #007AFF;
         margin-right: 2px;
     }
-
     .ip-prefix {
         font-weight: 600;
         color: #007AFF;
     }
-
     .capsule-divider {
         display: inline-block;
         width: 1px;
@@ -72,7 +61,6 @@
         margin: 0 6px;
         vertical-align: middle;
     }
-
     .isp-info {
         max-width: 40vw;
         overflow: hidden;
@@ -80,47 +68,37 @@
         display: inline-block;
         vertical-align: bottom;
     }
-
-    /* --- 2. 返回顶部按钮 (独立控制，反应快一点) --- */
     #back-top-btn {
         position: fixed;
         bottom: 45px;
         right: 120px;
-        z-index: 99999;
-        
+        z-index: 999999;
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        
         display: flex;
         justify-content: center;
         align-items: center;
         cursor: pointer;
         color: #333;
-        
         opacity: 0;
-        visibility: hidden; 
+        visibility: hidden;
         transform: translateY(10px) scale(0.9);
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
-    
     #back-top-btn.visible {
         opacity: 1;
         visibility: visible;
         transform: translateY(0) scale(1);
     }
-    
     #back-top-btn:hover {
         transform: translateY(-2px);
         background: rgba(255, 255, 255, 0.95);
     }
-
-    /* 深色模式适配 */
     @media (prefers-color-scheme: dark) {
         #capsule-bar, #back-top-btn {
             background: rgba(30, 30, 30, 0.95);
@@ -131,7 +109,6 @@
         .capsule-icon, .ip-prefix { color: #0A84FF; }
         #back-top-btn { color: #fff; }
     }
-
     @media (max-width: 600px) {
         #back-top-btn { bottom: 80px; right: 20px; }
         .ip-prefix { display: none; }
@@ -147,7 +124,6 @@
     </svg>
     <span id="ip-display">Wait...</span>
 </div>
-
 <div id="back-top-btn" onclick="scrollToTop()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
@@ -155,232 +131,99 @@
 </div>
 
 <script>
-    // 1. IP获取与慢速显示逻辑
+document.addEventListener('DOMContentLoaded', function() {
     const bar = document.getElementById('capsule-bar');
     const el = document.getElementById('ip-display');
-
-    // 添加错误处理，避免API请求失败时出错
-    fetch('https://ipwho.is/?lang=zh-CN')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // 填入数据
-                el.innerHTML = `
-                    <span class="ip-prefix">Your IP:</span> 
-                    ${data.ip} 
-                    <span class="capsule-divider"></span> 
-                    <span>${data.city}</span>
-                    <span class="isp-info">&nbsp;${data.connection.isp}</span>
-                `;
-                
-                // 关键修改 1：数据就绪后，先等待 1.5 秒 (不要立即出现)
-                setTimeout(() => {
-                    // 关键修改 2：添加类名，触发 CSS 中定义的 1.5秒 慢速淡入
-                    bar.classList.add('active');
-                    
-                    // 关键修改 3：显示 10 秒后自动消失 (从动画开始算起，实际停留时间会包含动画时间)
-                    setTimeout(() => {
-                        bar.classList.remove('active');
-                    }, 10000); 
-                    
-                }, 1500); // <-- 这里是启动延迟 1.5s
-
-            } else {
-                el.innerText = "Network Info N/A";
-            }
-        })
-        .catch(() => { 
-            el.innerText = "Error fetching IP info.";  // 错误处理
-            console.log("Fetch error"); 
-        });
-
-    // 2. 滚动监听 (返回顶部按钮 - 保持灵敏)
     const btn = document.getElementById('back-top-btn');
-    window.addEventListener('scroll', function(e) {
-        const scrollTop = window.scrollY || e.target.scrollTop || document.documentElement.scrollTop || 0;
+
+    // ====== 使用标准超时写法 ======
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    fetch('https://api.ip.sb/geoip', {
+        signal: controller.signal
+    })
+    .then(res => {
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error('接口请求失败');
+        return res.json();
+    })
+    .then(data => {
+        let ispName = data.isp || '未知运营商';
+        let location = data.country || '未知国家';
+
+        el.innerHTML = `
+            <span class="ip-prefix">Your IP:</span>
+            ${data.ip || '未知IP'}
+            <span class="capsule-divider"></span>
+            <span>${location}</span>
+            <span class="capsule-divider"></span>
+            <span class="isp-info">${ispName}</span>
+        `;
+
+        setTimeout(() => {
+            bar.classList.add('active');
+            setTimeout(() => {
+                bar.classList.remove('active');
+            }, 8000);
+        }, 1500);
+    })
+    .catch(err => {
+        console.error('IP接口请求错误:', err);
+        el.innerText = "无法获取IP信息";
+        setTimeout(() => bar.classList.add('active'), 1500);
+    });
+
+    function checkScroll() {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
         if (scrollTop > 200) {
             btn.classList.add('visible');
         } else {
             btn.classList.remove('visible');
         }
-    }, true);
-
-    // 3. 返回顶部
-    function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        const scrollables = document.querySelectorAll('div, main');
-        scrollables.forEach(el => {
-            if (el.scrollTop > 0) try { el.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){console.error(e);}
-        });
     }
-</script>
 
-自定义 Body
+    window.addEventListener('scroll', checkScroll, true);
+    checkScroll();
+
+    window.scrollToTop = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelectorAll('div[style*="overflow-y"], main').forEach(el => {
+            if (el.scrollTop > 0) {
+                try { el.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+            }
+        });
+    };
+});
+</script>
+<!-- 地球仪 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D地球 - 增强版</title>
+    <title>3D地球</title>
 </head>
 <body>
 <script src="//unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 
 <style>
-    /* =========================================
-       模块样式 (胶囊条 & 返回顶部)
-       ========================================= */
-    #capsule-bar {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        /* 初始状态：向下偏移 30px */
-        transform: translateX(-50%) translateY(30px);
-        z-index: 99990; /* 略低于地球侧边栏(99999) */
-        
-        display: flex;
-        align-items: center;
-        padding: 8px clamp(10px, 2vw, 20px); 
-        gap: 8px;
-        
-        background: rgba(255, 255, 255, 0.95); 
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        
-        border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        font-weight: 500;
-        color: #1d1d1f;
-        font-size: clamp(11px, 2.5vw, 14px); 
-        white-space: nowrap;
-        max-width: 92vw; 
-        overflow-x: hidden;
-        
-        /* 极慢速过渡动画 */
-        opacity: 0;          
-        visibility: hidden;  
-        transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 1.5s;
-        pointer-events: none; 
-    }
-
-    #capsule-bar.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(0); 
-        pointer-events: auto; 
-    }
-
-    .capsule-icon {
-        width: 1.4em; 
-        height: 1.4em;
-        flex-shrink: 0;
-        color: #007AFF;
-        margin-right: 2px;
-    }
-
-    .ip-prefix {
-        font-weight: 600;
-        color: #007AFF;
-    }
-
-    .capsule-divider {
-        display: inline-block;
-        width: 1px;
-        height: 12px;
-        background-color: rgba(0, 0, 0, 0.15);
-        margin: 0 6px;
-        vertical-align: middle;
-    }
-
-    .isp-info {
-        max-width: 40vw;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: inline-block;
-        vertical-align: bottom;
-    }
-
-    /* 返回顶部按钮 */
-    #back-top-btn {
-        position: fixed;
-        bottom: 45px;
-        right: 120px;
-        z-index: 99990; /* 与胶囊条同级 */
-        
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        color: #333;
-        
-        opacity: 0;
-        visibility: hidden; 
-        transform: translateY(10px) scale(0.9);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    }
-    
-    #back-top-btn.visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0) scale(1);
-    }
-    
-    #back-top-btn:hover {
-        transform: translateY(-2px);
-        background: rgba(255, 255, 255, 0.95);
-    }
-
-    /* 深色模式适配 */
-    @media (prefers-color-scheme: dark) {
-        #capsule-bar, #back-top-btn {
-            background: rgba(30, 30, 30, 0.95);
-            border-color: rgba(255, 255, 255, 0.1);
-            color: #f5f5f7;
-        }
-        .capsule-divider { background-color: rgba(255, 255, 255, 0.2); }
-        .capsule-icon, .ip-prefix { color: #0A84FF; }
-        #back-top-btn { color: #fff; }
-    }
-
-    @media (max-width: 600px) {
-        #back-top-btn { bottom: 80px; right: 20px; }
-        .ip-prefix { display: none; }
-    }
-    @media (min-width: 360px) {
-        .ip-prefix { display: inline; }
-    }
-
-    /* =========================================
-       地球模块样式
-       ========================================= */
     #earth-drawer-container {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 66.7vw;
-        min-width: 500px;
-        height: 100vh;
-        z-index: 99999; /* 最高层级，确保覆盖胶囊条 */
-        background: linear-gradient(135deg, rgba(0, 5, 15, 0.98), rgba(0, 10, 25, 0.98));
-        border-left: 2px solid rgba(0, 255, 255, 0.4);
-        box-shadow: none;
-        transform: translateX(100%);
-        transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        display: flex;
-        flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 66.7vw;
+    min-width: 500px;
+    height: 100vh;
+    z-index: 99999;
+    background: linear-gradient(135deg, rgba(0, 5, 15, 0.98), rgba(0, 10, 25, 0.98));
+    border-left: 2px solid rgba(0, 255, 255, 0.4);
+    box-shadow: none;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
     }
     #earth-drawer-container.active { transform: translateX(0); }
     #earth-render-area { flex: 1; width: 100%; height: 100%; overflow: hidden; cursor: grab; }
@@ -649,19 +492,7 @@
         }
     }
 </style>
-
-<div id="capsule-bar">
-    <svg class="capsule-icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-    </svg>
-    <span id="ip-display">Wait...</span>
-</div>
-
-<div id="back-top-btn" onclick="scrollToTop()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
-    </svg>
-</div>
+</head>
 
 <div id="earth-toggle-btn" title="Open Global Map">
     <svg class="earth-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -705,94 +536,23 @@
 
 <div id="earth-drawer-container">
     <div class="earth-header">
-        <div class="earth-title">服务器全球分布区域</div>
-        <div id="earth-close-btn">关闭</div>
+        <div class="earth-title">KOMARI /// LINKED</div>
+        <div id="earth-close-btn">DISCONNECT</div>
     </div>
     <div class="earth-stats">
-        <div>检测到<span id="country-count">0</span>个地区</div>
-        <div>已加载<span id="polygon-count">0</span>个区域</div>
-        <div>状态: <span id="globe-status">Ready</span></div>
-        <div style="margin-top:8px;font-size:10px;opacity:0.7;cursor:pointer" id="toggle-debug">[调试]</div>
+        <div>Detected <span id="country-count">0</span> regions</div>
+        <div>Polygons <span id="polygon-count">0</span> loaded</div>
+        <div>Status: <span id="globe-status">Ready</span></div>
+        <div style="margin-top:8px;font-size:10px;opacity:0.7;cursor:pointer" id="toggle-debug">[Debug]</div>
     </div>
     <div id="debug-panel"></div>
     <div id="earth-render-area"></div>
 </div>
 
 <script>
-/* =========================================
-   胶囊条与返回顶部逻辑 (独立运行)
-   ========================================= */
-(function() {
-    // 1. IP获取与慢速显示逻辑
-    const bar = document.getElementById('capsule-bar');
-    const el = document.getElementById('ip-display');
-
-    // 添加错误处理，避免API请求失败时出错
-    fetch('https://ipwho.is/?lang=zh-CN')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // 填入数据
-                el.innerHTML = `
-                    <span class="ip-prefix">Your IP:</span> 
-                    ${data.ip} 
-                    <span class="capsule-divider"></span> 
-                    <span>${data.city}</span>
-                    <span class="isp-info">&nbsp;${data.connection.isp}</span>
-                `;
-                
-                // 关键修改 1：数据就绪后，先等待 1.5 秒
-                setTimeout(() => {
-                    // 关键修改 2：添加类名，触发 CSS 中定义的 1.5秒 慢速淡入
-                    if(bar) bar.classList.add('active');
-                    
-                    // 关键修改 3：显示 10 秒后自动消失
-                    setTimeout(() => {
-                        if(bar) bar.classList.remove('active');
-                    }, 10000); 
-                    
-                }, 1500);
-
-            } else {
-                el.innerText = "Network Info N/A";
-            }
-        })
-        .catch(() => { 
-            el.innerText = "Error fetching IP info.";
-            console.log("Fetch error"); 
-        });
-
-    // 2. 滚动监听 (返回顶部按钮)
-    const btn = document.getElementById('back-top-btn');
-    window.addEventListener('scroll', function(e) {
-        const scrollTop = window.scrollY || e.target.scrollTop || document.documentElement.scrollTop || 0;
-        if (scrollTop > 200) {
-            btn.classList.add('visible');
-        } else {
-            btn.classList.remove('visible');
-        }
-    }, true);
-    
-    // 3. 挂载全局函数
-    window.scrollToTop = function() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        const scrollables = document.querySelectorAll('div, main');
-        scrollables.forEach(el => {
-            if (el.scrollTop > 0) try { el.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){console.error(e);}
-        });
-    }
-})();
-
-/* =========================================
-   原有：地球核心逻辑
-   ========================================= */
 (function() {
     'use strict';
     
-    // --- 存储用户IP位置 (访问者) ---
-    let userLocation = null;
-
-    // --- 扩展后的坐标字典 ---
     const COORD_MAP = {
         'CN': [35.8617, 104.1954], 'HK': [22.3193, 114.1694], 'TW': [23.6978, 120.9605],
         'JP': [36.2048, 138.2529], 'KR': [35.9078, 127.7669], 'SG': [1.3521, 103.8198],
@@ -806,11 +566,6 @@
         'BH': [26.0667, 50.5577], 'OM': [21.4735, 55.9754], 'JO': [30.5852, 36.2384],
         'LB': [33.8547, 35.8623], 'IQ': [33.2232, 43.6793], 'IR': [32.4279, 53.6880],
         'AF': [33.9391, 67.7100],
-        // 中亚/西亚/其他
-        'KG': [41.2044, 74.7661], 'TJ': [38.8610, 71.2761], 'TM': [38.9697, 59.5563],
-        'SY': [34.8021, 38.9968], 'KP': [40.3399, 127.5101], 'MV': [3.2028, 73.2207],
-        'BN': [4.5353, 114.7277], 'TL': [-8.8742, 125.7275],
-        
         'GB': [55.3781, -3.4360], 'DE': [51.1657, 10.4515], 'FR': [46.2276, 2.2137],
         'IT': [41.8719, 12.5674], 'ES': [40.4637, -3.7492], 'NL': [52.1326, 5.2913],
         'BE': [50.5039, 4.4699], 'CH': [46.8182, 8.2275], 'AT': [47.5162, 14.5501],
@@ -825,8 +580,6 @@
         'IS': [64.9631, -19.0208], 'LU': [49.8153, 6.1296], 'MT': [35.9375, 14.3754],
         'CY': [35.1264, 33.4299], 'AL': [41.1533, 20.1683], 'MK': [41.5124, 21.7465],
         'BA': [43.9159, 17.6791], 'ME': [42.7087, 19.3744],
-        'GL': [71.7069, -42.6043], // 格陵兰
-
         'US': [37.0902, -95.7129], 'CA': [56.1304, -106.3468], 'MX': [23.6345, -102.5528],
         'GT': [15.7835, -90.2308], 'CU': [21.5218, -77.7812], 'HT': [18.9712, -72.2852],
         'DO': [18.7357, -70.1627], 'JM': [18.1096, -77.2975], 'PR': [18.2208, -66.5901],
@@ -837,34 +590,20 @@
         'VE': [6.4238, -66.5897], 'EC': [-1.8312, -78.1834], 'BO': [-16.2902, -63.5887],
         'PY': [-23.4425, -58.4438], 'UY': [-32.5228, -55.7658], 'GY': [4.8604, -58.9302],
         'SR': [3.9193, -56.0278],
-        'BS': [25.0343, -77.3963], 'TT': [10.6918, -61.2225], 'BB': [13.1939, -59.5432],
-
         'AU': [-25.2744, 133.7751], 'NZ': [-40.9006, 174.8860], 'FJ': [-17.7134, 178.0650],
         'PG': [-6.3150, 143.9555], 'NC': [-20.9043, 165.6180],
-        'SB': [-9.6457, 160.1562], 'VU': [-15.3767, 166.9592],
-
         'ZA': [-30.5595, 22.9375], 'EG': [26.8206, 30.8025], 'NG': [9.0820, 8.6753],
         'KE': [-0.0236, 37.9062], 'MA': [31.7917, -7.0926], 'DZ': [28.0339, 1.6596],
         'TN': [33.8869, 9.5375], 'GH': [7.9465, -1.0232], 'ET':[9.1450, 40.4897],
-        'UG': [1.3733, 32.2903], 'CI': [7.5400, -5.5471],
+        'TZ': [-6.3690, 34.8888], 'UG': [1.3733, 32.2903], 'CI': [7.5400, -5.5471],
         'SN': [14.4974, -14.4524], 'CM': [7.3697, 12.3547], 'AO': [-11.2027, 17.8739],
         'MZ': [-18.6657, 35.5296], 'MG': [-18.7669, 46.8691], 'ZW': [-19.0154, 29.1549],
         'BW': [-22.3285, 24.6849], 'NA': [-22.9576, 18.4904], 'RW': [-1.9403, 29.8739],
         'MU': [-20.3484, 57.5522], 'LY': [26.3351, 17.2283], 'SD': [12.8628, 30.2176],
-        // 非洲其他
-        'CD': [-4.0383, 21.7587], 'CG': [-0.2280, 15.8277], 'SO': [5.1521, 46.1996],
-        'TD': [15.4542, 18.7322], 'NE': [17.6078, 8.0817], 'ML': [17.5707, -3.9962],
-        'BF': [12.2383, -1.5616], 'GN': [9.9456, -9.6966], 'SL': [8.4606, -11.7799],
-        'LR': [6.4281, -9.4295], 'TG': [8.6195, 0.8248], 'BJ': [9.3077, 2.3158],
-        'GA': [-0.8037, 11.6094], 'SS': [6.8770, 31.3070], 'ZM': [-13.1339, 27.8493],
-
         'AE': [23.4241, 53.8478], 'SA': [23.8859, 45.0792], 'IL': [31.0461, 34.8516],
-        'YE': [15.5527, 48.5164],
-        'MO': [22.1987, 113.5439], 
-        'AQ': [-82.8628, 135.0000] 
+        'YE': [15.5527, 48.5164]
     };
 
-    // --- ISO ID映射 (用于GeoJSON板块高亮) ---
     const ISO_TO_ID = {
         'CN': '156', 'JP': '392', 'KR': '410', 'IN': '356', 'ID': '360', 
         'TH': '764', 'VN': '704', 'MY': '458', 'PH': '608', 'SG': '702',
@@ -873,8 +612,6 @@
         'TW': '158', 'HK': '344', 'AF': '4', 'IQ': '368', 'IR': '364',
         'KW': '414', 'QA': '634', 'BH': '48', 'OM': '512', 'JO': '400',
         'LB': '422', 'AZ': '31', 'GE': '268', 'AM': '51',
-        'KG': '417', 'TJ': '762', 'TM': '795', 'SY': '760', 'KP': '408',
-        'BN': '096', 'TL': '626', 'MV': '462',
         'GB': '826', 'FR': '250', 'DE': '276', 'IT': '380', 'ES': '724',
         'NL': '528', 'BE': '56', 'CH': '756', 'AT': '40', 'SE': '752',
         'NO': '578', 'FI': '246', 'DK': '208', 'IE': '372', 'PT': '620',
@@ -883,7 +620,6 @@
         'HR': '191', 'RS': '688', 'SI': '705', 'LT': '440', 'LV': '428',
         'EE': '233', 'BY': '112', 'MD': '498', 'IS': '352', 'LU': '442',
         'MT': '470', 'CY': '196', 'AL': '8', 'MK': '807', 'BA': '70', 'ME': '499',
-        'GL': '304',
         'US': '840', 'CA': '124', 'MX': '484', 'GT': '320', 'CU': '192',
         'HT': '332', 'DO': '214', 'JM': '388', 'PA': '591', 'CR': '188',
         'NI': '558', 'HN': '340', 'SV': '222', 'BZ': '84',
@@ -891,23 +627,16 @@
         'PE': '604',
         'VE': '862', 'EC': '218', 'BO': '68', 'PY': '600', 'UY': '858',
         'GY': '328', 'SR': '740',
-        'BS': '044', 'TT': '780', 'BB': '052',
         'AU': '36',
-        'NZ': '554', 'FJ': '242', 'PG': '598', 'SB': '090', 'VU': '548',
+        'NZ': '554', 'FJ': '242', 'PG': '598',
         'ZA': '710', 'EG': '818', 'NG': '566', 'KE': '404', 'MA': '504',
         'DZ': '12', 'TN': '788', 'GH': '288', 'ET': '231', 'TZ': '834',
         'UG': '800', 'CI': '384', 'SN': '686', 'CM': '120', 'AO': '24',
         'MZ': '508', 'MG': '450', 'ZW': '716', 'BW': '72', 'NA': '516',
         'RW': '646', 'MU': '480', 'LY': '434', 'SD': '729',
-        'CD': '180', 'CG': '178', 'SO': '706', 'TD': '148', 'NE': '562', 'ML': '466',
-        'BF': '854', 'GN': '324', 'SL': '694', 'LR': '430', 'TG': '768', 'BJ': '204',
-        'GA': '266', 'SS': '728', 'ZM': '894',
-        'AE': '784', 'SA': '682', 'IL': '376', 'YE': '887',
-        'MO': '446', 
-        'AQ': '010'
+        'AE': '784', 'SA': '682', 'IL': '376', 'YE': '887'
     };
 
-    // --- 旗帜Emoji ---
     const FLAG_EMOJI = {
         'CN': '🇨🇳', 'HK': '🇭🇰', 'TW': '🇹🇼', 'JP': '🇯🇵', 'KR': '🇰🇷', 'SG': '🇸🇬',
         'TH': '🇹🇭', 'VN': '🇻🇳', 'MY': '🇲🇾', 'ID': '🇮🇩', 'PH': '🇵🇭', 'IN': '🇮🇳',
@@ -915,8 +644,6 @@
         'LK': '🇱🇰', 'MN': '🇲🇳', 'KZ': '🇰🇿', 'UZ': '🇺🇿', 'AZ': '🇦🇿', 'GE': '🇬🇪',
         'AM': '🇦🇲', 'KW': '🇰🇼', 'QA': '🇶🇦', 'BH': '🇧🇭', 'OM': '🇴🇲', 'JO': '🇯🇴',
         'LB': '🇱🇧', 'IQ': '🇮🇶', 'IR': '🇮🇷', 'AF': '🇦🇫',
-        'KG': '🇰🇬', 'TJ': '🇹🇯', 'TM': '🇹🇲', 'SY': '🇸🇾', 'KP': '🇰🇵', 'BN': '🇧🇳',
-        'TL': '🇹🇱', 'MV': '🇲🇻',
         'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷', 'IT': '🇮🇹', 'ES': '🇪🇸', 'NL': '🇳🇱',
         'BE': '🇧🇪', 'CH': '🇨🇭', 'AT': '🇦🇹', 'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮',
         'DK': '🇩🇰', 'IE': '🇮🇪', 'PT': '🇵🇹', 'GR': '🇬🇷', 'PL': '🇵🇱', 'CZ': '🇨🇿',
@@ -924,25 +651,18 @@
         'BG': '🇧🇬', 'HR': '🇭🇷', 'RS': '🇷🇸', 'SI': '🇸🇮', 'LT': '🇱🇹', 'LV': '🇱🇻',
         'EE': '🇪🇪', 'BY': '🇧🇾', 'MD': '🇲🇩', 'IS': '🇮🇸', 'LU': '🇱🇺', 'MT': '🇲🇹',
         'CY': '🇨🇾', 'AL': '🇦🇱', 'MK': '🇲🇰', 'BA': '🇧🇦', 'ME': '🇲🇪',
-        'GL': '🇬🇱',
         'US': '🇺🇸', 'CA': '🇨🇦', 'MX': '🇲🇽', 'GT': '🇬🇹', 'CU': '🇨🇺', 'HT': '🇭🇹',
         'DO': '🇩🇴', 'JM': '🇯🇲', 'PR': '🇵🇷', 'PA': '🇵🇦', 'CR': '🇨🇷', 'NI': '🇳🇮',
         'HN': '🇭🇳', 'SV': '🇸🇻', 'BZ': '🇧🇿',
         'BR': '🇧🇷', 'AR': '🇦🇷', 'CL': '🇨🇱', 'CO': '🇨🇴', 
         'PE': '🇵🇪',
         'VE': '🇻🇪', 'EC': '🇪🇨', 'BO': '🇧🇴', 'PY': '🇵🇾', 'UY': '🇺🇾', 'GY': '🇬🇾', 'SR': '🇸🇷',
-        'BS': '🇧🇸', 'TT': '🇹🇹', 'BB': '🇧🇧',
-        'AU': '🇦🇺', 'NZ': '🇳🇿', 'FJ': '🇫🇯', 'PG': '🇵🇬', 'SB': '🇸🇧', 'VU': '🇻🇺',
+        'AU': '🇦🇺', 'NZ': '🇳🇿', 'FJ': '🇫🇯', 'PG': '🇵🇬',
         'ZA': '🇿🇦', 'EG': '🇪🇬', 'NG': '🇳🇬', 'KE': '🇰🇪', 'MA': '🇲🇦', 'DZ': '🇩🇿',
         'TN': '🇹🇳', 'GH': '🇬🇭', 'ET': '🇪🇹', 'TZ': '🇹🇿', 'UG': '🇺🇬', 'CI': '🇨🇮',
         'SN': '🇸🇳', 'CM': '🇨🇲', 'AO': '🇦🇴', 'MZ': '🇲🇿', 'MG': '🇲🇬', 'ZW': '🇿🇼',
         'BW': '🇧🇼', 'NA': '🇳🇦', 'RW': '🇷🇼', 'MU': '🇲🇺', 'LY': '🇱🇾', 'SD': '🇸🇩',
-        'CD': '🇨🇩', 'CG': '🇨🇬', 'SO': '🇸🇴', 'TD': '🇹🇩', 'NE': '🇳🇪', 'ML': '🇲🇱',
-        'BF': '🇧🇫', 'GN': '🇬🇳', 'SL': '🇸🇱', 'LR': '🇱🇷', 'TG': '🇹🇬', 'BJ': '🇧🇯',
-        'GA': '🇬🇦', 'SS': '🇸🇸', 'ZM': '🇿🇲',
-        'AE': '🇦🇪', 'SA': '🇸🇦', 'IL': '🇮🇱', 'YE': '🇾🇪',
-        'MO': '🇲🇴', 
-        'AQ': '🇦🇶'
+        'AE': '🇦🇪', 'SA': '🇸🇦', 'IL': '🇮🇱', 'YE': '🇾🇪'
     };
 
     const container = document.getElementById('earth-drawer-container');
@@ -977,7 +697,7 @@
             }
             emojiSupported = colors.size > 3;
         } catch (e) { emojiSupported = false; }
-        addLog(`表情符号: ${emojiSupported ? '支持' : '不支持'}`);
+        addLog(`Emoji support: ${emojiSupported ? 'YES' : 'NO'}`);
         return emojiSupported;
     }
 
@@ -1006,13 +726,13 @@
 
     async function loadGeoJSON() {
         if (countriesGeoJSON) return countriesGeoJSON;
-        addLog('地理结构加载中...');
+        addLog('Loading GeoJSON...');
         statusEl.textContent = 'Loading';
         try {
             const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
             const topo = await res.json();
             countriesGeoJSON = topojson.feature(topo, topo.objects.countries).features;
-            addLog(`已加载 ${countriesGeoJSON.length} 个国家`);
+            addLog(`Loaded ${countriesGeoJSON.length} countries`);
             return countriesGeoJSON;
         } catch (e) {
             addLog(`Load failed: ${e.message}`);
@@ -1023,7 +743,7 @@
     function filterPolygons(codes) {
         if (!countriesGeoJSON || codes.length === 0) return [];
         
-        addLog(`已加载 ${codes.length} 个区域...`);
+        addLog(`Filtering polygons for ${codes.length} codes...`);
         const result = [];
         const notFound = [];
         
@@ -1045,7 +765,7 @@
             
             if (feat) {
                 result.push({ code, geometry: feat.geometry, id: feat.id });
-                addLog(`${code} 已加载 (id: ${feat.id})`);
+                addLog(`${code} matched (id: ${feat.id})`);
             } else {
                 notFound.push(code);
             }
@@ -1056,7 +776,7 @@
         }
         
         polygonCountEl.textContent = result.length;
-        addLog(`加载数量: ${result.length}/${codes.length}`);
+        addLog(`Total matched: ${result.length}/${codes.length}`);
         return result;
     }
 
@@ -1077,38 +797,25 @@
                 if (img.src.toLowerCase().includes(`/${code.toLowerCase()}.`)) flags.add(code);
             });
         });
-        addLog(`已扫描 ${flags.size} 面旗帜`);
+        addLog(`Scanned ${flags.size} flags`);
         return Array.from(flags);
     }
 
-    // --- 数据生成逻辑：仅根据扫描结果显示 ---
     function generateData() {
-        // 1. 只获取页面实际存在的旗帜代码
-        let codes = scanFlags();
-        
+        const codes = scanFlags();
         const points = [], arcs = [];
         if (codes.length === 0) return { points, arcs, codes };
 
-        // 2. 确定飞线起点：优先使用用户位置，否则回退到列表第一个或中国
-        let startLat = userLocation ? userLocation.lat : (COORD_MAP[codes[0]] ? COORD_MAP[codes[0]][0] : 35);
-        let startLng = userLocation ? userLocation.lng : (COORD_MAP[codes[0]] ? COORD_MAP[codes[0]][1] : 110);
-        
-        if (!userLocation && codes.includes('CN')) {
-             startLat = COORD_MAP['CN'][0];
-             startLng = COORD_MAP['CN'][1];
-        }
+        const centerCode = codes.includes('CN') ? 'CN' : codes[0];
+        const centerCoord = COORD_MAP[centerCode];
 
-        // 3. 生成数据点和飞线
         codes.forEach(code => {
             const coord = COORD_MAP[code];
             if (coord) {
                 points.push({ code, lat: coord[0], lng: coord[1] });
-                
-                // 只有当目标不是起点本身时，才生成飞线
-                const isOrigin = Math.abs(coord[0] - startLat) < 1 && Math.abs(coord[1] - startLng) < 1;
-                if (!isOrigin) {
+                if (code !== centerCode) {
                     arcs.push({
-                        startLat: startLat, startLng: startLng,
+                        startLat: centerCoord[0], startLng: centerCoord[1],
                         endLat: coord[0], endLng: coord[1]
                     });
                 }
@@ -1121,7 +828,7 @@
         if (globeInstance) { updateGlobe(); return; }
         
         statusEl.textContent = 'Initializing';
-        addLog('地球已激活');
+        addLog('Starting Globe...');
         checkEmojiSupport();
         
         await loadGeoJSON();
@@ -1144,9 +851,9 @@
             globe.width(renderArea.clientWidth);
             globe.height(renderArea.clientHeight);
 
-            globe.backgroundImageUrl('https://i.onji.cn/cgz/1/2026/02/698436de0d050.png');
-            globe.globeImageUrl('https://i.onji.cn/cgz/1/2026/02/6984369591a5d.jpg');
-            globe.bumpImageUrl('https://i.onji.cn/cgz/1/2026/02/698436b7b2065.png');
+            globe.backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png');
+            globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg');
+            globe.bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
             globe.atmosphereColor('rgba(26, 84, 144, 0.8)');
             globe.atmosphereAltitude(0.25);
 
@@ -1166,10 +873,10 @@
                     
                     if (polygon && polygon.code) {
                         globe.controls().autoRotate = false;
-                        addLog(`当前悬停: ${polygon.code}`);
+                        addLog(`Paused - Hover: ${polygon.code}`);
                     } else {
                         globe.controls().autoRotate = true;
-                        addLog(`已恢复自转`);
+                        addLog(`Rotation resumed`);
                     }
 
                     if (particleInterval) {
@@ -1186,7 +893,7 @@
                         : 'rgba(0, 200, 255, 0.15)');
                     
                     if (polygon && polygon.code) {
-                        addLog(`暂停自转`);
+                        addLog(`Hover: ${polygon.code}`);
                         
                         const coord = COORD_MAP[polygon.code];
                         if (coord) {
@@ -1316,8 +1023,8 @@
             globe.controls().enableZoom = true;
 
             globeInstance = globe;
-            statusEl.textContent = '已完成';
-            addLog(`地球加载完毕! ${codes.length} 个国家, ${polygons.length} 个区域`);
+            statusEl.textContent = 'Active';
+            addLog(`Globe ready! ${codes.length} countries, ${polygons.length} polygons`);
 
         } catch (error) {
             statusEl.textContent = 'Error';
@@ -1357,7 +1064,7 @@
             container.classList.add('active');
             toggleBtn.classList.add('hidden');
             debugLogs = [];
-            addLog('地球已加载');
+            addLog('Globe activated');
             setTimeout(initGlobe, 400);
         } else {
             container.classList.remove('active');
@@ -1382,17 +1089,6 @@
     setInterval(() => {
         if (isActive && globeInstance) updateGlobe();
     }, 30000);
-
-    fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .then(data => {
-            if (data.latitude && data.longitude) {
-                userLocation = { lat: data.latitude, lng: data.longitude };
-                addLog(`定位成功: ${data.city}`);
-                if (globeInstance) updateGlobe();
-            }
-        })
-        .catch(() => addLog('定位不可用，使用默认位置'));
 
     addLog('Earth module loaded');
 })();
