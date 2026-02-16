@@ -115,3 +115,21 @@
     }
 </style>
 
+<!-- 引入霞鹜文楷字体 -->
+<script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.bootcdn.net/ajax/libs/lxgw-wenkai-screen-webfont/1.7.0/style.min.css';
+    document.head.appendChild(link);
+</script>
+<!-- 设置页面字体 -->
+<style>
+    * {
+        font-family: 'LXGW WenKai Screen'; /* 设置所有元素使用霞鹜文楷字体 */
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: 'LXGW WenKai Screen', sans-serif; /* 设置标题使用霞鹜文楷字体 */
+    }
+</style>
+
+
