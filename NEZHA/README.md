@@ -47,6 +47,11 @@
 <script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/kbn.js"></script>
 ```
 
+### ip胶囊
+```bash
+<script src="https://cdn.jsdelivr.net/gh/sistarry/toolbox/NEZHA/ip.js"></script>
+```
+
 ### 自定义代码
 ```bash
 <script>
@@ -63,20 +68,18 @@
 
 ### 美化字体(源自https://www.nodeseek.com/post-328904-1)
 ```bash
-<!-- 引入霞鹜文楷字体 -->
-<script>
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdn.bootcdn.net/ajax/libs/lxgw-wenkai-screen-webfont/1.7.0/style.min.css';
-    document.head.appendChild(link);
-</script>
-<!-- 设置页面字体 -->
+<!-- 引入Mi Sans字体 -->
 <style>
+    /* 引入小米字体 */
+    @import url('https://cdn-font.hyperos.mi.com/font/css?family=MiSans:400,500,600,700:Chinese_Simplify,Latin&display=swap');
+    
+    /* 设置页面字体 */
     * {
-        font-family: 'LXGW WenKai Screen'; /* 设置所有元素使用霞鹜文楷字体 */
+        font-family: 'MiSans', sans-serif !important; /* 设置所有元素使用小米字体 */
     }
     h1, h2, h3, h4, h5 {
-        font-family: 'LXGW WenKai Screen', sans-serif; /* 设置标题使用霞鹜文楷字体 */
+        font-family: 'MiSans', sans-serif !important; /* 设置标题使用小米字体 */
+        font-weight: 600; /* 标题使用粗体 */
     }
 </style>
 
