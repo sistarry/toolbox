@@ -105,7 +105,10 @@ generate_server_config() {
     DOMAIN=$1
     TARGET=$2
     IS_WS=$3
+    MAX_SIZE=$4
     CONFIG_PATH="/etc/nginx/sites-available/$DOMAIN"
+
+    MAX_SIZE=${MAX_SIZE:-200M}
 
     if [ "$IS_WS" == "y" ]; then
         WS_HEADERS="proxy_http_version 1.1;
@@ -130,6 +133,8 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
 
     location / {
+        client_max_body_size $MAX_SIZE;
+
         proxy_pass $TARGET;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -141,6 +146,7 @@ server {
 EOF
     ln -sf "$CONFIG_PATH" "/etc/nginx/sites-enabled/$DOMAIN"
 }
+
 
 check_domain_resolution() {
     DOMAIN=$1
@@ -210,8 +216,12 @@ install_nginx() {
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n，回车默认 y): ${RESET}"; read IS_WS
     IS_WS=${IS_WS:-y}
 
+    echo -ne "${GREEN}请输入最大上传大小 (默认 200M): ${RESET}"
+    read MAX_SIZE
+    MAX_SIZE=${MAX_SIZE:-200M}
+
     certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
-    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
+    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS" "$MAX_SIZE"
 
     nginx -t && systemctl reload nginx
     systemctl enable --now certbot.timer
@@ -253,10 +263,14 @@ add_config() {
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n，回车默认 y): ${RESET}"; read IS_WS
     IS_WS=${IS_WS:-y}
 
+    echo -ne "${GREEN}请输入最大上传大小 (默认 200M): ${RESET}"
+    read MAX_SIZE
+    MAX_SIZE=${MAX_SIZE:-200M}
+
     [ -f "/etc/nginx/sites-available/$DOMAIN" ] && echo -e "${YELLOW}配置已存在${RESET}" && pause && return
 
     certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
-    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
+    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS" "$MAX_SIZE"
     create_default_server
     nginx -t && systemctl reload nginx
     echo -e "${GREEN}添加完成！访问: https://$DOMAIN${RESET}"
@@ -290,13 +304,16 @@ modify_config() {
     echo -ne "${GREEN}请输入新反代目标: ${RESET}"; read TARGET
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n，回车默认 y): ${RESET}"; read IS_WS
     IS_WS=${IS_WS:-y}
+    echo -ne "${GREEN}请输入最大上传大小 (默认 200M): ${RESET}"
+    read MAX_SIZE
+    MAX_SIZE=${MAX_SIZE:-200M}
     echo -ne "${GREEN}是否更新邮箱? (y/n，回车默认 n): ${RESET}"; read c
     c=${c:-n}
     if [[ "$c" == "y" ]]; then
         echo -ne "${GREEN}新邮箱: ${RESET}"; read EMAIL
         certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
     fi
-    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
+    generate_server_config "$DOMAIN" "$TARGET" "$IS_WS" "$MAX_SIZE"
     create_default_server
     nginx -t && systemctl reload nginx
     echo -e "${GREEN}修改完成！访问: https://$DOMAIN${RESET}"
