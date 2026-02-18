@@ -14,55 +14,78 @@ pause() {
 }
 
 install_caddy() {
-    if ! command -v caddy >/dev/null 2>&1; then
-        echo -e "${GREEN}正在安装 Caddy...${RESET}"
-        sudo apt install -yq debian-keyring debian-archive-keyring apt-transport-https curl
-        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-        sudo apt update -q
-        sudo apt install -yq caddy
-        echo -e "${GREEN}Caddy 安装完成${RESET}"
-    else
+    if command -v caddy >/dev/null 2>&1; then
         echo -e "${GREEN}Caddy 已安装${RESET}"
+        pause
+        return
     fi
+
+    if ! command -v apt >/dev/null 2>&1; then
+        echo -e "${RED}仅支持 Debian/Ubuntu 系统${RESET}"
+        pause
+        return
+    fi
+
+    echo -e "${GREEN}正在安装 Caddy...${RESET}"
+
+    sudo apt update -q
+    sudo apt install -yq debian-keyring debian-archive-keyring apt-transport-https curl
+
+    if [ ! -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg ]; then
+        curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | \
+        sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    fi
+
+    if [ ! -f /etc/apt/sources.list.d/caddy-stable.list ]; then
+        curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt | \
+        sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    fi
+
+    sudo apt update -q
+    sudo apt install -yq caddy
+
+    sudo systemctl enable caddy
+    sudo systemctl start caddy
+
+    echo -e "${GREEN}Caddy 安装完成并已启动${RESET}"
     pause
 }
+
 
 uninstall_caddy() {
-    if command -v caddy >/dev/null 2>&1; then
-        echo -e "${GREEN}正在卸载 Caddy...${RESET}"
-
-        # 停止服务
-        sudo systemctl stop caddy 2>/dev/null || true
-        sudo systemctl disable caddy 2>/dev/null || true
-        sudo systemctl daemon-reload
-
-        # 删除 apt 安装的 caddy
-        sudo apt remove -y caddy
-        sudo apt autoremove -y
-
-        # 删除源和 keyring
-        sudo rm -f /etc/apt/sources.list.d/caddy-stable.list
-        sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-
-        # 删除 Caddy 系统数据和配置
-        sudo rm -rf /etc/caddy
-        sudo rm -rf /var/lib/caddy
-        sudo rm -rf /var/log/caddy
-        sudo rm -rf /usr/bin/caddy
-        sudo rm -rf /usr/local/bin/caddy
-
-        # 删除残留 systemd 服务文件（如果有）
-        sudo rm -f /etc/systemd/system/caddy.service
-        sudo rm -f /lib/systemd/system/caddy.service
-        sudo systemctl daemon-reload
-
-        echo -e "${GREEN}Caddy 已彻底卸载${RESET}"
-    else
-        echo -e "${RED}Caddy 未安装${RESET}"
+    if ! command -v caddy >/dev/null 2>&1; then
+        echo -e "${YELLOW}Caddy 未安装${RESET}"
+        pause
+        return
     fi
+
+    echo -e "${GREEN}正在卸载 Caddy...${RESET}"
+
+    # 停止并禁用服务（存在就处理，不存在不报错）
+    sudo systemctl stop caddy 2>/dev/null || true
+    sudo systemctl disable caddy 2>/dev/null || true
+
+    # 使用 apt 正确卸载（包含 service / 二进制）
+    sudo apt purge -y caddy
+    sudo apt autoremove -y
+
+    # 删除 Caddy 数据和配置（这些 apt 不会删）
+    sudo rm -rf /etc/caddy
+    sudo rm -rf /var/lib/caddy
+    sudo rm -rf /var/log/caddy
+
+    # 删除 Caddy 源和 keyring（可选但推荐）
+    sudo rm -f /etc/apt/sources.list.d/caddy-stable.list
+    sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+    # 刷新 systemd
+    sudo systemctl daemon-reload
+    sudo systemctl reset-failed
+
+    echo -e "${GREEN}Caddy 已干净卸载（可安全重新安装）${RESET}"
     pause
 }
+
 
 
 reload_caddy() {
