@@ -467,17 +467,17 @@ uninstall_nginx() {
 while true; do
     clear
     echo -e "${GREEN}===== Nginx 管理脚本 =====${RESET}"
-    echo -e "${GREEN}1) 安装 Nginx证书${RESET}"
+    echo -e "${GREEN}1) 安装Nginx证书${RESET}"
     echo -e "${GREEN}2) 添加配置${RESET}"
     echo -e "${GREEN}3) 修改配置${RESET}"
     echo -e "${GREEN}4) 删除配置${RESET}"
     echo -e "${GREEN}5) 测试证书续期${RESET}"
     echo -e "${GREEN}6) 查看证书信息${RESET}"
-    echo -e "${GREEN}7) 卸载 Nginx证书${RESET}"
+    echo -e "${GREEN}7) 卸载Nginx证书${RESET}"
     echo -e "${GREEN}8) 查看域名证书状态${RESET}"
-    echo -e "${GREEN}9) 重载 Nginx 配置${RESET}"
+    echo -e "${GREEN}9) 重载Nginx配置${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
-    echo -ne "${GREEN}请选择[0-9]: ${RESET}"
+    echo -ne "${GREEN}请选择[0-9]:${RESET}"
     read choice
     case $choice in
         1) install_nginx ;;
