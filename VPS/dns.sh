@@ -36,6 +36,9 @@ set_dns_resolved() {
 
     echo -e "${GREEN}使用 systemd-resolved 模式${RESET}"
 
+    # 如果之前锁定过，先自动解锁（防止报错）
+    chattr -i $CONFIG_FILE 2>/dev/null
+
     rm -rf $CONFIG_DIR
     mkdir -p $CONFIG_DIR
 
@@ -51,14 +54,9 @@ EOF
     systemctl restart systemd-resolved
     resolvectl flush-caches
 
-    read -p $'\033[32m是否锁定 resolved 配置? (y/n): \033[0m' LOCK
-    if [[ "$LOCK" == "y" ]]; then
-        chattr +i $CONFIG_FILE 2>/dev/null
-        echo -e "${GREEN}已锁定 resolved 配置${RESET}"
-    fi
-
     echo -e "${GREEN}DNS 已更新完成${RESET}"
 }
+
 
 ########################################
 # 设置 resolv.conf DNS
