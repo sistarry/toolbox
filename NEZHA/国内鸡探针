@@ -1,0 +1,40 @@
+1. 新建文件夹
+
+mkdir -p /opt/nezha
+
+2. 下载探针agent
+
+cd /opt/nezha && wget https://github.com/nezhahq/agent/releases
+3.赋予权限
+
+chmod +x /opt/nezha/nezha-agent
+
+4.创建 systemctl 服务文件
+
+cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/NEZHA/nezha-agent.service
+
+5.启动服务
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable nezha-agent
+
+sudo systemctl start nezha-agent
+
+6.编辑配置文件
+
+cd /opt/nezha
+
+nano config.yml
+
+#主要改下面两个地方（注意第一个冒号后面留空格）
+
+client_secret: your_agent_secret
+
+server: data.example.com:8008
+
+#Ctrl+X保存
+
+7.重启探针
+
+sudo systemctl restart nezha-agent
