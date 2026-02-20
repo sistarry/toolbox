@@ -92,11 +92,11 @@ echo -e "\e[1;33mV2rayN 或 Nekobox\033[0m"
 echo -e "\e[1;32mhysteria2://$PASSWD@$HOST_IP:$HY2_PORT/?sni=www.bing.com&alpn=h3&insecure=1#$HOSTNAME\033[0m"
 echo ""
 echo -e "\e[1;33mSurge\033[0m"
-echo -e "\e[1;32m$#$HOSTNAME = hysteria2, $HOST_IP, $HY2_PORT, password = $PASSWD, skip-cert-verify=true, sni=www.bing.com\033[0m"
+echo -e "\e[1;32m$HOSTNAME = hysteria2, $HOST_IP, $HY2_PORT, password = $PASSWD, skip-cert-verify=true, sni=www.bing.com\033[0m"
 echo ""
 echo -e "\e[1;33mClash\033[0m"
 cat << EOF
-- name: $#$HOSTNAME
+- name: $HOSTNAME
   type: hysteria2
   server: $HOST_IP
   port: $HY2_PORT
