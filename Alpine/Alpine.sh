@@ -72,10 +72,21 @@ menu() {
         11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh) ;;
         12) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
         13) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
-        88) 
-            curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+        88)
+            echo -e "${YELLOW}🔄 正在更新脚本...${RESET}"
+            curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL" || {
+                echo -e "${RED}❌ 更新失败，请检查网络${RESET}"
+                break
+            }
             chmod +x "$SCRIPT_PATH"
-            echo -e "${GREEN}✅ 更新完成,A 或 a 可快速启动${RESET}" ;;
+
+            # 重新确保快捷键存在
+            ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/A"
+            ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/a"
+
+            echo -e "${GREEN}✅ 脚本已更新，可继续使用 A/a 启动${RESET}"
+            exec "$SCRIPT_PATH"
+            ;;
         99) 
             rm -f "$SCRIPT_PATH" "$BIN_LINK_DIR/A" "$BIN_LINK_DIR/a"
             echo -e "${RED}✅ 卸载完成${RESET}"
