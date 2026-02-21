@@ -24,7 +24,7 @@ menu() {
             ;;
         2)
             echo -e "${GREEN}正在国内环境安装 Realm 转发...${RESET}"
-            wget -qO- https://ghfast.top/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install
+            wget -qO- https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install
             pause
             ;;
         3)
@@ -34,7 +34,7 @@ menu() {
             ;;
         4)
             echo -e "${GREEN}正在国内环境安装 端口流量狗...${RESET}"
-            wget -O port-traffic-dog.sh https://ghfast.top/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh
+            wget -O port-traffic-dog.sh https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh
             pause
             ;;
         5)
