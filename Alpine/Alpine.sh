@@ -42,7 +42,7 @@ menu() {
     echo -e "${YELLOW}[02] 修改SSH端口${RESET}"
     echo -e "${YELLOW}[03] 防火墙管理${RESET}"
     echo -e "${YELLOW}[04] Fail2Ban${RESET}"
-    echo -e "${YELLOW}[05] 换源${RESET}"
+    echo -e "${YELLOW}[05] 更换系统源${RESET}"
     echo -e "${YELLOW}[06] 系统清理${RESET}"
     echo -e "${YELLOW}[07] 切换字体${RESET}"
     echo -e "${YELLOW}[08] 修改主机名${RESET}"
