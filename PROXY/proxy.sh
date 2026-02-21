@@ -66,7 +66,8 @@ show_menu() {
     echo -e "${YELLOW}[27] BBR+TCP智能调参${RESET}"
     echo -e "${YELLOW}[28] 自建DNS解锁服务${RESET}"
     echo -e "${YELLOW}[29] 自定义DNS解锁${RESET}"
-    echo -e "${YELLOW}[30] 多协议代理部署${RESET}"
+    echo -e "${YELLOW}[30] 233boy-sing-box${RESET}"
+    echo -e "${YELLOW}[31] 多协议代理部署${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出脚本${RESET}"
@@ -108,7 +109,8 @@ install_protocol() {
         27) bash <(curl -sL https://raw.githubusercontent.com/yahuisme/network-optimization/main/script.sh) ;;
         28) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DNSsnp.sh) ;;
         29) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ;;
-        30) wget -O vless-server.sh https://raw.githubusercontent.com/Chil30/vless-all-in-one/main/vless-server.sh && bash vless-server.sh ;;
+        30) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ;;
+        31) wget -O vless-server.sh https://raw.githubusercontent.com/Chil30/vless-all-in-one/main/vless-server.sh && bash vless-server.sh ;;
         88|088)
             echo -e "${GREEN}🔄 更新脚本...${RESET}"
             curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
