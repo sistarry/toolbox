@@ -26,7 +26,7 @@ menu() {
     echo -e "${GREEN}   证书备份与恢复管理      ${RESET}"
     echo -e "${GREEN}============================${RESET}"
     echo -e "${GREEN}1) Nginx 证书备份与恢复${RESET}"
-    echo -e "${GREEN}2) Caady 证书备份与恢复${RESET}"
+    echo -e "${GREEN}2) Caddy 证书备份与恢复${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择: \033[0m' choice
     case $choice in
