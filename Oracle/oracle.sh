@@ -30,7 +30,9 @@ pause() {
 # =============================
 menu() {
     clear
-    echo -e "${ORANGE}====== 甲骨文管理菜单 ======${RESET}"
+    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
+    echo -e "${ORANGE}      甲骨文工具箱      ${RESET}"
+    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] 甲骨文救砖${RESET}"
     echo -e "${YELLOW}[02] 开启ROOT登录${RESET}"
     echo -e "${YELLOW}[03] 一键重装系统${RESET}"
