@@ -17,17 +17,17 @@ menu_sui() {
     while true; do
         clear
         echo -e "${green}=== S-UI 面板管理===${reset}"
-        echo -e "${green}1. 安装 Sui 面板${reset}"
-        echo -e "${green}2. 卸载 Sui 面板${reset}"
+        echo -e "${green}1. 安装 S-UI 面板${reset}"
+        echo -e "${green}2. 卸载 S-UI 面板${reset}"
         echo -e "${green}0. 退出${reset}"
         read -p "$(echo -e ${green}请选择:${re}) " sub_choice
         case $sub_choice in
             1)
-                echo -e "${yellow}正在安装 Sui 面板...${reset}"
+                echo -e "${yellow}正在安装 S-UI 面板...${reset}"
                 bash <(curl -Ls https://raw.githubusercontent.com/Misaka-blog/s-ui/master/install.sh)
 
                 echo -e "\n${green}✅ 安装完成${reset}"
-                echo -e "${yellow}===== Sui 默认面板信息 ======${reset}"
+                echo -e "${yellow}===== S-UI 默认面板信息 ======${reset}"
                 echo -e "${green}面板端口：2095${reset}"
                 echo -e "${green}面板路径：/app/${reset}"
                 echo -e "${green}订阅端口：2096${reset}"
@@ -35,7 +35,7 @@ menu_sui() {
                 pause_and_return
                 ;;
             2)
-                echo -e "${yellow}正在卸载 Sui 面板...${reset}"
+                echo -e "${yellow}正在卸载 S-UI 面板...${reset}"
                 systemctl stop sing-box s-ui 2>/dev/null
                 systemctl disable sing-box s-ui 2>/dev/null
                 rm -f /etc/systemd/system/{s-ui,sing-box}.service
