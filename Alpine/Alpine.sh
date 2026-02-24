@@ -49,7 +49,7 @@ menu() {
     echo -e "${YELLOW}[07] 切换字体${RESET}"
     echo -e "${YELLOW}[08] 修改主机名${RESET}"
     echo -e "${YELLOW}[09] Docker管理${RESET}"
-    echo -e "${YELLOW}[10] 代理协议${RESET}"
+    echo -e "${YELLOW}[10] 代理部署${RESET}"
     echo -e "${YELLOW}[11] 3X-UI面板${RESET}"
     echo -e "${YELLOW}[12] Realm转发${RESET}"
     echo -e "${YELLOW}[13] 应用商店${RESET}"
