@@ -67,7 +67,7 @@ menu() {
         99)
             echo -e "${YELLOW}正在卸载脚本...${RESET}"
             rm -f "$BIN_LINK_DIR/o" "$BIN_LINK_DIR/O" "$SCRIPT_PATH"
-            echo -e "${GREEN}✅ 卸载完成${RESET}"
+            echo -e "${RED}✅ 卸载完成${RESET}"
             exit 0
             ;;
       00|0) exit 0 ;;
