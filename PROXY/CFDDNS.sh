@@ -15,9 +15,9 @@ Tip="${YELLOW}[提示]${NC}"
 
 cop_info(){
 clear
-echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-echo -e "${ORANGE}       DDNS管理        ${RESET}"
-echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+echo -e "${ORANGE}╔═════════════════════════════╗${RESET}"
+echo -e "${ORANGE}           DDNS管理           ${RESET}"
+echo -e "${ORANGE}╚═════════════════════════════╝${RESET}"
 }
 
 # 检查系统是否为 Debian、Ubuntu 或 Alpine
