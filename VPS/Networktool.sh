@@ -7,19 +7,31 @@ RESET="\033[0m"
 menu() {
     clear
     echo -e "${GREEN}=== 网络工具菜单 ===${RESET}"
-    echo -e "${GREEN}1) 路由追踪 nexttrace${RESET}"
-    echo -e "${GREEN}2) 网络测速 speedtest${RESET}"
+    echo -e "${GREEN}1) 网络测速 speedtest${RESET}"
+    echo -e "${GREEN}2) 路由追踪 nexttrace${RESET}"
+    echo -e "${GREEN}3) 网络性能测试 iperf3${RESET}"
+    echo -e "${GREEN}4) 网络诊断工具 MTR${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            echo -e "${GREEN}正在运行 nexttrace 路由追踪...${RESET}"
-            curl -sL nxtrace.org/nt | bash
-            pause
-            ;;
-        2)
             echo -e "${GREEN}正在运行 speedtest 网络测速...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Speedtest.sh)
+            pause
+            ;;
+        1)
+            echo -e "${GREEN}正在运行 nexttrace 路由追踪...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NextTrace.sh)
+            pause
+            ;;
+        3)
+            echo -e "${GREEN}正在运行 网络性能测试 iperf3...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/iperf3.sh)
+            pause
+            ;;
+        4)
+            echo -e "${GREEN}正在运行 网络诊断工具 MTR...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/mtr.sh)
             pause
             ;;
         0)
