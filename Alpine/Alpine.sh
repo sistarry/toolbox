@@ -86,7 +86,7 @@ menu() {
             ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/A"
             ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/a"
 
-            echo -e "${GREEN}✅ 脚本已更新，可继续使用 A/a 启动${RESET}"
+            echo -e "${GREEN}✅ 脚本已更新${RESET}"
             exec "$SCRIPT_PATH"
             ;;
         99) 
