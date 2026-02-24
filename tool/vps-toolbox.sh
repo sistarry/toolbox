@@ -436,7 +436,7 @@ execute_choice() {
             if [[ -f "$MARK_FILE" ]]; then
             rm -f "$MARK_FILE"
             fi
-           echo -e "${green}卸载完成！${reset}"
+           echo -e "${red}卸载完成！${reset}"
            exit 0
            ;;
         0) exit 0 ;;
