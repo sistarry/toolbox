@@ -7,8 +7,8 @@ RESET="\033[0m"
 menu() {
     clear
     echo -e "${GREEN}=== 开心宝塔面板管理菜单 ===${RESET}"
-    echo -e "${GREEN}1) 安装开心宝塔面板${RESET}"
-    echo -e "${GREEN}2) 卸载宝塔面板${RESET}"
+    echo -e "${GREEN}1) 安装面板${RESET}"
+    echo -e "${GREEN}2) 卸载面板${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
@@ -19,7 +19,7 @@ menu() {
             pause
             ;;
         2)
-            echo -e "${GREEN}正在卸载宝塔面板...${RESET}"
+            echo -e "${GREEN}正在卸载面板...${RESET}"
             curl -o bt-uninstall.sh http://download.bt.cn/install/bt-uninstall.sh > /dev/null 2>&1
             chmod +x bt-uninstall.sh
             ./bt-uninstall.sh
