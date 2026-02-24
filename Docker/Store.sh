@@ -355,7 +355,7 @@ show_app_menu() {
     done
 
     # 返回上一级菜单
-    printf "${GREEN}[0] %-25s${RESET}\n" "返回"
+    printf "${GREEN}[0] %-25s${RESET}\n" " 返回"
 
     # 退出脚本
     printf "${GREEN}[X] %-25s${RESET}\n" " 退出"
