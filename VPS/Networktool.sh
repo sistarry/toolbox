@@ -19,7 +19,7 @@ menu() {
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Speedtest.sh)
             pause
             ;;
-        1)
+        2)
             echo -e "${GREEN}正在运行 nexttrace 路由追踪...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NextTrace.sh)
             pause
