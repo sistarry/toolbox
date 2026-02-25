@@ -136,9 +136,9 @@ enable_cron() {
     crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" > /tmp/cron.tmp || true
 
     case $c in
-        1) echo "0 3 * * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        2) echo "0 3 * * 1 $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        3) echo "0 3 1 * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
+        1) echo "0 0 * * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
+        2) echo "0 0 * * 1 $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
+        3) echo "0 0 1 * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
         4) echo "0 */6 * * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
         5)
             echo "示例: 每30分钟 */30 * * * *"
