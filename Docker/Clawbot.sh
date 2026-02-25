@@ -21,7 +21,7 @@ get_install_status() {
     if command -v openclaw >/dev/null 2>&1; then
         echo -e "${GREEN}已安装${RESET}"
     else
-        echo -e "${GRAY}未安装${RESET}"
+        echo -e "${YELLOW}未安装${RESET}"
     fi
 }
 
@@ -29,7 +29,7 @@ get_running_status() {
     if pgrep -f openclaw-gateway >/dev/null 2>&1; then
         echo -e "${GREEN}运行中${RESET}"
     else
-        echo -e "${GRAY}未运行${RESET}"
+        echo -e "${YELLOW}未运行${RESET}"
     fi
 }
 
@@ -43,8 +43,8 @@ show_menu() {
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN}     Clawbot管理菜单           ${RESET}"
     echo -e "${GREEN}==============================${RESET}"
-    echo -e "${YELLOW}安装状态:${RESET}${YELLOW} $(get_install_status)${RESET}"
-    echo -e "${YELLOW}运行状态:${RESET}${YELLOW} $(get_running_status)${RESET}"
+    echo -e "${YELLOW}安装状态:${RESET} $(get_install_status)"
+    echo -e "${YELLOW}运行状态:${RESET} $(get_running_status)"
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN} 1. 安装${RESET}"
     echo -e "${GREEN} 2. 启动${RESET}"
