@@ -166,7 +166,6 @@ while true; do
     echo -e "${YELLOW}[05] fscarmen-ArgoX${RESET}"
     echo -e "${YELLOW}[06] 233boySing-box${RESET}"
     echo -e "${YELLOW}[07] SS+SNELL${RESET}"
-    echo -e "${YELLOW}[08] VlessallInOne多协议代理${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -180,7 +179,6 @@ while true; do
         05) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) ; pause_return ;;
         06) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ; pause_return ;;
         07) bash <(curl -L -s menu.jinqians.com) ; pause_return ;;
-        08) wget -O vless-server.sh https://raw.githubusercontent.com/Chil30/vless-all-in-one/main/vless-server.sh && bash vless-server.sh ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
