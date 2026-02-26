@@ -113,12 +113,13 @@ while true; do
         printf "${green}[%02d] %-10s${reset}" "$count" "$region"
         (( count % 2 == 0 )) && echo ""
     done
-    echo -e "${green}[00] 退出${reset}"
+    echo -e "${green}[0]  退出${reset}"
 
     echo -ne "${green}请输入编号:${reset} "
     read choice
 
-    [ "$choice" = "00" ] && exit 0
+     # 支持 0 或 00 退出
+    [[ "$choice" == "0" || "$choice" == "00" ]] && exit 0
 
     if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#dns_order[@]} )); then
         region="${dns_order[$((choice-1))]}"
