@@ -12,9 +12,9 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsy
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Filebackup.sh)
 ```
 
-### PVE开小鸡脚本
+### 开小鸡工具箱
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/nat.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh)
 ```
 
 ### VPSTG监控通知脚本
