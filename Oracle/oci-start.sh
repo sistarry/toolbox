@@ -50,15 +50,11 @@ status_app() {
     read -p "按回车键返回菜单..."
     show_menu
 }
-# 卸载应用
+# 卸载应用（无需确认）
 uninstall_app() {
-    read -p "⚠️ 确认要完全卸载应用吗？(y/N): " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        oci-start uninstall
-        echo -e "${GREEN}✅ 应用已完全卸载${RESET}"
-    else
-        echo "❌ 卸载操作已取消"
-    fi
+    echo -e "${GREEN}正在卸载应用...${RESET}"
+    oci-start uninstall
+    echo -e "${GREEN}✅ 应用已完全卸载${RESET}"
     read -p "按回车键返回菜单..."
     show_menu
 }
