@@ -14,6 +14,7 @@ menu() {
     echo -e "${GREEN}5) 查看自启动服务${RESET}"
     echo -e "${GREEN}6) 自启动服务管理${RESET}"
     echo -e "${GREEN}7) 删除文件${RESET}"
+    echo -e "${GREEN}8) 安全扫描${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
@@ -50,6 +51,11 @@ menu() {
         7)
             echo -e "${GREEN}正在删除文件...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rmdocument.sh)
+            pause
+            ;;
+        8)
+            echo -e "${GREEN}正在安全扫描...${RESET}"
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Security.sh)
             pause
             ;;
         0)
