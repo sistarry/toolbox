@@ -65,9 +65,9 @@ check_cmd() {
 while true; do
 
 clear
-echo -e "${BLUE}============================${RESET}"
+echo -e "${GREEN}============================${RESET}"
 echo -e "${GREEN}    VPS 压缩工具${RESET}"
-echo -e "${BLUE}============================${RESET}"
+echo -e "${GREEN}============================${RESET}"
 echo -e "${GREEN}1) tar.gz (推荐)${RESET}"
 echo -e "${GREEN}2) tar.xz (高压缩)${RESET}"
 echo -e "${GREEN}3) tar.bz2${RESET}"
