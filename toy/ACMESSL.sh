@@ -161,7 +161,7 @@ remove_cert(){
 # ===============================
 uninstall_acme(){
     [ -f "$ACME_HOME/acme.sh" ] && $ACME_HOME/acme.sh --uninstall >/dev/null 2>&1
-    rm -rf $ACME_HOME $SSL_DIR
+    rm -rf $ACME_HOME etc/acme
     [ -f ~/.bashrc ] && sed -i '/acme.sh.env/d' ~/.bashrc
     [ -f ~/.profile ] && sed -i '/acme.sh.env/d' ~/.profile
     green "acme.sh 已彻底卸载"
