@@ -77,7 +77,7 @@ restore_default() {
     echo -e "${YELLOW}恢复系统默认 DNS...${RESET}"
     chattr -i $RESOLV_FILE 2>/dev/null
     rm -f $RESOLV_FILE
-    echo -e "${GREEN}已删除静态 DNS，请重启网络或配置新的 DNS${RESET}"
+    echo -e "${GREEN}已删除静态 DNS，请重启VPS或配置新的 DNS${RESET}"
 }
 
 ########################################
