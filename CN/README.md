@@ -15,12 +15,9 @@ bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistar
 
 ### 国内VPS 工具箱脚本
 ```bash
-bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNinstall.sh)
+bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh)
 ```
 
-### 国内VPS 工具箱自动更新脚本
-```bash
-bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNupdate.sh)
 ```
 ### 国内VPS Docker安装管理脚本
 ```bash
