@@ -7,7 +7,7 @@ RESET="\033[0m"
 menu() {
     clear
     echo -e "${GREEN}=== Realm 转发管理 ===${RESET}"
-    echo -e "${GREEN}1) realm-xwPF${RESET}"
+    echo -e "${GREEN}1) Realm-xwPF${RESET}"
     echo -e "${GREEN}2) ZelayRealm转发面板${RESET}"
     echo -e "${GREEN}3) Realm转发(Web面板)${RESET}"
     echo -e "${GREEN}4) EZRealm转发${RESET}"
@@ -15,7 +15,7 @@ menu() {
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            echo -e "${GREEN}正在国外环境安装 Realm 转发...${RESET}"
+            echo -e "${GREEN}正在安装 Realm-xwPF...${RESET}"
             wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install
             pause
             ;;
