@@ -12,7 +12,7 @@ read target
 
 # 检查输入是否为空
 if [[ -z "$target" ]]; then
-    echo -e "${RED}未输入文件或目录，退出脚本。${RESET}"
+    echo -e "${RED}未输入文件或目录，退出。${RESET}"
     exit 1
 fi
 
