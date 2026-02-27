@@ -8,7 +8,7 @@ SCRIPT_URL="https://raw.githubusercontent.com/myxuchangbin/dnsmasq_sniproxy_inst
 
 menu() {
     clear
-    echo -e "${GREEN}=== 自建 DNS 解锁管理 ===${RESET}"
+    echo -e "${GREEN}=== DnsmasqSNIproxy-One-click ===${RESET}"
     echo -e "${GREEN}1) 安装 DNS 解锁${RESET}"
     echo -e "${GREEN}2) 卸载 DNS 解锁${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
