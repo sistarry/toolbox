@@ -10,7 +10,7 @@ menu() {
     echo -e "${GREEN}1) 系统信息${RESET}"
     echo -e "${GREEN}2) 网卡信息${RESET}"
     echo -e "${GREEN}3) Docker信息${RESET}"
-    echo -e "${GREEN}4) 智能流量监控与限制脚本${RESET}"
+    echo -e "${GREEN}4) 智能流量监控与限制${RESET}"
     echo -e "${GREEN}5) VPS遥控器${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
