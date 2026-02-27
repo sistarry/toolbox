@@ -44,7 +44,6 @@ download_script(){
             exit 1
         }
         chmod +x "$SCRIPT_PATH"
-        echo -e "${GREEN}✅ 脚本已下载: $SCRIPT_PATH${RESET}"
     fi
 }
 download_script
