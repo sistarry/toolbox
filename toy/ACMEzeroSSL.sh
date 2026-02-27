@@ -201,7 +201,7 @@ if [ -f "$ACME_HOME/acme.sh" ]; then
 fi
 
 rm -rf $ACME_HOME
-rm -rf $SSL_DIR
+rm -rf etc/acme
 
 # 只有存在才处理
 [ -f ~/.bashrc ] && sed -i '/acme.sh.env/d' ~/.bashrc
