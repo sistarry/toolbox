@@ -236,7 +236,7 @@ show_main_menu() {
 
     # 显示菜单
     for i in "${!MAIN_MENU[@]}"; do
-        if [[ $i -eq 8 ]]; then  # 第9项（索引从0开始）
+        if [[ $i -eq 6 ]]; then  # 第7项（索引从0开始）
             # 符号红色，数字和点绿色，文字黄色
             printf "${red}▶${reset} ${green}%02d.${reset} ${yellow}%s${reset}\n" "$((i+1))" "${MAIN_MENU[i]}"
         else
