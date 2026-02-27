@@ -15,7 +15,7 @@ menu() {
         echo -e "${GREEN}1) 3X-UI${RESET}"
         echo -e "${GREEN}2) 中文版-3X-UI${RESET}"
         echo -e "${GREEN}3) Alpine-3X-UI${RESET}"
-        echo -e "${GREEN}4) Docker-3X-UI{RESET}"
+        echo -e "${GREEN}4) Docker-3X-UI${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
         read -p $'\033[32m请选择操作: \033[0m' choice
 
