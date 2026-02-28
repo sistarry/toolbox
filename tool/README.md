@@ -33,8 +33,8 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/ins
   * **工具箱合集**
   * **玩具熊ʕ•ᴥ•ʔ**
   * **监控通知**
-  * **备份/恢复**
-  * **更新/卸载**
+  * **备份恢复**
+  * **更新卸载**
     
 ### 操作流程
 
