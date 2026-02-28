@@ -322,6 +322,23 @@ view_sites() {
     pause
 }
 
+nginx_reload() {
+    if ! command -v nginx >/dev/null 2>&1; then
+        echo -e "${RED}Nginx 未安装${RESET}"
+        pause
+        return
+    fi
+
+    echo -e "${GREEN}检测配置文件...${RESET}"
+    if nginx -t; then
+        systemctl reload nginx
+        echo -e "${GREEN}Nginx 重载成功！${RESET}"
+    else
+        echo -e "${RED}配置检测失败，请检查配置文件${RESET}"
+    fi
+    pause
+}
+
 # ---------------------------
 # 主菜单
 # ---------------------------
@@ -334,6 +351,7 @@ while true; do
     echo -e "${GREEN}4) 删除站点配置${RESET}"
     echo -e "${GREEN}5) 查看站点信息${RESET}"
     echo -e "${GREEN}6) 卸载Nginx${RESET}"
+    echo -e "${GREEN}7) 重载Nginx${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
@@ -344,6 +362,7 @@ while true; do
         4) delete_site ;;
         5) view_sites ;;
         6) uninstall_nginx_certbot ;;
+        7) nginx_reload ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}"; pause ;;
     esac
