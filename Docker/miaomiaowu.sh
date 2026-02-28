@@ -50,7 +50,7 @@ EOF
   cat > "$COMPOSE_FILE" <<'EOF'
 services:
   miaomiaowu:
-    image: ghcr.io/jimleerx/miaomiaowu:latest
+    image: ghcr.io/iluobei/miaomiaowu:latest
     container_name: miaomiaowu
     restart: unless-stopped
     user: root
