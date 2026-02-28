@@ -42,6 +42,8 @@ check_and_install() {
         # Debian 系统处理 netcat
         if [ "$OS_TYPE" = "debian" ]; then
             apt update -y
+            # 让 iperf3 安装时自动选择 No（不启动 daemon）
+            echo "iperf3 iperf3/start_daemon boolean false" | debconf-set-selections
             for pkg in "${missing[@]}"; do
                 if [ "$pkg" = "nc" ]; then
                     apt install -y netcat-openbsd
