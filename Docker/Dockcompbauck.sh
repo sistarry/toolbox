@@ -35,10 +35,8 @@ mkdir -p "$SCRIPT_DIR" "$BACKUP_DIR"
 
 # ================== 首次运行下载远程脚本 ==================
 if [[ ! -f "$REMOTE_SCRIPT_PATH" ]]; then
-    echo -e "${CYAN}📥 首次运行，下载远程脚本...${RESET}"
     curl -fsSL "https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh" -o "$REMOTE_SCRIPT_PATH"
     chmod +x "$REMOTE_SCRIPT_PATH"
-    echo -e "${GREEN}✅ 远程脚本已下载到 $REMOTE_SCRIPT_PATH${RESET}"
     exec "$REMOTE_SCRIPT_PATH"
 fi
 
@@ -310,7 +308,7 @@ uninstall() {
     [[ -f "$CONFIG_FILE" ]] && rm -f "$CONFIG_FILE" && echo -e "${GREEN}✅ 配置文件已删除${RESET}"
     [[ -f "$REMOTE_SCRIPT_PATH" ]] && rm -f "$REMOTE_SCRIPT_PATH" && echo -e "${GREEN}✅ 远程脚本已删除${RESET}"
     crontab -l 2>/dev/null | grep -v -E "($INSTALL_PATH|$CRON_TAG)" | crontab -
-    [[ -d "$BASE_DIR" ]] && rm -rf "$BASE_DIR" && echo -e "${GREEN}✅ 本地备份目录已删除: $BASE_DIR${RESET}"
+    [[ -d "$BASE_DIR" ]] && rm -rf "$BASE_DIR" && echo -e "${GREEN}✅ 本地备份目录已删除${RESET}"
     [[ -f "$SSH_KEY" ]] && rm -f "$SSH_KEY" "$SSH_KEY.pub" && echo -e "${GREEN}✅ SSH 密钥已删除: $SSH_KEY${RESET}"
     echo -e "${GREEN}✅ 卸载完成，所有文件和定时任务已清理干净${RESET}"
     exit 0
@@ -355,7 +353,7 @@ while true; do
     echo -e "${GREEN}1. 本地备份${RESET}"
     echo -e "${GREEN}2. 恢复项目${RESET}"
     echo -e "${GREEN}3. 设置SSH密钥自动登录${RESET}"
-    echo -e "${GREEN}4. 配置设置（Telegram/服务器名/保留天数/目录/远程信息）${RESET}"
+    echo -e "${GREEN}4. 配置设置（Telegram/保留天数/目录/远程信息）${RESET}"
     echo -e "${GREEN}5. 远程备份${RESET}"
     echo -e "${GREEN}6. 定时任务管理${RESET}"
     echo -e "${GREEN}7. 卸载${RESET}"
