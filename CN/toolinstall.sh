@@ -19,10 +19,10 @@ if [ ! -f "$SCRIPT_PATH" ]; then
         exit 1
     fi
     chmod +x "$SCRIPT_PATH"
-    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/c"
-    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/C"
+    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/z"
+    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/Z"
     echo -e "${GREEN}✅ 安装完成${RESET}"
-    echo -e "${GREEN}✅ 你可以输入 ${RED}c${RESET}${GREEN} 或 ${RED}C${RESET}${GREEN} 运行 Toolbox 工具箱${RESET}"
+    echo -e "${GREEN}✅ 你可以输入 ${RED}z${RESET}${GREEN} 或 ${RED}Z${RESET}${GREEN} 运行 Toolbox 工具箱${RESET}"
 fi
 
 # ================== 执行脚本 ==================
