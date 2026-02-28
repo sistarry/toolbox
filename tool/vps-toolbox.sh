@@ -424,7 +424,7 @@ execute_choice() {
         86) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh) ;;
         87) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dl.sh) ;;
         89) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh) ;;
-		90) bash <(curl -sL kejilion.sh) app openclaw ;;
+		90) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Clawbot.sh) ;;
         91) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Embyfd.sh) ;;
         92) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/GProxy.sh) ;;
         93) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
