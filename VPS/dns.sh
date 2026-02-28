@@ -99,7 +99,7 @@ menu() {
     echo -e "${GREEN}=== DNS 管理工具 ===${RESET}"
     echo -e "${GREEN}1) Google DNS (8.8.8.8 / 1.1.1.1)${RESET}"
     echo -e "${GREEN}2) Cloudflare DNS (1.1.1.1 / 1.0.0.1)${RESET}"
-    echo -e "${GREEN}3) 阿里 DNS (223.5.5.5 / 223.6.6.6)${RESET}"
+    echo -e "${GREEN}3) 阿里云 DNS (223.5.5.5 / 223.6.6.6)${RESET}"
     echo -e "${GREEN}4) claw (100.100.2.136 / 100.100.2.138)${RESET}"
     echo -e "${GREEN}5) 自定义 DNS${RESET}"
     echo -e "${GREEN}6) 恢复默认${RESET}"
