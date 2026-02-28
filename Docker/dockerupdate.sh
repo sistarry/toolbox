@@ -32,7 +32,7 @@ LOG_FILE="/var/log/docker-update.log"
 if [ ! -f "$SCRIPT_PATH" ]; then
     curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
     if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 下载失败，请检查网络或 URL${RESET}"
+        echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
         exit 1
     fi
     chmod +x "$SCRIPT_PATH"
