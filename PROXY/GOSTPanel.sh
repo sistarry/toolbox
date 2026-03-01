@@ -14,7 +14,7 @@ menu() {
     case $choice in
         1)
             echo -e "${GREEN}正在安装...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GostPanel.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GostPaneldocker.sh)
             pause
             ;;
         2)
