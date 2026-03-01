@@ -163,8 +163,8 @@ check_domain_resolution() {
     DOMAIN_IP=$(dig AAAA +short "$DOMAIN" | tail -n1)
 
     echo -e "${YELLOW}检测域名 AAAA 记录...${RESET}"
-    echo -e "  ${GREEN}VPS IPv6:   ${RESET}$VPS_IP"
-    echo -e "  ${GREEN}域名 IPv6:  ${RESET}$DOMAIN_IP"
+    echo -e "  ${GREEN}VPSIPv6:   ${RESET}$VPS_IP"
+    echo -e "  ${GREEN}域名IPv6:  ${RESET}$DOMAIN_IP"
 
     if [ -z "$DOMAIN_IP" ]; then
         echo -e "${RED}错误: 域名 $DOMAIN 没有 AAAA 记录！${RESET}"
