@@ -19,7 +19,7 @@ menu() {
             ;;
         2)
             echo -e "${GREEN}正在安装 GOST Panel...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GOSTPaneldocker.sh)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GOSTPanel.sh)
             pause
             ;;
         0)
