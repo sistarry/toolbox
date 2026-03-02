@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# Snell 一键管理脚本（完整可选配置）
+# Snell 一键管理脚本（Host 模式 + 去掉 DNS）
 # ========================================
 
 GREEN="\033[32m"
@@ -11,6 +11,7 @@ RESET="\033[0m"
 APP_NAME="snell-server"
 APP_DIR="/root/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
+CONTAINER_NAME="snell-server"
 
 check_docker() {
     if ! command -v docker &>/dev/null; then
@@ -94,20 +95,16 @@ install_app() {
     read -p "是否启用 TCP Fast Open [true/false, 默认 true]: " tfo
     TFO=${tfo:-true}
 
-    read -p "请输入 DNS [默认 8.8.8.8,1.1.1.1]: " dns
-    DNS=${dns:-8.8.8.8,1.1.1.1}
-
     ECN=true   # 固定开启
 
-    # 生成 Docker Compose 文件
+    # 生成 Docker Compose 文件 (host 模式, 去掉 DNS)
     cat > "$COMPOSE_FILE" <<EOF
 services:
   snell-server:
     image: 1byte/snell-server:latest
-    container_name: snell-server
+    container_name: ${CONTAINER_NAME}
     restart: always
-    ports:
-      - "${PORT}:${PORT}"
+    network_mode: host
     environment:
       PORT: "${PORT}"
       PSK: "${PSK}"
@@ -115,7 +112,6 @@ services:
       OBFS: "${OBFS}"
       OBFS_HOST: "${OBFS_HOST}"
       TFO: "${TFO}"
-      DNS: "${DNS}"
       ECN: "${ECN}"
 EOF
 
@@ -144,24 +140,25 @@ update_app() {
 }
 
 restart_app() {
-    docker restart snell-server
+    docker restart ${CONTAINER_NAME}
     echo -e "${GREEN}✅ Snell 已重启${RESET}"
     read -p "按回车返回菜单..."
 }
 
 view_logs() {
     echo -e "${YELLOW}按 Ctrl+C 退出日志${RESET}"
-    docker logs -f snell-server
+    docker logs -f ${CONTAINER_NAME}
 }
 
 check_status() {
-    docker ps | grep snell-server
+    docker ps | grep ${CONTAINER_NAME}
     read -p "按回车返回菜单..."
 }
 
 uninstall_app() {
     cd "$APP_DIR" || return
-    docker compose down
+    docker stop ${CONTAINER_NAME}
+    docker rm ${CONTAINER_NAME}
     rm -rf "$APP_DIR"
     echo -e "${RED}✅ Snell 已卸载${RESET}"
     read -p "按回车返回菜单..."
