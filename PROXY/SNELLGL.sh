@@ -84,20 +84,16 @@ install_node() {
     read -p "是否启用 TCP Fast Open [true/false, 默认 true]: " tfo
     TFO=${tfo:-true}
 
-    read -p "请输入 DNS [默认 8.8.8.8,1.1.1.1]: " dns
-    DNS=${dns:-8.8.8.8,1.1.1.1}
-
     ECN=true
 
-    # 生成 docker-compose.yml
+    # 生成 docker-compose.yml (host 模式, 去掉 DNS)
     cat > "$NODE_DIR/docker-compose.yml" <<EOF
 services:
   ${NODE_NAME}:
     image: 1byte/snell-server:latest
     container_name: ${NODE_NAME}
     restart: always
-    ports:
-      - "${PORT}:${PORT}"
+    network_mode: host
     environment:
       PORT: "${PORT}"
       PSK: "${PSK}"
@@ -105,7 +101,6 @@ services:
       OBFS: "${OBFS}"
       OBFS_HOST: "${OBFS_HOST}"
       TFO: "${TFO}"
-      DNS: "${DNS}"
       ECN: "${ECN}"
 EOF
 
@@ -119,7 +114,6 @@ EOF
     echo -e "${YELLOW}📄 客户端配置: $NODE_NAME = snell, ${IP}, ${PORT}, psk=${PSK}, version=5, reuse=true, tfo=${TFO}, ecn=${ECN}${RESET}"
     read -r -p $'\033[32m按回车返回菜单...\033[0m'
 }
-
 node_action_menu() {
     select_node || return
     while true; do
