@@ -92,30 +92,15 @@ install_node() {
 
     PRIVATE_KEY=$(echo "$X25519" | grep "PrivateKey" | awk -F': ' '{print $2}')
     PUBLIC_KEY=$(echo "$X25519"  | grep "Password"   | awk -F': ' '{print $2}')
-
-    if [[ -z "$PRIVATE_KEY" || -z "$PUBLIC_KEY" ]]; then
-        echo -e "${RED}密钥生成失败${RESET}"
-        return
-    fi
-
     SHORT_ID=$(openssl rand -hex 8)
-
-    read -p "请输入 DNS（逗号分隔，默认 8.8.8.8,1.1.1.1）: " DNS_INPUT
-    DNS_INPUT=${DNS_INPUT:-8.8.8.8,1.1.1.1}
-    IFS=',' read -ra DNS_ARRAY <<< "$DNS_INPUT"
-    DNS_SERVERS="["
-    for dns in "${DNS_ARRAY[@]}"; do
-        DNS_SERVERS+="\"$dns\","
-    done
-    DNS_SERVERS="${DNS_SERVERS%,}]"
 
     CONFIG_FILE="$NODE_DIR/config.json"
     COMPOSE_FILE="$NODE_DIR/compose.yml"
 
+    # 生成 config.json（去掉 DNS 配置）
     cat > "$CONFIG_FILE" <<EOF
 {
   "log": { "access": "/var/log/xray/access.log", "error": "/var/log/xray/error.log", "loglevel": "warning" },
-  "dns": { "servers": $DNS_SERVERS },
   "inbounds": [
     {
       "port": $PORT,
@@ -132,17 +117,17 @@ install_node() {
 }
 EOF
 
+    # 生成 docker-compose.yml（host 网络模式）
     cat > "$COMPOSE_FILE" <<EOF
 services:
   $NODE_NAME:
     image: ghcr.io/xtls/xray-core:latest
     container_name: $NODE_NAME
     restart: unless-stopped
+    network_mode: "host"
     command: ["run","-c","/etc/xray/config.json"]
     volumes:
       - ./config.json:/etc/xray/config.json:ro
-    ports:
-      - "$PORT:$PORT/tcp"
 EOF
 
     cd "$NODE_DIR" || exit
