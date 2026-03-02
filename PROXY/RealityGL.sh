@@ -168,14 +168,25 @@ node_action_menu() {
 show_all_status() {
     list_nodes
     echo -e "${GREEN}=== 节点状态 ===${RESET}"
+
     for node in "$APP_DIR"/*; do
         [ -d "$node" ] || continue
         NODE_NAME=$(basename "$node")
-        PORT=$(grep -oP '^\s+- "\K[0-9]+(?=:)' "$node/compose.yml")
-        STATUS=$(docker ps --filter "name=$NODE_NAME" --format "{{.Status}}")
-        [ -z "$STATUS" ] && STATUS="未启动"
-        echo -e "${GREEN}$NODE_NAME${RESET} | ${YELLOW}端口: ${RESET}${YELLOW}$PORT${RESET} | ${YELLOW}状态: ${STATUS}${RESET}"
+
+        # 从 config.json 读取端口
+        PORT=$(grep '"port"' "$node/config.json" | head -n1 | awk -F': ' '{print $2}' | tr -d ',')
+
+        STATUS=$(docker inspect -f '{{.State.Status}}' "$NODE_NAME" 2>/dev/null)
+
+        case "$STATUS" in
+            running) STATUS_COLOR="${GREEN}运行中${RESET}" ;;
+            paused)  STATUS_COLOR="${YELLOW}已暂停${RESET}" ;;
+            *)       STATUS_COLOR="${RED}未启动${RESET}" ;;
+        esac
+
+        echo -e "${GREEN}$NODE_NAME${RESET} | 端口: ${YELLOW}$PORT${RESET} | 状态: $STATUS_COLOR"
     done
+
     read -r -p $'\033[32m按回车返回菜单...\033[0m'
 }
 
