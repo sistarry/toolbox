@@ -133,7 +133,9 @@ EOF
     docker compose up -d
 
     IP=$(hostname -I | awk '{print $1}')
+    echo -e "${GREEN}📂 安装目录: $NODE_DIR⭐${RESET}"
     echo -e "${GREEN}✅ 节点 ${NODE_NAME} 已启动${RESET}"
+    echo -e "${GREEN}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo -e "${YELLOW}🌐 端口: ${PORT}${RESET}"
     echo -e "${YELLOW}🔑 PSK: ${PSK}${RESET}"
     echo -e "${YELLOW}📄 客户端配置模板:${RESET}"
