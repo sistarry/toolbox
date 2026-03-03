@@ -266,26 +266,17 @@ show_all_status() {
 }
 
 batch_action() {
-
-    echo -e "${GREEN}=== 批量操作 ===${RESET}"
-    echo -e "${GREEN}1) 暂停节点${RESET}"
-    echo -e "${GREEN}2) 重启节点${RESET}"
-    echo -e "${GREEN}3) 更新节点${RESET}"
-    echo -e "${GREEN}4) 卸载节点${RESET}"
-    echo -e "${GREEN}0) 返回主菜单${RESET}"
-    read -r -p $'\033[32m请选择操作: \033[0m' choice
-
     mkdir -p "$APP_DIR"
 
     NODE_LIST=()
     local count=0
 
+    # 构建节点列表
     for node in "$APP_DIR"/*; do
         [ -d "$node" ] || continue
         count=$((count+1))
         NODE_NAME=$(basename "$node")
         NODE_LIST+=("$NODE_NAME")
-        echo -e "${YELLOW}[$count] $NODE_NAME${RESET}"
     done
 
     if [ $count -eq 0 ]; then
@@ -294,49 +285,54 @@ batch_action() {
         return
     fi
 
+    echo -e "${GREEN}=== 批量操作 ===${RESET}"
+    echo -e "${GREEN}1) 暂停节点${RESET}"
+    echo -e "${GREEN}2) 重启节点${RESET}"
+    echo -e "${GREEN}3) 更新节点${RESET}"
+    echo -e "${GREEN}4) 卸载节点${RESET}"
+    echo -e "${GREEN}0) 返回主菜单${RESET}"
+
+    read -r -p $'\033[32m请选择操作: \033[0m' choice
+
+    # 立即处理返回主菜单
+    if [[ "$choice" == "0" ]]; then
+        echo -e "${YELLOW}已返回主菜单${RESET}"
+        return
+    fi
+
+    # 打印节点列表
+    count=0
+    for node in "${NODE_LIST[@]}"; do
+        count=$((count+1))
+        echo -e "${YELLOW}[$count] $node${RESET}"
+    done
+
     read -r -p $'\033[32m请输入节点序号（空格分隔，或输入 all）: \033[0m' input_nodes
 
     SELECTED_NODES=()
-
     if [[ "$input_nodes" == "all" ]]; then
         SELECTED_NODES=("${NODE_LIST[@]}")
     else
         for i in $input_nodes; do
-            if [[ "$i" =~ ^[0-9]+$ ]] && [ "$i" -ge 1 ] && [ "$i" -le "$count" ]; then
+            if [[ "$i" =~ ^[0-9]+$ ]] && [ "$i" -ge 1 ] && [ "$i" -le "${#NODE_LIST[@]}" ]; then
                 SELECTED_NODES+=("${NODE_LIST[$((i-1))]}")
             fi
         done
     fi
 
     for NODE_NAME in "${SELECTED_NODES[@]}"; do
-
         NODE_DIR="$APP_DIR/$NODE_NAME"
-
         if [ ! -f "$NODE_DIR/docker-compose.yml" ]; then
             echo -e "${RED}⚠ $NODE_NAME 缺少 docker-compose.yml，跳过${RESET}"
             continue
         fi
 
         case $choice in
-            1)
-                docker pause "$NODE_NAME"
-                ;;
-            2)
-                docker restart "$NODE_NAME"
-                ;;
-            3)
-                (cd "$NODE_DIR" && docker compose pull && docker compose up -d)
-                ;;
-            4)
-                (cd "$NODE_DIR" && docker compose down)
-                rm -rf "$NODE_DIR"
-                ;;
-            0)
-                return
-                ;;
-            *)
-                echo -e "${RED}无效选择${RESET}"
-                ;;
+            1) docker pause "$NODE_NAME" ;;
+            2) docker restart "$NODE_NAME" ;;
+            3) (cd "$NODE_DIR" && docker compose pull && docker compose up -d) ;;
+            4) (cd "$NODE_DIR" && docker compose down && rm -rf "$NODE_DIR") ;;
+            *) echo -e "${RED}无效选择${RESET}" ;;
         esac
 
         echo -e "${GREEN}✅ 节点 $NODE_NAME 操作完成${RESET}"
