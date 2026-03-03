@@ -130,9 +130,6 @@ while true; do
     echo -e "${YELLOW}[07] MTProto${RESET}"
     echo -e "${YELLOW}[08] MTProxy(Docker)${RESET}"
     echo -e "${YELLOW}[09] Socks5${RESET}"
-    echo -e "${YELLOW}[10] Reality(Docker)${RESET}"
-    echo -e "${YELLOW}[11] Snell(Docker)${RESET}"
-    echo -e "${YELLOW}[12] Socks5(Docker)${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -148,9 +145,6 @@ while true; do
         07) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MTProto.sh) ; pause_return ;;
         08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dkmop.sh) ; pause_return ;;
         09) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/socks5.sh) ; pause_return ;;
-        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Realitydocker.sh) ; pause_return ;;
-        11) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SNELLDOCKER.sh) ; pause_return ;;
-        12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5docker.sh) ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
@@ -188,9 +182,6 @@ while true; do
         05) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) ; pause_return ;;
         06) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ; pause_return ;;
         07) bash <(curl -L -s menu.jinqians.com) ; pause_return ;;
-        08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RealityGL.sh) ; pause_return ;;
-        09) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SNELLGL.sh) ; pause_return ;;
-        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5GL.sh) ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
