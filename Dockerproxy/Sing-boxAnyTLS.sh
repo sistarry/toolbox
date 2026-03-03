@@ -101,7 +101,7 @@ install_app() {
   "inbounds": [
     {
       "type": "anytls",
-      "listen": "0.0.0.0",
+      "listen": "::",
       "listen_port": ${PORT},
       "users": [
         {
@@ -145,11 +145,12 @@ EOF
     HOSTNAME=$(hostname -s | sed 's/ /_/g')
 
     echo
-    echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
-    echo -e "${GREEN}✅ Sing-box AnyTLS 已启动${RESET}"
+    echo -e "${GREEN}📂 安装目录: $APP_DIR⭐${RESET}"
+    echo -e "${GREEN}✅ Sing-box AnyTLS 已启动⭐${RESET}"
     echo -e "${YELLOW}🌐 公网 IP: ${SERVER_IP}${RESET}"
     echo -e "${YELLOW}🔌 端口: ${PORT}${RESET}"
     echo -e "${YELLOW}🔑 密码: ${PASSWORD}${RESET}"
+    echo -e "${YELLOW}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo
     echo -e "${YELLOW}V2rayN:${RESET}"
     echo -e "${YELLOW}anytls://${PASSWORD}@${SERVER_IP}:${PORT}/?sni=www.bing.com&insecure=1#$HOSTNAME${RESET}"
