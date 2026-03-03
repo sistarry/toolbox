@@ -168,7 +168,7 @@ EOF
     SHADOWTLS_BASE=$(echo -n "$SHADOWTLS_JSON" | base64 -w 0)
 
     # 4️⃣ 组合最终链接
-    SS_LINK="ss://${SS_BASE}@${IP4}:${TLS_PORT}?shadow-tls=${SHADOWTLS_BASE}#$HOSTNAME"
+    SS_LINK="ss://${SS_BASE}@${IP4}:${TLS_PORT}?shadow-tls=${SHADOWTLS_BASE}#$NODE_NAME"
 
     echo
     echo "SS + ShadowTLS 链接："
