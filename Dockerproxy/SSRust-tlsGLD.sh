@@ -227,7 +227,7 @@ EOF
     SS_LINK="ss://${SS_BASE}@${IP}:${TLS_PORT}?shadow-tls=${SHADOWTLS_BASE}#$NODE_NAME"
 
     echo -e "${YELLOW}📄 V6VPS替换IP地址为V6 ★${RESET}"
-    echo -e "${YELLOW}SS + ShadowTLS 链接：${RESET}"
+    echo -e "${YELLOW}SS + ShadowTLS 小火箭订阅链接：${RESET}"
     echo -e "${YELLOW}----------------------------------${RESET}"
     echo -e "${YELLOW}${YELLOW}${SS_LINK}${RESET}"
     echo -e "${YELLOW}----------------------------------${RESET}"
