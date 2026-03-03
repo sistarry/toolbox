@@ -302,7 +302,7 @@ batch_action() {
         return
     fi
 
-    read -r -p $'\033[32m输入序号(空格)或 all:\033[0m ' input
+    read -r -p $'\033[32m 请输入节点序号（空格分隔，或 all 全选）:\033[0m ' input
 
     if [ -z "$input" ]; then
         echo -e "${YELLOW}未选择节点${RESET}"
