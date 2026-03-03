@@ -137,6 +137,7 @@ EOF
     TAG=$NODE_NAME
     VLESS_LINK="vless://${UUID}@${IP}:${PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${DOMAIN}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp#${TAG}"
     echo -e "${GREEN}📂 安装目录: $NODE_DIR${RESET}"
+    echo -e "${GREEN}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo -e "${GREEN}✅ 节点 $NODE_NAME 已启动${RESET}"
     echo -e "${YELLOW}$VLESS_LINK${RESET}"
     read -r -p $'\033[32m按回车返回菜单...\033[0m'
