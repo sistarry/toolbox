@@ -98,7 +98,7 @@ install_node() {
   "inbounds": [
     {
       "type": "anytls",
-      "listen": "0.0.0.0",
+      "listen": "::",
       "listen_port": ${PORT},
       "users": [{ "password": "${PASSWORD}" }],
       "tls": {
@@ -131,9 +131,10 @@ EOF
     docker compose up -d
 
     SERVER_IP=$(hostname -I | awk '{print $1}')
-    echo -e "${GREEN}📂 安装目录: $NODE_DIR${RESET}"
-    echo -e "${GREEN}✅ 节点已启动${RESET}"
+    echo -e "${GREEN}📂 安装目录: $NODE_DIR⭐${RESET}"
+    echo -e "${GREEN}✅ 节点已启动⭐${RESET}"
     echo -e "${YELLOW}IP: ${SERVER_IP} 端口: ${PORT} 密码: ${PASSWORD}${RESET}"
+    echo -e "${YELLOW}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo -e "${YELLOW}V2rayN:${RESET}"
     echo -e "${YELLOW}anytls://${PASSWORD}@${SERVER_IP}:${PORT}/?sni=www.bing.com&insecure=1#$HOSTNAME${RESET}"
     echo -e "${YELLOW}Surge:${RESET}"
