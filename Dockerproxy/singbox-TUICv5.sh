@@ -99,7 +99,7 @@ install_app() {
   "inbounds": [
     {
       "type": "tuic",
-      "listen": "0.0.0.0",
+      "listen": "::",
       "listen_port": ${PORT},
       "users": [
         {
@@ -144,12 +144,13 @@ EOF
     HOSTNAME=$(hostname -s | sed 's/ /_/g')
 
     echo
-    echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
-    echo -e "${GREEN}✅ singbox-TUICv5 节点已启动${RESET}"
+    echo -e "${GREEN}📂 安装目录: $APP_DIR⭐${RESET}"
+    echo -e "${GREEN}✅ singbox-TUICv5 节点已启动⭐${RESET}"
     echo -e "${YELLOW}🌐 公网 IP: ${SERVER_IP}${RESET}"
     echo -e "${YELLOW}🔌 端口: ${PORT}${RESET}"
     echo -e "${YELLOW}🆔 UUID: ${UUID}${RESET}"
     echo -e "${YELLOW}🔑 密码: ${PASSWORD}${RESET}"
+    echo -e "${YELLOW}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo
     echo -e "${GREEN}📄 客户端链接:${RESET}"
     echo -e "${YELLOW}tuic://${UUID}:${PASSWORD}@${SERVER_IP}:${PORT}?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#${HOSTNAME}${RESET}"
