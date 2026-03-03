@@ -105,6 +105,7 @@ EOF
     echo -e "${GREEN}✅ 节点 $NODE_NAME 已启动${RESET}"
     echo -e "${YELLOW}端口: $PORT${RESET}"
     echo -e "${YELLOW}Secret: $SECRET${RESET}"
+    echo -e "${YELLOW}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${YELLOW}tg://proxy?server=${SERVER_IP}&port=${PORT}&secret=${SECRET}${RESET}"
     echo
