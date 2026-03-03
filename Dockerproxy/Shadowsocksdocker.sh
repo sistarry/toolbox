@@ -73,7 +73,7 @@ install_app() {
 
     cat > "$CONFIG_FILE" <<EOF
 {
-    "server": "0.0.0.0",
+    "server": "::",
     "server_port": $PORT,
     "password": "$PASSWORD",
     "method": "$METHOD",
@@ -117,10 +117,11 @@ EOF
     SS_LINK_V6="ss://${BASE64_V6}"
     echo "————————————————————————————————————————"
     echo "链接 [IPv4]："
-    echo -e "${YELLOW} $SS_LINK_V4${RESET}"
+    echo -e "${YELLOW} $SS_LINK_V4$HOSTNAME${RESET}"
     echo "链接 [IPv6]："
-    echo -e "${YELLOW}$SS_LINK_V6${RESET}"
+    echo -e "${YELLOW}$SS_LINK_V6$HOSTNAME${RESET}"
     echo "—————————————————————————"
+    echo -e "${YELLOW}📄 V6VPS替换IP地址为V6⭐${RESET}"
     echo "[信息] Surge 配置："
     echo -e "${YELLOW}$HOSTNAME = ss, $IP4,$PORT, encrypt-method=$METHOD, password=$PASSWORD, tfo=true, udp-relay=true, ecn=true${RESET}"
     echo
