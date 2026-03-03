@@ -101,6 +101,9 @@ install_node() {
     NODE_DIR="$APP_DIR/$NODE_NAME"
     mkdir -p "$NODE_DIR"
 
+    read -p "是否启用 IPv6 [true/false 默认 false]: " ipv6
+    IPv6=${ipv6:-false}
+
     # ShadowTLS 对外端口
     read -p "ShadowTLS 对外端口 [默认 8443]: " TLS_PORT
     TLS_PORT=${TLS_PORT:-8443}
@@ -124,10 +127,21 @@ install_node() {
     CONFIG_FILE="$NODE_DIR/config.json"
     COMPOSE_FILE="$NODE_DIR/docker-compose.yml"
 
+    # ===== IPv6 / IPv4 地址逻辑 =====
+    if [[ "$IPv6" == "true" ]]; then
+        SS_BIND="::1"
+        LISTEN_ADDR="[::]:${TLS_PORT}"
+        SERVER_ADDR="[::1]:${SS_PORT}"
+    else
+        SS_BIND="127.0.0.1"
+        LISTEN_ADDR="0.0.0.0:${TLS_PORT}"
+        SERVER_ADDR="127.0.0.1:${SS_PORT}"
+    fi
+
     # ================= SS 配置 =================
     cat > "$CONFIG_FILE" <<EOF
 {
-    "server": "127.0.0.1",
+    "server": "$SS_BIND",
     "server_port": $SS_PORT,
     "password": "$SS_PASSWORD",
     "method": "$METHOD",
@@ -156,13 +170,14 @@ services:
     environment:
       - MODE=server
       - V3=1
-      - LISTEN=0.0.0.0:${TLS_PORT}
-      - SERVER=127.0.0.1:${SS_PORT}
+      - LISTEN=${LISTEN_ADDR}
+      - SERVER=${SERVER_ADDR}
       - TLS=${TLS_HOST}:443
       - PASSWORD=${TLS_PASSWORD}
 EOF
 
     cd "$NODE_DIR" || exit
+    docker compose down 2>/dev/null
     docker compose up -d
 
     IP4=$(hostname -I | awk '{print $1}')
@@ -174,20 +189,31 @@ EOF
     echo "SNI: $TLS_HOST"
     echo "SS密码: $SS_PASSWORD"
     echo "TLS密码: $TLS_PASSWORD"
-    # 生成 ss 链接
-    BASE=$(echo -n "${METHOD}:${SS_PASSWORD}@${IP4}:${TLS_PORT}" | base64 -w 0)
+    # ===== 生成 SS + ShadowTLS v3 链接 =====
 
-    PLUGIN="shadow-tls%3Bhost%3D${TLS_HOST}%3Bpassword%3D${TLS_PASSWORD}%3Bv3%3D1"
+    # 获取服务器IP（优先 IPv4）
+    IP4=$(hostname -I | awk '{print $1}')
 
-    SS_LINK="ss://${BASE}?plugin=${PLUGIN}"
+    # 1️⃣ 生成 SS 主体 base64
+    SS_BASE=$(echo -n "${METHOD}:${SS_PASSWORD}" | base64 -w 0)
+
+
+    # 2️⃣ 生成 shadow-tls JSON（稳定版）
+    SHADOWTLS_JSON="{\"version\":\"3\",\"password\":\"${TLS_PASSWORD}\",\"host\":\"${TLS_HOST}\"}"
+ 
+    # 3️⃣ JSON 再 base64
+    SHADOWTLS_BASE=$(echo -n "$SHADOWTLS_JSON" | base64 -w 0)
+
+    # 4️⃣ 组合最终链接
+    SS_LINK="ss://${SS_BASE}@${IP4}:${TLS_PORT}?shadow-tls=${SHADOWTLS_BASE}#$NODE_NAME"
 
     echo
-    echo "ShadowTLS 专用链接："
+    echo "SS + ShadowTLS 链接："
     echo "----------------------------------"
-    echo -e "${YELLOW}$SS_LINK${RESET}"
+    echo -e "${YELLOW}${SS_LINK}${RESET}"
     echo "----------------------------------"
     echo "Surge配置:"
-    echo -e "${YELLOW}$HOSTNAME = ss, $IP4, $TLS_PORT, encrypt-method=$METHOD, password=$SS_PASSWORD, shadow-tls-password=$TLS_PASSWORD, shadow-tls-sni=$TLS_HOST, shadow-tls-version=3, tfo=true, udp-relay=true, ecn=true ${RESET}"
+    echo -e "${YELLOW}$NODE_NAME = ss, $IP4, $TLS_PORT, encrypt-method=$METHOD, password=$SS_PASSWORD, shadow-tls-password=$TLS_PASSWORD, shadow-tls-sni=$TLS_HOST, shadow-tls-version=3, tfo=true, udp-relay=true, ecn=true ${RESET}"
     read -p "按回车返回菜单..."
 }
 
@@ -227,18 +253,44 @@ batch_action() {
     echo -e "${GREEN}3) 批量更新${RESET}"
     echo -e "${GREEN}4) 批量卸载${RESET}"
     echo -e "${GREEN}0) 返回${RESET}"
+
     read -r -p $'\033[32m请选择操作:\033[0m ' choice
-    [[ "$choice" == "0" ]] && return
+
+    # ===== 合法性检查 =====
+    case "$choice" in
+        1|2|3|4) ;;
+        0) return ;;
+        *)
+            echo -e "${RED}无效选择${RESET}"
+            sleep 1
+            return
+            ;;
+    esac
+
     declare -A NODE_MAP
     local count=0
+
     for node in "$APP_DIR"/*; do
         [ -d "$node" ] || continue
         count=$((count+1))
         NODE_MAP[$count]=$(basename "$node")
         echo -e "${GREEN}[$count] ${NODE_MAP[$count]}${RESET}"
     done
-    [ $count -eq 0 ] && { echo -e "${YELLOW}无节点${RESET}"; read -p "按回车返回菜单..."; return; }
+
+    if [ $count -eq 0 ]; then
+        echo -e "${YELLOW}无节点${RESET}"
+        read -p "按回车返回菜单..."
+        return
+    fi
+
     read -r -p $'\033[32m输入序号(空格)或 all:\033[0m ' input
+
+    if [ -z "$input" ]; then
+        echo -e "${YELLOW}未选择节点${RESET}"
+        sleep 1
+        return
+    fi
+
     if [[ "$input" == "all" ]]; then
         SELECTED=("${NODE_MAP[@]}")
     else
@@ -247,20 +299,42 @@ batch_action() {
             [ -n "${NODE_MAP[$i]}" ] && SELECTED+=("${NODE_MAP[$i]}")
         done
     fi
+
+    [ ${#SELECTED[@]} -eq 0 ] && {
+        echo -e "${YELLOW}没有有效节点${RESET}"
+        sleep 1
+        return
+    }
+
+    # ===== 执行批量操作 =====
     for NODE_NAME in "${SELECTED[@]}"; do
         NODE_DIR="$APP_DIR/$NODE_NAME"
+
+        [ -d "$NODE_DIR" ] || continue
         cd "$NODE_DIR" || continue
-        case $choice in
-            1) docker stop "$NODE_NAME-ss" "$NODE_NAME-tls" ;;
-            2) docker restart "$NODE_NAME-ss" "$NODE_NAME-tls" ;;
-            3) docker compose pull && docker compose up -d ;;
-            4) docker compose down && rm -rf "$NODE_DIR" ;;
+
+        case "$choice" in
+            1)
+                docker stop "$NODE_NAME-ss" "$NODE_NAME-tls" 2>/dev/null
+                ;;
+            2)
+                docker restart "$NODE_NAME-ss" "$NODE_NAME-tls" 2>/dev/null
+                ;;
+            3)
+                docker compose pull
+                docker compose up -d
+                ;;
+            4)
+                docker compose down
+                rm -rf "$NODE_DIR"
+                ;;
         esac
+
         echo -e "${GREEN}已操作 $NODE_NAME${RESET}"
     done
+
     read -p "按回车返回菜单..."
 }
-
 # =========================
 # 查看所有节点状态
 # =========================
@@ -269,7 +343,8 @@ show_all_status() {
     for node in "$APP_DIR"/*; do
         [ -d "$node" ] || continue
         NODE_NAME=$(basename "$node")
-        TLS_PORT=$(grep 'LISTEN=' "$node/docker-compose.yml" | cut -d: -f2 | tr -d '"')
+        TLS_PORT=$(grep 'LISTEN=' "$node/docker-compose.yml" \
+          | sed -E 's/.*:([0-9]+).*/\1/')
         STATUS=$(docker inspect -f '{{.State.Status}}' "$NODE_NAME-ss" 2>/dev/null)
         [ -z "$STATUS" ] && STATUS="未启动"
         echo -e "${GREEN}$NODE_NAME | ${TLS_PORT:-未知端口} | $STATUS${RESET}"
