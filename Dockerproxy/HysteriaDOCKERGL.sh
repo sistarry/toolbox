@@ -44,29 +44,52 @@ generate_cert() {
 }
 
 add_jump_rules() {
-    if [[ -n "$JUMP_START" && -n "$JUMP_END" ]]; then
-        iptables -t nat -A PREROUTING -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT
 
-        ip6tables -t nat -A PREROUTING -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT
-
-        echo -e "${GREEN}端口跳跃规则添加完成${RESET}"
+    if [[ -z "$JUMP_START" || -z "$JUMP_END" ]]; then
+        return
     fi
+
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+
+    echo -e "${YELLOW}添加端口跳跃规则: $JUMP_START-$JUMP_END -> $PORT${RESET}"
+    echo -e "${GREEN}服务器IP: $SERVER_IP${RESET}"
+
+    # 防止重复
+    while iptables -t nat -C PREROUTING -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT 2>/dev/null
+    do
+        iptables -t nat -D PREROUTING -p udp \
+            --dport $JUMP_START:$JUMP_END \
+            -j DNAT --to-destination ${SERVER_IP}:$PORT
+    done
+
+    # 插入最前面
+    iptables -t nat -I PREROUTING 1 -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT
+
+    echo -e "${GREEN}端口跳跃规则添加完成${RESET}"
 }
 
 remove_jump_rules() {
-    if [[ -n "$JUMP_START" && -n "$JUMP_END" ]]; then
+
+    if [[ -z "$JUMP_START" || -z "$JUMP_END" ]]; then
+        return
+    fi
+
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+
+    while iptables -t nat -C PREROUTING -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT 2>/dev/null
+    do
         iptables -t nat -D PREROUTING -p udp \
             --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT 2>/dev/null
+            -j DNAT --to-destination ${SERVER_IP}:$PORT
+    done
 
-        ip6tables -t nat -D PREROUTING -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT 2>/dev/null
-    fi
+    echo -e "${GREEN}端口跳跃规则已清理${RESET}"
 }
 
 list_nodes() {
@@ -134,8 +157,15 @@ install_node() {
 
     PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c16)
 
-    read -p "是否启用端口跳跃 [y/N]: " enable_jump
-    if [[ "$enable_jump" =~ ^[Yy]$ ]]; then
+    read -p "是否启用端口跳跃 [Y/n,回车默认Y]: " enable_jump
+    enable_jump=$(echo "$enable_jump" | tr -d ' ')
+    enable_jump=${enable_jump:-Y}
+
+    if [[ "$enable_jump" =~ ^[Nn]$ ]]; then
+        echo "已关闭端口跳跃"
+        JUMP_START=""
+        JUMP_END=""
+    else
         read -p "起始端口: " JUMP_START
         read -p "结束端口: " JUMP_END
     fi
@@ -160,6 +190,9 @@ masquerade:
     url: $MASQ_URL
     rewriteHost: true
 EOF
+# 🔥 这里追加（就在 EOF 后面）
+echo "jump_start: $JUMP_START" >> "$NODE_DIR/hysteria.yaml"
+echo "jump_end: $JUMP_END" >> "$NODE_DIR/hysteria.yaml"
 
     cat > "$NODE_DIR/docker-compose.yml" <<EOF
 services:
@@ -180,7 +213,9 @@ EOF
 
     IP=$(hostname -I | awk '{print $1}')
     HOSTNAME=$(hostname -s | sed 's/ /_/g')
-    echo -e "${GREEN}📂 安装目录: $NODE_DIR${RESET}"
+    echo -e "${GREEN}📂 安装目录: $NODE_DIR⭐${RESET}"
+    echo -e "${GREEN}📄 V6VPS替换IP地址为V6⭐${RESET}"
+    echo -e "${GREEN}📄 端口跳跃只适配V4⭐${RESET}"
     echo -e "${GREEN}节点已启动${RESET}"
     echo -e "${YELLOW}V2rayN:${RESET}" 
     echo -e "${YELLOW}hysteria2://$PASSWORD@$IP:$PORT/?sni=bing.com&insecure=1#$NODE_NAME${RESET}"
@@ -209,7 +244,17 @@ node_action_menu() {
             2) docker restart "$NODE_NAME" ;;
             3) docker compose -f "$NODE_DIR/docker-compose.yml" pull && docker compose -f "$NODE_DIR/docker-compose.yml" up -d ;;
             4) docker logs -f "$NODE_NAME" ;;
-            5) docker compose -f "$NODE_DIR/docker-compose.yml" down && rm -rf "$NODE_DIR"; return ;;
+            5)
+               PORT=$(grep '^listen:' "$NODE_DIR/hysteria.yaml" | sed -E 's/^listen:[[:space:]]*:(.*)/\1/')
+               JUMP_START=$(grep '^jump_start:' "$NODE_DIR/hysteria.yaml" 2>/dev/null | cut -d: -f2)
+               JUMP_END=$(grep '^jump_end:' "$NODE_DIR/hysteria.yaml" 2>/dev/null | cut -d: -f2)
+
+               remove_jump_rules
+               docker compose -f "$NODE_DIR/docker-compose.yml" down
+               rm -rf "$NODE_DIR"
+               echo -e "${RED}已卸载 $NODE_NAME${RESET}"
+               return
+            ;;
             0) return ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
@@ -275,7 +320,15 @@ batch_action() {
             1) docker stop "$NODE_NAME" ;;
             2) docker restart "$NODE_NAME" ;;
             3) docker compose pull && docker compose up -d ;;
-            4) docker compose down && rm -rf "$NODE_DIR" ;;
+            4)
+               PORT=$(grep '^listen:' "$NODE_DIR/hysteria.yaml" | sed -E 's/^listen:[[:space:]]*:(.*)/\1/')
+               JUMP_START=$(grep '^jump_start:' "$NODE_DIR/hysteria.yaml" 2>/dev/null | cut -d: -f2)
+               JUMP_END=$(grep '^jump_end:' "$NODE_DIR/hysteria.yaml" 2>/dev/null | cut -d: -f2)
+
+               remove_jump_rules
+               docker compose down
+               rm -rf "$NODE_DIR"
+            ;;
         esac
         echo -e "${GREEN}已操作 $NODE_NAME${RESET}"
     done
