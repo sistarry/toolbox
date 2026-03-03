@@ -1,6 +1,7 @@
 #!/bin/bash
 # ========================================
-# Hysteria 一键管理脚本（Host Docker + 自签证书 tls: + 端口跳跃 + 必应伪装）
+# Hysteria 一键管理脚本（Host Docker + 自签证书 + 端口跳跃 + 必应伪装）
+# 优化版：防重复规则 + 默认回车启用跳跃
 # ========================================
 
 GREEN="\033[32m"
@@ -14,7 +15,6 @@ COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/hysteria.yaml"
 CONTAINER_NAME="hysteria"
 
-# 端口跳跃变量
 JUMP_START=""
 JUMP_END=""
 PORT=""
@@ -52,42 +52,223 @@ generate_cert() {
     fi
 }
 
-# 添加端口跳跃规则（一次性范围转发）
-# 添加端口跳跃规则（一次性范围转发）
 add_port_jump_rules() {
-    if [[ -n "$JUMP_START" ]] && [[ -n "$JUMP_END" ]]; then
-        echo -e "${YELLOW}添加端口跳跃规则: $JUMP_START-$JUMP_END -> $PORT${RESET}"
 
-        # IPv4
-        iptables -t nat -A PREROUTING -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT
-
-        # IPv6 (如果需要，部分系统可能不支持)
-        ip6tables -t nat -A PREROUTING -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT
-
-        echo -e "${GREEN}✅ 端口跳跃规则添加完成${RESET}"
-        iptables -t nat -L PREROUTING -n --line-numbers
+    if [[ -z "$JUMP_START" || -z "$JUMP_END" ]]; then
+        return
     fi
+
+    echo -e "${YELLOW}添加端口跳跃规则: $JUMP_START-$JUMP_END -> $PORT${RESET}"
+
+    # 获取本机主IP（不依赖外网）
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+
+    if [[ -z "$SERVER_IP" ]]; then
+        echo -e "${RED}无法获取服务器IP，跳跃规则添加失败${RESET}"
+        return
+    fi
+
+    echo -e "${GREEN}服务器IP: $SERVER_IP${RESET}"
+
+    # 关闭 rp_filter（否则部分机器不转发）
+    sysctl -w net.ipv4.conf.all.rp_filter=0 >/dev/null 2>&1
+    sysctl -w net.ipv4.conf.default.rp_filter=0 >/dev/null 2>&1
+
+    # 删除旧规则（防止重复）
+    while iptables -t nat -C PREROUTING -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT 2>/dev/null
+    do
+        iptables -t nat -D PREROUTING -p udp \
+            --dport $JUMP_START:$JUMP_END \
+            -j DNAT --to-destination ${SERVER_IP}:$PORT
+    done
+
+    # 添加新规则（插入到最前面，避免被抢）
+    iptables -t nat -I PREROUTING 1 -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT
+
+    # 放行 FORWARD（部分系统必须）
+    iptables -C FORWARD -p udp --dport $PORT -j ACCEPT 2>/dev/null || \
+    iptables -I FORWARD -p udp --dport $PORT -j ACCEPT
+
+    echo -e "${GREEN}✅ 端口跳跃规则添加完成${RESET}"
+}
+remove_port_jump_rules() {
+
+    if [[ -z "$JUMP_START" || -z "$JUMP_END" ]]; then
+        return
+    fi
+
+    echo -e "${YELLOW}清理端口跳跃规则: $JUMP_START-$JUMP_END -> $PORT${RESET}"
+
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+
+    while iptables -t nat -C PREROUTING -p udp \
+        --dport $JUMP_START:$JUMP_END \
+        -j DNAT --to-destination ${SERVER_IP}:$PORT 2>/dev/null
+    do
+        iptables -t nat -D PREROUTING -p udp \
+            --dport $JUMP_START:$JUMP_END \
+            -j DNAT --to-destination ${SERVER_IP}:$PORT
+    done
+
+    echo -e "${GREEN}✅ 跳跃规则已清理${RESET}"
 }
 
-# 删除端口跳跃规则（一次性范围删除）
-remove_port_jump_rules() {
-    if [[ -n "$JUMP_START" ]] && [[ -n "$JUMP_END" ]]; then
-        echo -e "${YELLOW}清理端口跳跃规则: $JUMP_START-$JUMP_END -> $PORT${RESET}"
+install_app() {
+    check_docker
+    mkdir -p "$APP_DIR"
 
-        # IPv4
-        iptables -t nat -D PREROUTING -i eth0 -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT 2>/dev/null
-
-        # IPv6
-        ip6tables -t nat -D PREROUTING -i eth0 -p udp \
-            --dport $JUMP_START:$JUMP_END \
-            -j REDIRECT --to-ports $PORT 2>/dev/null
+    read -p "请输入监听端口 [1025-65535, 默认随机]: " input_port
+    if [[ -z "$input_port" ]]; then
+        PORT=$(shuf -i 1025-65535 -n1)
+    else
+        PORT=$input_port
     fi
+    check_port "$PORT" || return
+
+    PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c16)
+
+    read -p "是否启用端口跳跃 [Y/n,回车默认Y]: " enable_jump
+    enable_jump=$(echo "$enable_jump" | tr -d ' ')
+    enable_jump=${enable_jump:-Y}
+
+    case "$enable_jump" in
+        Y|y)
+            while true; do
+                read -p "请输入端口范围起始端口 (10000-65535): " firstport
+                read -p "请输入端口范围末尾端口: " endport
+
+                if ! [[ "$firstport" =~ ^[0-9]+$ && "$endport" =~ ^[0-9]+$ ]]; then
+                    echo "端口必须为数字"
+                    continue
+                fi
+
+                if (( firstport < 10000 || firstport > 65535 || endport < 10000 || endport > 65535 )); then
+                    echo "端口必须在 10000-65535"
+                    continue
+                fi
+
+                if (( firstport >= endport )); then
+                    echo "起始端口必须小于结束端口"
+                    continue
+                fi
+
+                if (( PORT >= firstport && PORT <= endport )); then
+                    echo "跳跃范围不能包含监听端口 $PORT"
+                    continue
+                fi
+
+                JUMP_START=$firstport
+                JUMP_END=$endport
+                break
+            done
+            ;;
+        N|n)
+            echo "已关闭端口跳跃"
+            ;;
+        *)
+            echo "输入无效，默认启用"
+            ;;
+    esac
+
+    generate_cert
+    add_port_jump_rules
+
+    cat > "$CONFIG_FILE" <<EOF
+listen: :$PORT
+
+tls:
+  cert: /etc/hysteria/server.crt
+  key: /etc/hysteria/server.key
+
+auth:
+  type: password
+  password: $PASSWORD
+
+masquerade:
+  type: proxy
+  proxy:
+    url: $MASQ_URL
+    rewriteHost: true
+EOF
+
+    cat > "$COMPOSE_FILE" <<EOF
+services:
+  hysteria:
+    image: tobyxdd/hysteria
+    container_name: $CONTAINER_NAME
+    restart: always
+    network_mode: host
+    volumes:
+      - $APP_DIR/hysteria.yaml:/etc/hysteria.yaml
+      - $APP_DIR/cert/server.crt:/etc/hysteria/server.crt
+      - $APP_DIR/cert/server.key:/etc/hysteria/server.key
+    command: ["server", "-c", "/etc/hysteria.yaml"]
+EOF
+
+    cd "$APP_DIR" || exit
+    docker compose up -d
+
+    IP=$(hostname -I | awk '{print $1}')
+    HOSTNAME=$(hostname -s | sed 's/ /_/g')
+
+    echo
+    echo -e "${GREEN}✅ Hysteria 已启动${RESET}"
+    echo -e "${YELLOW}🌐 服务端监听端口: ${PORT}${RESET}"
+    echo -e "${YELLOW}🔑 密码: ${PASSWORD}${RESET}"
+    echo -e "${GREEN}📂 安装目录: $APP_DIR⭐${RESET}"
+    if [[ -n "$JUMP_START" ]]; then
+        echo -e "${YELLOW}🟢 端口跳跃: $JUMP_START-$JUMP_END -> $PORT${RESET}"
+    else
+        echo -e "${YELLOW}🟢 端口跳跃: 未启用${RESET}"
+    fi
+    echo -e "${YELLOW}🟢 伪装网址: $MASQ_URL${RESET}"
+    echo -e "${GREEN}📄 V6VPS替换IP地址为V6⭐${RESET}"
+    echo -e "${GREEN}📄 端口跳跃只适配V4⭐${RESET}"
+    echo -e "${GREEN}📄 客户端配置模板:${RESET}"
+    echo -e "${YELLOW}V2rayN:${RESET}"
+    echo -e "${YELLOW} hysteria2://$PASSWORD@$IP:$PORT/?sni=bing.com&insecure=1#$HOSTNAME${RESET}"
+    echo -e "${YELLOW}Surge:${RESET}"
+    echo -e "${YELLOW}  $HOSTNAME = hysteria2, $IP, $PORT, password=$PASSWORD, skip-cert-verify=true, sni=www.bing.com${RESET}"
+    read -p "按回车返回菜单..."
+}
+
+update_app() {
+    cd "$APP_DIR" || return
+    docker compose pull
+    docker compose up -d
+    echo -e "${GREEN}✅ 更新完成${RESET}"
+    read -p "按回车返回菜单..."
+}
+
+restart_app() {
+    docker restart $CONTAINER_NAME
+    echo -e "${GREEN}✅ 已重启${RESET}"
+    read -p "按回车返回菜单..."
+}
+
+view_logs() {
+    docker logs -f $CONTAINER_NAME
+}
+
+check_status() {
+    docker ps | grep $CONTAINER_NAME
+    read -p "按回车返回菜单..."
+}
+
+uninstall_app() {
+    remove_port_jump_rules
+
+    docker stop $CONTAINER_NAME 2>/dev/null
+    docker rm $CONTAINER_NAME 2>/dev/null
+    rm -rf "$APP_DIR"
+
+    echo -e "${RED}✅ 已卸载${RESET}"
+
+    exit 0
 }
 
 menu() {
@@ -111,151 +292,9 @@ menu() {
             5) check_status ;;
             6) uninstall_app ;;
             0) exit 0 ;;
-            *) echo -e "${RED}无效选择${RESET}"; sleep 1 ;;
+            *) echo "无效选择"; sleep 1 ;;
         esac
     done
-}
-
-install_app() {
-    check_docker
-    mkdir -p "$APP_DIR"
-
-    # 端口自定义 / 随机
-    read -p "请输入监听端口 [1025-65535, 默认随机]: " input_port
-    if [[ -z "$input_port" ]]; then
-        PORT=$(shuf -i 1025-65535 -n1)
-    else
-        PORT=$input_port
-    fi
-    check_port "$PORT" || return
-
-    PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c16)
-
-    # 端口跳跃
-    read -p "是否启用端口跳跃（客户端可通过多个端口连接）[y/N,回车y]: " enable_jump
-    if [[ "$enable_jump" =~ ^[Yy]$ ]]; then
-        while true; do
-            read -p "请输入端口范围起始端口 (建议10000-65535): " firstport
-            read -p "请输入端口范围末尾端口 (必须大于起始端口，建议10000-65535): " endport
-
-            # 检查是否为数字
-            if ! [[ "$firstport" =~ ^[0-9]+$ && "$endport" =~ ^[0-9]+$ ]]; then
-                  echo "端口必须为数字，请重新输入"
-                  continue
-            fi
-
-            # 检查端口合法范围
-            if (( firstport < 10000 || firstport > 65535 || endport < 10000 || endport > 65535 )); then
-                echo "端口必须在 10000-65535 之间，请重新输入"
-                continue
-            fi
-
-            # 检查起始端口 < 结束端口
-            if (( firstport >= endport )); then
-                echo "起始端口必须小于结束端口，请重新输入"
-                continue
-            fi
-
-            # 校验通过，赋值
-            JUMP_START=$firstport
-            JUMP_END=$endport
-            break
-       done
-    fi
-
-    generate_cert
-    add_port_jump_rules
-
-    # 生成 hysteria.yaml (Hysteria 2 tls: 版本)
-    cat > "$CONFIG_FILE" <<EOF
-listen: :$PORT
-
-tls:
-  cert: /etc/hysteria/server.crt
-  key: /etc/hysteria/server.key
-
-auth:
-  type: password
-  password: $PASSWORD
-
-masquerade:
-  type: proxy
-  proxy:
-    url: $MASQ_URL
-    rewriteHost: true
-EOF
-
-    # docker-compose.yml
-    cat > "$COMPOSE_FILE" <<EOF
-services:
-  hysteria:
-    image: tobyxdd/hysteria
-    container_name: $CONTAINER_NAME
-    restart: always
-    network_mode: host
-    volumes:
-      - $APP_DIR/hysteria.yaml:/etc/hysteria.yaml
-      - $APP_DIR/cert/server.crt:/etc/hysteria/server.crt
-      - $APP_DIR/cert/server.key:/etc/hysteria/server.key
-    command: ["server", "-c", "/etc/hysteria.yaml"]
-EOF
-
-    cd "$APP_DIR" || exit
-    docker compose up -d
-
-    IP=$(hostname -I | awk '{print $1}')
-    echo
-    echo -e "${GREEN}✅ Hysteria 已启动${RESET}"
-    echo -e "${YELLOW}🌐 服务端监听端口: ${PORT}${RESET}"
-    echo -e "${YELLOW}🔑 密码: ${PASSWORD}${RESET}"
-    echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
-    if [[ -n "$JUMP_START" ]]; then
-        echo -e "${YELLOW}🟢 端口跳跃: $JUMP_START-$JUMP_END -> $PORT${RESET}"
-    else
-        echo -e "${YELLOW}🟢 端口跳跃: 未启用${RESET}"
-    fi
-    echo -e "${YELLOW}🟢 伪装网址: $MASQ_URL${RESET}"
-    echo -e "${YELLOW}📄 客户端配置模板:${RESET}"
-    HOSTNAME=$(hostname -s | sed 's/ /_/g')
-    echo -e "${YELLOW}V2rayN:{RESET}"
-    echo -e "${YELLOW} hysteria2://$PASSWORD@$IP:$PORT/?sni=bing.com&insecure=1#$HOSTNAME${RESET}"
-    echo -e "${YELLOW}Surge:{RESET}"
-    echo -e "${YELLOW}  $HOSTNAME = hysteria2, $IP, $PORT, password=$PASSWORD, skip-cert-verify=true, sni=www.bing.com${RESET}"
-    read -p "按回车返回菜单..."
-}
-
-update_app() {
-    cd "$APP_DIR" || return
-    docker compose pull
-    docker compose up -d
-    echo -e "${GREEN}✅ Hysteria 更新完成${RESET}"
-    read -p "按回车返回菜单..."
-}
-
-restart_app() {
-    docker restart $CONTAINER_NAME
-    echo -e "${GREEN}✅ Hysteria 已重启${RESET}"
-    read -p "按回车返回菜单..."
-}
-
-view_logs() {
-    echo -e "${YELLOW}按 Ctrl+C 退出日志${RESET}"
-    docker logs -f $CONTAINER_NAME
-}
-
-check_status() {
-    docker ps | grep $CONTAINER_NAME
-    read -p "按回车返回菜单..."
-}
-
-uninstall_app() {
-    remove_port_jump_rules
-    cd "$APP_DIR" || return
-    docker stop $CONTAINER_NAME
-    docker rm $CONTAINER_NAME
-    rm -rf "$APP_DIR"
-    echo -e "${RED}✅ Hysteria 已卸载并清理端口跳跃规则${RESET}"
-    read -p "按回车返回菜单..."
 }
 
 menu
