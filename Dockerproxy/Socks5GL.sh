@@ -193,11 +193,24 @@ batch_action() {
     echo -e "${GREEN}3) 更新节点${RESET}"
     echo -e "${GREEN}4) 卸载节点${RESET}"
     echo -e "${GREEN}0) 返回${RESET}"
+
     read -r -p $'\033[32m请选择操作: \033[0m' choice
+
+    # ✅ 关键修复：提前判断
+    case "$choice" in
+        1|2|3|4) ;;
+        0) return ;;
+        *)
+            echo -e "${RED}无效选择${RESET}"
+            sleep 1
+            return
+            ;;
+    esac
 
     mkdir -p "$APP_DIR"
     declare -A NODE_MAP
     local count=0
+
     for node in "$APP_DIR"/*; do
         [ -d "$node" ] || continue
         count=$((count+1))
@@ -205,38 +218,55 @@ batch_action() {
         NODE_MAP[$count]="$NODE_NAME"
         echo -e "${YELLOW}[$count] $NODE_NAME${RESET}"
     done
-    [ $count -eq 0 ] && { echo -e "${YELLOW}无节点${RESET}"; read -r -p $'\033[32m按回车返回菜单...\033[0m' ; return ; }
+
+    [ $count -eq 0 ] && {
+        echo -e "${YELLOW}无节点${RESET}"
+        read -r -p $'\033[32m按回车返回菜单...\033[0m'
+        return
+    }
 
     read -r -p $'\033[32m请输入要操作的节点序号（用空格分隔，或输入 all 全选）: \033[0m' input_nodes
+
     if [[ "$input_nodes" == "all" ]]; then
         SELECTED_NODES=("${NODE_MAP[@]}")
     else
         SELECTED_NODES=()
         for i in $input_nodes; do
             NODE=${NODE_MAP[$i]}
-            [ -n "$NODE" ] && SELECTED_NODES+=("$NODE") || echo -e "${YELLOW}⚠ 序号 $i 无效，跳过${RESET}"
+            [ -n "$NODE" ] && SELECTED_NODES+=("$NODE") \
+                || echo -e "${YELLOW} 序号 $i 无效，跳过${RESET}"
         done
     fi
 
+    [ ${#SELECTED_NODES[@]} -eq 0 ] && {
+        echo -e "${YELLOW}没有有效节点${RESET}"
+        sleep 1
+        return
+    }
+
     for NODE_NAME in "${SELECTED_NODES[@]}"; do
         NODE_DIR="$APP_DIR/$NODE_NAME"
+
         [ -d "$NODE_DIR" ] || continue
-        [ -f "$NODE_DIR/compose.yml" ] || { echo -e "${YELLOW}⚠ 节点 $NODE_NAME compose.yml 不存在，跳过${RESET}"; continue; }
+        [ -f "$NODE_DIR/compose.yml" ] || {
+            echo -e "${YELLOW} 节点 $NODE_NAME compose.yml 不存在，跳过${RESET}"
+            continue
+        }
+
         cd "$NODE_DIR" || continue
 
-        case $choice in
+        case "$choice" in
             1) docker pause "$NODE_NAME" ;;
             2) docker restart "$NODE_NAME" ;;
             3) docker compose pull && docker compose up -d ;;
             4) docker compose down && rm -rf "$NODE_DIR" ;;
-            0) return ;;
-            *) echo -e "${RED}无效选择${RESET}" ; return ;;
         esac
+
         echo -e "${GREEN}✅ 节点 $NODE_NAME 操作完成${RESET}"
     done
+
     read -r -p $'\033[32m按回车返回菜单...\033[0m'
 }
-
 # ========================================
 # 主菜单
 # ========================================
