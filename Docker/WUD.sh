@@ -115,7 +115,7 @@ EOF
     docker compose up -d
 
     echo
-    echo -e "${GREEN}✅ bash <(curl -sL https://raw.githubusercontent.com/iu683/uu/main/aa.sh) 已启动${RESET}"
+    echo -e "${GREEN}✅  WUD 已启动${RESET}"
     echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:${PORT}${RESET}"
     echo -e "${YELLOW}🔑 用户名: ${USERNAME}  密码: ${PASSWORD}${RESET}"
     echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
