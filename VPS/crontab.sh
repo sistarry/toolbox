@@ -172,7 +172,7 @@ cron_menu() {
         echo -e "${GREEN}1. 添加定时任务${RESET}"
         echo -e "${GREEN}2. 删除定时任务${RESET}"
         echo -e "${GREEN}3. 编辑定时任务${RESET}"
-        echo -e "${GREEN}0. 退出脚本${RESET}"
+        echo -e "${GREEN}0. 退出${RESET}"
         echo -e "${GREEN}------------------------${RESET}"
         read -p "$(echo -e "${GREEN}请输入选项: ${RESET}")" sub_choice
 
