@@ -126,10 +126,12 @@ EOF
     SERVER_IP=$(get_ip)
     HOSTNAME=$(hostname -s | sed 's/ /_/g')
     echo -e "\n${GREEN}√ 安装完成！${RESET}"
-    echo -e "${GREEN}√ 端口: $PORT${RESET}"
-    echo -e "${GREEN}√ 密码: $PASSWORD${RESET}"
-    echo -e "${GREEN}V2rayN: anytls://$PASSWORD@$SERVER_IP:$PORT/?insecure=1#$HOSTNAME${GREEN}"
-    echo -e "${GREEN}Surge : $HOSTNAME = anytls, $SERVER_IP, $PORT, password=$PASSWORD, tfo=true, skip-cert-verify=true, reuse=false${GREEN}"
+    echo -e "${YELLOW}√ 端口: $PORT${RESET}"
+    echo -e "${YELLOW}√ 密码: $PASSWORD${RESET}"
+    echo -e "${GREEN}V2rayN:${GREEN}"
+    echo -e "${YELLOW}anytls://$PASSWORD@$SERVER_IP:$PORT/?insecure=1#$HOSTNAME${GREEN}"
+    echo -e "${GREEN}Surge :${GREEN}"
+    echo -e "${YELLOW}$HOSTNAME = anytls, $SERVER_IP, $PORT, password=$PASSWORD, tfo=true, skip-cert-verify=true, reuse=false${GREEN}"
 
     pause_return
 }
