@@ -163,7 +163,6 @@ EOF
     echo -e "${YELLOW}🌐 ShadowTLS端口: ${TLS_PORT}${RESET}"
     echo -e "${YELLOW}🔑 Snell PSK: ${PSK}${RESET}"
     echo -e "${YELLOW}🔑 ShadowTLS 密码: ${TLS_PASSWORD}${RESET}"
-    echo
     echo -e "${YELLOW}📄 V6VPS替换IP地址为V6 ★${RESET}"
     echo -e "${YELLOW}Snell配置:${RESET}"
     echo -e "${YELLOW}$HOSTNAME = snell, ${IP}, ${TLS_PORT}, psk=${PSK}, version=5, tfo=${TFO}, ecn=${ECN}, shadow-tls-password=${TLS_PASSWORD}, shadow-tls-sni=${TLS_HOST}, shadow-tls-version=3${RESET}"
