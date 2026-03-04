@@ -293,13 +293,13 @@ delete_schedule() {
 update_self() {
     curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
     chmod +x "$SCRIPT_PATH"
-    echo -e "${GREEN}已更新脚本${RESET}"
+    echo -e "${GREEN}已更新${RESET}"
 }
 
 uninstall_self() {
     crontab -l 2>/dev/null | grep -v "rsync_" | crontab - || true
     rm -rf "$BASE_DIR"
-    echo -e "${RED}已卸载脚本${RESET}"
+    echo -e "${RED}已卸载${RESET}"
     exit
 }
 
@@ -339,8 +339,8 @@ while true; do
     echo -e "${GREEN} 7) 添加定时任务${RESET}"
     echo -e "${GREEN} 8) 删除定时任务${RESET}"
     echo -e "${GREEN} 9) Telegram设置${RESET}"
-    echo -e "${GREEN}10) 更新脚本${RESET}"
-    echo -e "${GREEN}11) 卸载脚本${RESET}"
+    echo -e "${GREEN}10) 更新${RESET}"
+    echo -e "${GREEN}11) 卸载${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p "$(echo -e ${GREEN}请选择操作: ${RESET}) " c
     case $c in
