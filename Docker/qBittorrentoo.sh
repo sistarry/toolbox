@@ -11,6 +11,20 @@ APP_NAME="qbittorrent"
 COMPOSE_DIR="/opt/qbittorrent"
 COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
 
+get_public_ip() {
+    local ip
+    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
+        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
+        for url in "https://api64.ipify.org" "https://ip.sb"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    echo "无法获取公网 IP 地址。"
+}
 
 function menu() {
     clear
@@ -63,8 +77,10 @@ EOF
 
     cd "$COMPOSE_DIR"
     docker compose up -d
+
+    SERVER_IP=$(get_public_ip)
     echo -e "${GREEN}✅ qBittorrent 已启动${RESET}"
-    echo -e "${YELLOW}🌐 本机访问地址:  http://$(hostname -I | awk '{print $1}'):$WEB_PORT${RESET}"
+    echo -e "${YELLOW}🌐 本机访问地址:  http://${SERVER_IP}:$WEB_PORT${RESET}"
     echo -e "${GREEN}🌐 账号/密码:查看日志${RESET}"
     echo -e "${GREEN}📂 配置目录: $COMPOSE_DIR/config${RESET}"
     echo -e "${GREEN}📂 下载目录: $COMPOSE_DIR/downloads${RESET}"
