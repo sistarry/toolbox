@@ -171,10 +171,9 @@ EOF
     echo -e "${GREEN}✅ Snell 已启动${RESET}"
     echo -e "${YELLOW}🌐 访问端口: ${PORT}${RESET}"
     echo -e "${YELLOW}🔑 PSK: ${PSK}${RESET}"
-    echo
     echo -e "${YELLOW}📄 V6VPS替换IP地址为V6 ★${RESET}"
     echo -e "${YELLOW}📄 客户端配置模板:${RESET}"
-    echo -e "${YELLOW} $HOSTNAME = snell, ${IP}, ${PORT}, psk=${PSK}, version=5, tfo=${TFO}, ecn=${ECN}${RESET}"
+    echo -e "${YELLOW}$HOSTNAME = snell, ${IP}, ${PORT}, psk=${PSK}, version=5, tfo=${TFO}, ecn=${ECN}${RESET}"
     read -p "按回车返回菜单..."
 }
 
