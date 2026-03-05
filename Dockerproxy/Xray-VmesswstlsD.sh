@@ -11,7 +11,7 @@ RESET="\033[0m"
 CONTAINER_NAME="xray-server"
 APP_NAME="xray-vmess-ws-tls"
 APP_DIR="/opt/$APP_NAME"
-COMPOSE_FILE="$APP_DIR/compose.yml"
+COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/config.json"
 
 check_docker() {
