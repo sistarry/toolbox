@@ -23,6 +23,21 @@ check_docker() {
     fi
 }
 
+get_public_ip() {
+    local ip
+    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
+        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
+        for url in "https://api64.ipify.org" "https://ip.sb"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    echo "无法获取公网 IP 地址。"
+}
+
 menu() {
     while true; do
         clear
@@ -72,7 +87,7 @@ services:
     container_name: aiclient2api
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${MAIN_PORT}:3000"
+      - "${MAIN_PORT}:3000"
       - "8085-8087:8085-8087"
       - "1455:1455"
       - "19876-19880:19876-19880"
@@ -91,9 +106,11 @@ EOF
     cd "$APP_DIR" || exit
     docker compose up -d
 
+    
+    SERVER_IP=$(get_public_ip)
     echo
     echo -e "${GREEN}✅ AIClient-2 API 已启动${RESET}"
-    echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:${MAIN_PORT}${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://${SERVER_IP}:${MAIN_PORT}${RESET}"
     echo -e "${YELLOW}🌐 密码: admin123 ${RESET}"
     echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
     read -p "按回车返回菜单..."
