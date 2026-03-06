@@ -66,7 +66,7 @@ menu() {
         echo -e "${ORANGE}===================================${RESET}"
         echo -e "${ORANGE}         NextTrace 路由检测        ${RESET}"
         echo -e "${ORANGE}===================================${RESET}"
-        echo -e " ${GREEN}1) 测试 1.0.0.1${RESET}"
+        echo -e " ${GREEN}1) 测试 1.1.1.1${RESET}"
         echo -e " ${GREEN}2) 自定义IP/域名${RESET}"
         echo -e " ${GREEN}0) 退出${RESET}"
         echo -ne "${GREEN} 请选择: ${RESET}"
