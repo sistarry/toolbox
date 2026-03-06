@@ -54,7 +54,7 @@ function install_app() {
     read -p "请输入 APP_KEY [默认:随机生成]: " input_key
     APP_KEY=${input_key:-$(openssl rand -hex 16)}
 
-    read -p "请输入 APP_URL [例如:https://2fa.gugu.ovh]: " input_url
+    read -p "请输入 APP_URL [例如:https://2fa.eu.org]: " input_url
     APP_URL=${input_url:-https://2fa.gugu.ovh}
 
     # 创建数据目录并设置权限，避免 permission denied
@@ -113,14 +113,13 @@ function update_app() {
 
 # ----------------- 卸载 -----------------
 function uninstall_app() {
-    read -p "⚠️ 确认要卸载 $APP_NAME 吗？（这将删除所有数据）（y/N): " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        docker compose down -v
-        rm -rf "$APP_DIR"
-        echo -e "${GREEN}✅ 2FAuth 已卸载，数据已删除${RESET}"
-    else
-        echo "❌ 已取消"
-    fi
+    echo "正在卸载 $APP_NAME 并删除所有数据..."
+
+    docker compose down -v
+    rm -rf "$APP_DIR"
+
+    echo -e "${GREEN}✅ $APP_NAME 已卸载，数据已删除${RESET}"
+
     read -p "按回车返回菜单..."
     menu
 }
