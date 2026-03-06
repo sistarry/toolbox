@@ -16,7 +16,7 @@ yellow(){ echo -e "${YELLOW}$1${RESET}"; }
 [[ $EUID -ne 0 ]] && red "请使用 root 运行" && exit
 
 ACME_HOME="$HOME/.acme.sh"
-SSL_DIR="/etc/acme/ssl"
+SSL_DIR="/root/ssl"
 mkdir -p $SSL_DIR
 
 # ===============================
@@ -168,12 +168,22 @@ uninstall_acme(){
     # 删除安装目录
     [ -d "$ACME_HOME" ] && rm -rf "$ACME_HOME"
     [ -d "/etc/acme" ] && rm -rf "/etc/acme"
+
+    # 删除 cron
+    crontab -l 2>/dev/null | grep -v acme.sh | crontab -
     
     # 清理 shell 环境变量
     [ -f "$HOME/.bashrc" ] && sed -i '/acme.sh.env/d' "$HOME/.bashrc"
     [ -f "$HOME/.profile" ] && sed -i '/acme.sh.env/d' "$HOME/.profile"
     
     green "acme.sh 已彻底卸载"
+}
+
+show_cron(){
+    echo
+    green "当前 acme.sh 自动续期任务:"
+    crontab -l | grep acme.sh || yellow "未发现自动续期任务"
+    echo
 }
 
 # ===============================
@@ -216,7 +226,8 @@ do
     green "3. 续期全部证书"
     green "4. 查看已申请证书"
     green "5. 删除指定证书"
-    green "6. 卸载acme.sh"
+    green "6. 查看自动续期任务"
+    green "7. 卸载"
     green "0. 退出"
 
     read -p $'\033[32m请选择: \033[0m' num
@@ -226,7 +237,8 @@ do
         3) renew_all;;
         4) list_cert;;
         5) remove_cert;;
-        6) uninstall_acme;;
+        6) show_cron;;
+        7) uninstall_acme;;
         0) exit;;
         *) echo -e "${RED}无效选项${RESET}";;
     esac
