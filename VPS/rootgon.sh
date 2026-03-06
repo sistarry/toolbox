@@ -26,9 +26,9 @@ run_script() {
 clear_all_ssh_keys() {
     echo -e "${RED}警告：此操作将删除所有用户 SSH 密钥！${RESET}"
     echo -e "${RED}包括：/root/.ssh 和 /home/*/.ssh${RESET}"
-    read -p $'\033[33m确认清除请输入(yes): \033[0m' confirm
+    read -p $'\033[33m确认清除请输入(y): \033[0m' confirm
 
-    if [[ "$confirm" != "yes" ]]; then
+    if [[ "$confirm" != "y" ]]; then
         echo -e "${GREEN}已取消${RESET}"
         sleep 1
         menu
