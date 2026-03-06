@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # ==========================================
 # Poste.io 一键管理脚本 (Docker)
@@ -19,6 +20,23 @@ check_root() {
         exit 1
     fi
 }
+
+get_public_ip() {
+    local ip
+    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
+        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
+        for url in "https://api64.ipify.org" "https://ip.sb"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    echo "无法获取公网 IP 地址。"
+}
+
+
 
 check_docker() {
     export PATH=$PATH:/usr/local/bin
@@ -77,7 +95,7 @@ port_check() {
 
 show_dns_info() {
     local domain=$1
-    local ip=$(curl -s ifconfig.me)
+    local ip=$(get_public_ip)
     local root_domain=$(echo "$domain" | awk -F. '{print $(NF-1)"."$NF}')
     echo -e "${YELLOW}================ DNS 配置参考 ================${RESET}"
     echo -e "${GREEN}▶ A       mail      ${ip}${RESET}"
@@ -147,11 +165,12 @@ EOF
     show_dns_info "$domain"
 
     # 默认管理员账号提示
+    SERVER_IP=$(get_public_ip)
     admin_email="admin@${domain#mail.}"
     echo -e "${YELLOW}访问 Web 邮局: https://${domain}${RESET}"
     echo -e "${YELLOW}访问管理后台: https://${domain}/admin${RESET}"
     echo -e "${YELLOW}默认管理员邮箱: ${admin_email}${RESET}"
-    echo -e "${YELLOW}访问地址: http://$(hostname -I | awk '{print $1}'):${WEB_PORT}${RESET}"
+    echo -e "${YELLOW}访问地址: http://${SERVER_IP}:${WEB_PORT}${RESET}"
     read -p "按回车返回菜单..."
 }
 
