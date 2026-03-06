@@ -33,7 +33,7 @@ get_public_ip() {
     echo "无法获取公网 IP 地址。"
 }
 
-SERVER_IP=$(get_public_ip)
+
 
 # ==============================
 # 初始化 compose 命令（关键修复）
@@ -106,6 +106,8 @@ install_app() {
     curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-deploy.sh | bash
 
     $COMPOSE_CMD -f docker-compose.local.yml up -d
+
+    SERVER_IP=$(get_public_ip)
 
     echo
     echo -e "${GREEN}✅ sub2api 已启动${RESET}"
