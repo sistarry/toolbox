@@ -49,7 +49,7 @@ get_public_ip() {
     echo "无法获取公网 IP 地址。"
 }
 
-SERVER_IP=$(get_public_ip)
+
 
 # ==============================
 # 菜单
@@ -200,6 +200,7 @@ show_info() {
 
     if docker ps | grep -q "$APP_NAME"; then
         PORT=$(docker inspect -f '{{(index (index .NetworkSettings.Ports "8045/tcp") 0).HostPort}}' $APP_NAME)
+        SERVER_IP=$(get_public_ip)
         echo
         echo -e "${GREEN}📌 访问信息:${RESET}"
         echo -e "${YELLOW}访问地址: http://${SERVER_IP}:${PORT}${RESET}"
