@@ -104,7 +104,7 @@ install_app() {
 
     docker run -d \
       --name $APP_NAME \
-      -p ${PORT}:8045 \
+      -p 127.0.0.1:${PORT}:8045 \
       -e API_KEY=${API_KEY} \
       -e WEB_PASSWORD=${WEB_PASS} \
       -e ABV_MAX_BODY_SIZE=104857600 \
@@ -158,7 +158,7 @@ update_app() {
     echo -e "${BLUE}使用新镜像重新创建容器...${RESET}"
     docker run -d \
       --name $APP_NAME \
-      -p ${PORT}:8045 \
+      -p 127.0.0.1:${PORT}:8045 \
       -e API_KEY=${API_KEY} \
       -e WEB_PASSWORD=${WEB_PASS} \
       -e ABV_MAX_BODY_SIZE=104857600 \
@@ -186,7 +186,7 @@ show_info() {
         PORT=$(docker inspect -f '{{(index (index .NetworkSettings.Ports "8045/tcp") 0).HostPort}}' $APP_NAME)
         echo
         echo -e "${GREEN}📌 访问信息:${RESET}"
-        echo -e "${YELLOW}访问地址: http://${SERVER_IP}:${PORT}${RESET}"
+        echo -e "${YELLOW}访问地址: http://127.0.0.1:${PORT}${RESET}"
         echo -e "${YELLOW}API_KEY: ${API_KEY}${RESET}"
         echo -e "${YELLOW}Web登录密码: ${WEB_PASS}${RESET}"
         echo -e "${GREEN}数据目录: ${DATA_DIR}${RESET}"
