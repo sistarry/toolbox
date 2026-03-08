@@ -246,6 +246,13 @@ EOF
     echo -e "${YELLOW}hysteria2://$PASSWORD@$IP:$PORT/?sni=bing.com&insecure=1#$NODE_NAME${RESET}"
     echo -e "${YELLOW}Surge:${RESET}"
     echo -e "${YELLOW}$NODE_NAME = hysteria2, $IP, $PORT, password=$PASSWORD, skip-cert-verify=true, sni=www.bing.com${RESET}"
+    cat > "$NODE_DIR/node.txt" <<EOF
+跳跃端口: ${JUMP_START:-未启用}-${JUMP_END:-未启用}
+V2rayN
+hysteria2://$PASSWORD@$IP:$PORT/?sni=bing.com&insecure=1#$NODE_NAME
+Surge
+$NODE_NAME = hysteria2, $IP, $PORT, password=$PASSWORD, skip-cert-verify=true, sni=www.bing.com
+EOF
     read -r -p $'\033[32m按回车返回菜单...\033[0m'
 }
 
@@ -261,6 +268,7 @@ node_action_menu() {
         echo -e "${GREEN}3) 更新${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 卸载${RESET}"
+        echo -e "${GREEN}6) 查看节点信息${RESET}"
         echo -e "${GREEN}0) 返回${RESET}"
 
         read -r -p $'\033[32m请选择操作:\033[0m ' choice
@@ -280,6 +288,7 @@ node_action_menu() {
                echo -e "${RED}已卸载 $NODE_NAME${RESET}"
                return
             ;;
+            6) cat "$NODE_DIR/node.txt" ;;
             0) return ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
