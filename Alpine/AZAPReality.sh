@@ -30,12 +30,14 @@ menu() {
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN} 1) 安装 Reality${RESET}"
     echo -e "${GREEN} 2) 卸载 Reality${RESET}"
+    echo -e "${GREEN} 3) 查看订阅链接${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
         1) install_reality ;;
         2) uninstall_reality ;;
+        3) cat /etc/xray/node.txt ;;
         0) exit 0 ;;
         *)
             echo -e "${RED}输入错误，请重新选择${RESET}"
