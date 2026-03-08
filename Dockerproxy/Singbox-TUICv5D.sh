@@ -297,6 +297,7 @@ EOF
     echo -e "${YELLOW}tuic://${UUID}:${PASSWORD}@${SERVER_IP}:${PORT}?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#${HOSTNAME}${RESET}"
     echo
     cat > "$NODE_INFO_FILE" <<EOF
+跳跃端口: ${JUMP_START:-未启用}-${JUMP_END:-未启用}
 tuic://${UUID}:${PASSWORD}@${SERVER_IP}:${PORT}?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#${HOSTNAME}
 EOF
     
