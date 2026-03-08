@@ -55,14 +55,24 @@ EOF
     cd "$APP_DIR"
     docker compose up -d
 
+    CONFIG_FILE="$APP_DIR/data/config.yaml"
+    # 直接替换已有 language 或追加到文件末尾
+    sed -i '/^language:/d' "$CONFIG_FILE" 2>/dev/null
+    echo "language: zh_CN" >> "$CONFIG_FILE"
+
+    # 在文件末尾追加 TSDB 配置
+    cat >> "$CONFIG_FILE" <<EOF
+tsdb:
+  data_path: data/tsdb
+EOF
+    # 重启容器生效
+    docker compose restart
+
     echo -e "${GREEN}✅ Nezha Dashboard 已启动${RESET}"
-    echo -e "${YELLOW}🌐 Web UI 地址: http://127.0.0.1:$PORT${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:$PORT${RESET}"
     echo -e "${YELLOW}🌐 账号/密码: admin/admin${RESET}"
+    echo -e "${YELLOW}🌐 TSDB自动开启${RESET}"
     echo -e "${GREEN}📂 数据目录: $APP_DIR/data${RESET}"
-    echo -e "${YELLOW}要启用 TSDB，需要在$APP_DIR/data/config.yaml 中添加：${RESET}"
-    echo -e "${YELLOW}tsdb:${RESET}"
-    echo -e "${YELLOW}  data_path: data/tsdb${RESET}"
-    echo -e "${YELLOW}设置此路径后重启即可启用 TSDB${RESET}"
     read -p "按回车返回菜单..."
     menu
 }
