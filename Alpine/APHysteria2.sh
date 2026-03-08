@@ -231,3 +231,30 @@ echo ""
 echo -e "${GREEN}==== Surge ====${NC}"
 echo -e "${YELLOW}$HOSTNAME = hysteria2, $SERVER_IP, $HY_PORT, password=$HY_PASSWORD, sni=www.bing.com, skip-cert-verify=true${NC}"
 echo "------------------------------------------------"
+# ===============================
+# 保存节点信息
+# ===============================
+NODE_FILE="/etc/hysteria/node.txt"
+
+cat > $NODE_FILE <<EOF
+================ Hysteria2 节点信息 ================
+跳跃端口: ${JUMP_START:-未启用}-${JUMP_END:-未启用}
+服务器: $(hostname)
+IP: $SERVER_IP
+端口: $HY_PORT
+密码: $HY_PASSWORD
+SNI: www.bing.com
+
+---------------- v2rayN / Nekobox ----------------
+hysteria2://$HY_PASSWORD@$SERVER_IP:$HY_PORT/?insecure=1&sni=www.bing.com#$HOSTNAME
+
+---------------- Clash Meta ----------------
+{ name: $HOSTNAME, type: hysteria2, server: $SERVER_IP, port: $HY_PORT, password: $HY_PASSWORD, sni: www.bing.com, skip-cert-verify: true }
+
+---------------- Surge ----------------
+$HOSTNAME = hysteria2, $SERVER_IP, $HY_PORT, password=$HY_PASSWORD, sni=www.bing.com, skip-cert-verify=true
+
+===================================================
+EOF
+
+echo -e "${GREEN}节点信息已保存: ${NODE_FILE}${NC}"
