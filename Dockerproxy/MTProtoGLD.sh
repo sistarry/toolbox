@@ -124,6 +124,10 @@ EOF
     echo -e "${GREEN}📎 Telegram 代理链接:${RESET}"
     echo -e "${YELLOW}tg://proxy?server=${SERVER_IP}&port=${PORT}&secret=${SECRET}${RESET}"
     echo
+    cat > "$NODE_DIR/node.txt" <<EOF
+Telegram 代理链接
+tg://proxy?server=${SERVER_IP}&port=${PORT}&secret=${SECRET}
+EOF
     read -p "按回车返回菜单..."
 }
 
@@ -148,6 +152,7 @@ node_action_menu() {
         echo -e "${GREEN}3) 更新${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 卸载${RESET}"
+        echo -e "${GREEN}6) 查看节点信息${RESET}"
         echo -e "${GREEN}0) 返回${RESET}"
         read -r -p $'\033[32m请选择操作: \033[0m' choice
 
@@ -157,6 +162,7 @@ node_action_menu() {
             3) docker compose -f "$NODE_DIR/compose.yml" pull && docker compose -f "$NODE_DIR/compose.yml" up -d ;;
             4) docker logs -f "$NODE_NAME" ;;
             5) docker compose -f "$NODE_DIR/compose.yml" down && rm -rf "$NODE_DIR" && return ;;
+            6) cat "$NODE_DIR/node.txt" ;;
             0) return ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
