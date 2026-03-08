@@ -291,7 +291,7 @@ view_node_info() {
     fi
 
     echo
-    echo -e "${GREEN}=== TUIC 节点信息 ===${RESET}"
+    echo -e "${GREEN}=== 节点信息 ===${RESET}"
     echo
     cat "$NODE_INFO_FILE"
     echo
