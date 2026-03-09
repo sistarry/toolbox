@@ -143,9 +143,9 @@ while true; do
         02) bash <(curl -L https://raw.githubusercontent.com/yahuisme/xray-vless-reality/main/install.sh) ; pause_return ;;
         03) wget -O snell.sh --no-check-certificate https://git.io/Snell.sh && chmod +x snell.sh && ./snell.sh ; pause_return ;;
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/anytls.sh) ; pause_return ;;
-        05) wget -N --no-check-certificate https://raw.githubusercontent.com/flame1ce/hysteria2-install/main/hysteria2-install-main/hy2/hysteria.sh && bash hysteria.sh ; pause_return ;;
+        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHysteria2.sh) ; pause_return ;;
         06) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tuicv5.sh) ; pause_return ;;
-        07) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MTProto.sh) ; pause_return ;;
+        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLMTProto.sh) ; pause_return ;;
         08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/socks5.sh) ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
