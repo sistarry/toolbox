@@ -54,7 +54,7 @@ install_tuic() {
     version=$(curl -s "https://api.github.com/repos/etjec4/tuic/releases/latest" | jq -r ".tag_name")
     url="https://github.com/etjec4/tuic/releases/download/$version/$version-$arch"
 
-    echo -e "${green}正在下载 Tuic $version ...${reset}"
+    echo -e "${green}正在安装 ...${reset}"
     if ! wget -O tuic-server -q "$url"; then
         echo "wget 失败，尝试 curl..."
         curl -L -o tuic-server "$url" || { echo "下载失败"; exit 1; }
