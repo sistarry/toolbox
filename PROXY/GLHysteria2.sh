@@ -332,8 +332,12 @@ EOF
 }
 EOF
 
-    url="hysteria2://$auth_pwd@$last_ip:$port?insecure=1&sni=$hy_domain#$HOSTNAME"
-    echo $url > /root/hy/url.txt
+    cat > /root/hy/url.txt <<EOF
+V2rayN:
+hysteria2://$auth_pwd@$last_ip:$port?insecure=1&sni=$hy_domain#$HOSTNAME
+Surge:
+$HOSTNAME = hysteria2, $last_ip, $port, password=$auth_pwd, skip-cert-verify=true, sni=$hy_domain
+EOF
 
     systemctl daemon-reload
     systemctl enable hysteria-server
@@ -349,6 +353,7 @@ EOF
     red "$(cat /root/hy/hy-client.yaml)"
     yellow "Hysteria 2 客户端 JSON 配置文件 hy-client.json 内容如下，并保存到 /root/hy/hy-client.json"
     red "$(cat /root/hy/hy-client.json)"
+    yellow "V6VPS替换IP地址为V6 ★"
     if [[ -n "$firstport" && -n "$endport" ]]; then
         yellow "Hysteria 2 端口模式: 跳跃端口 $firstport-$endport -> $port"
     else
