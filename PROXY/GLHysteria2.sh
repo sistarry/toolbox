@@ -170,7 +170,7 @@ inst_jump(){
     green "Hysteria 2 端口使用模式如下："
     echo ""
     echo -e " ${GREEN}1.单端口${PLAIN}"
-    echo -e " ${GREEN}2.端口跳跃${PLAIN}${YELLOW}（默认）}${PLAIN}"
+    echo -e " ${GREEN}2.端口跳跃${PLAIN}${YELLOW}（默认)${PLAIN}"
     echo ""
 
     read -rp "请输入选项 [1-2] (默认2): " jumpInput
