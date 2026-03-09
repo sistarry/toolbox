@@ -186,8 +186,8 @@ menu() {
     echo -e "${GREEN} 8) 关闭自动清理${RESET}"
     echo -e "${GREEN} 9) 查看定时任务${RESET}"
     echo -e "${GREEN}10) 设置Telegram通知${RESET}"
-    echo -e "${GREEN}11) 更新脚本${RESET}"
-    echo -e "${GREEN}12) 卸载脚本${RESET}"
+    echo -e "${GREEN}11) 更新${RESET}"
+    echo -e "${GREEN}12) 卸载${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
 
     read -r -p $'\033[32m 请选择: \033[0m' choice
