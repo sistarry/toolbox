@@ -67,8 +67,11 @@ download_xray
 
 # 4. 用户自定义参数
 echo ""
-read -p "请输入 Reality 端口 (默认: 57891): " PORT
-[ -z "$PORT" ] && PORT=57891
+read -p "请输入 Reality 端口 (直接回车使用随机端口): " PORT
+if [ -z "$PORT" ]; then
+    PORT=$((RANDOM%45535+20000))
+    echo "使用随机端口: $PORT"
+fi
 
 read -p "请输入伪装域名 (默认: itunes.apple.com): " DEST_DOMAIN
 [ -z "$DEST_DOMAIN" ] && DEST_DOMAIN="itunes.apple.com"
