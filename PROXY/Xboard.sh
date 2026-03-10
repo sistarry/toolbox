@@ -63,6 +63,9 @@ function install_app() {
         git clone -b compose --depth 1 https://github.com/cedar2025/Xboard "$APP_DIR"
     fi
 
+    # 修改 Redis 镜像为 7
+    sed -i 's|image: redis:8.0-alpine|image: redis:7.0-alpine|' compose.yaml
+
     echo -e "${GREEN}=== 初始化数据库 ===${RESET}"
     docker compose run -it --rm \
         -e ENABLE_SQLITE=true \
@@ -78,6 +81,7 @@ function install_app() {
     echo -e "${GREEN}✅ Xboard 已安装并启动${RESET}"
     echo -e "${YELLOW}🌐 管理员账号: $ADMIN_ACCOUNT${RESET}"
     echo -e "${YELLOW}🌐 访问地址:http://${SERVER_IP}:7001${RESET}"
+    echo -e "${YELLOW}🌐 数据目录:$APP_DIR ${RESET}"
     read -p "按回车返回菜单..."
     menu
 }
