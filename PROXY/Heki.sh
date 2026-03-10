@@ -75,6 +75,11 @@ install_app() {
     read -p "请输入 Panel 类型 [默认:sspanel-uim]: " PANEL_TYPE
     PANEL_TYPE=${PANEL_TYPE:-sspanel-uim}
 
+    # server_type
+    read -p "请输入 Server 类型 [默认:v2ray]: " SERVER_TYPE
+    SERVER_TYPE=${SERVER_TYPE:-v2ray}
+
+    read -p "请输入 Node ID: " NODE_ID
     read -p "请输入Panel URL: " PANEL_URL
     read -p "请输入Panel Key: " PANEL_KEY
 
@@ -87,8 +92,8 @@ services:
     network_mode: host
     environment:
       type: ${PANEL_TYPE}
-      server_type: v2ray, vmess, vless, ss, ssr, trojan, hysteria, tuic, anytls, naive, mieru
-      node_id: 1
+      server_type: ${SERVER_TYPE}
+      node_id: ${NODE_ID}
       panel_url: ${PANEL_URL}
       panel_key: ${PANEL_KEY}
     volumes:
