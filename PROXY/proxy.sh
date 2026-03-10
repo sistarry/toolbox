@@ -207,6 +207,8 @@ while true; do
     echo -e "${YELLOW}[10] XrayR后端${RESET}"
     echo -e "${YELLOW}[11] Heki后端${RESET}"
     echo -e "${YELLOW}[12] DockerHeki${RESET}"
+    echo -e "${YELLOW}[13] PPanel(MSQL)${RESET}"
+    echo -e "${YELLOW}[14] PPanel${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -225,6 +227,8 @@ while true; do
         10) wget -N https://raw.githubusercontent.com/XrayR-project/XrayR-release/master/install.sh && bash install.sh ; pause_return ;;
         11) bash <(curl -Ls https://raw.githubusercontent.com/hekicore/heki/master/install.sh) ; pause_return ;;
         12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHeki.sh) ; pause_return ;;
+        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanel.sh) ; pause_return ;;
+        14) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHeki.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
