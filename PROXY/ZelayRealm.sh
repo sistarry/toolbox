@@ -20,7 +20,7 @@ get_cmd() {
 FETCH=$(get_cmd)
 
 ################################
-# ⭐ 修复点：支持参数传递
+# 支持参数传递
 ################################
 run_remote() {
     url=$1
@@ -39,8 +39,10 @@ menu() {
     clear
     echo -e "${GREEN}===== Zelay Realm 转发面板管理 =====${RESET}"
     echo -e "${GREEN}1) 安装 Zelay 面板${RESET}"
-    echo -e "${GREEN}2) 卸载 Zelay 面板${RESET}"
-    echo -e "${GREEN}3) 卸载 Zelay 节点${RESET}"
+    echo -e "${GREEN}2) 更新 Zelay 面板${RESET}"
+    echo -e "${GREEN}3) 卸载 Zelay 面板${RESET}"
+    echo -e "${GREEN}4) 更新 Zelay 节点${RESET}"
+    echo -e "${GREEN}5) 卸载 Zelay 节点${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
 }
 
@@ -53,18 +55,38 @@ while true; do
 
     case $choice in
         1)
+
+            read -p $'\033[32m请输入 Web 面板端口 (默认5755): \033[0m' web_port
+            web_port=${web_port:-5755}
+
+            read -p $'\033[32m请输入 Agent 端口 (默认5756): \033[0m' agent_port
+            agent_port=${agent_port:-5756}
+
             run_remote \
               "https://raw.githubusercontent.com/enp6/Zelay/main/zelay_manager.sh" \
-              web-port=5755 agent-port=5756
+              web-port=$web_port agent-port=$agent_port
+
             pause
             ;;
         2)
             run_remote \
               "https://raw.githubusercontent.com/enp6/Zelay/main/zelay_manager.sh" \
-              uninstall
+              update
             pause
             ;;
         3)
+            run_remote \
+              "https://raw.githubusercontent.com/enp6/Zelay/main/zelay_manager.sh" \
+              uninstall
+            pause
+            ;;
+         4)
+            run_remote \
+              "https://raw.githubusercontent.com/enp6/Zelay/main/zelay_agent.sh" \
+              update
+            pause
+            ;;
+        5)
             run_remote \
               "https://raw.githubusercontent.com/enp6/Zelay/main/zelay_agent.sh" \
               uninstall
