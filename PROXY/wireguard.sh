@@ -26,14 +26,18 @@ show_menu() {
     echo -e "${GREEN}1) 安装启动${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
     echo -e "${GREEN}3) 查看客户端配置${RESET}"
-    echo -e "${GREEN}4) 卸载${RESET}"
+    echo -e "${GREEN}4) 重启${RESET}"
+    echo -e "${GREEN}5) 查看日志${RESET}"
+    echo -e "${GREEN}6) 卸载${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -e -p "$(echo -e ${GREEN}请选择: ${RESET})" option
     case $option in
         1) modify_and_install_start_wireguard ;;
         2) update_wireguard ;;
         3) view_client_configs ;;
-        4) stop_wireguard ;;
+        4) restart_wireguard ;;
+        5) view_logs ;;
+        6) stop_wireguard ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选择${RESET}" && sleep 2 && show_menu ;;
     esac
@@ -169,6 +173,20 @@ update_wireguard() {
 view_client_configs() {
     echo "查看所有客户端配置..."
     docker exec wireguard sh -c 'for d in /config/peer_*; do echo "# $(basename $d) "; cat $d/*.conf; done'
+    read -p "按任意键返回主菜单..." && show_menu
+}
+
+restart_wireguard() {
+    echo -e "${gl_huang}正在重启 WireGuard...${gl_bai}"
+    docker restart wireguard
+    sleep 2
+    echo -e "${gl_huang}WireGuard 已重启${gl_bai}"
+    read -p "按任意键返回主菜单..." && show_menu
+}
+
+view_logs() {
+    echo -e "${gl_huang}WireGuard 日志 (Ctrl+C 退出)${gl_bai}"
+    docker logs -f wireguard
     read -p "按任意键返回主菜单..." && show_menu
 }
 
