@@ -212,8 +212,8 @@ SUB_MENU[6]="61 NGINXV4反代|62 NGINXV6反代|63 Caddy反代|64 NginxProxyManag
 SUB_MENU[7]="68 系统清理|69 重装系统|70 系统组件|71 开发环境|72 添加SWAP|73 DNS管理|74 工作区管理|75 系统监控|76 防火墙管理|78 Fail2ban|79 定时任务"
 SUB_MENU[8]="80 科技lion工具箱|81 老王工具箱|82 酷雪云工具箱|83 Alpine工具箱|84 甲骨文工具箱|85 开小鸡工具箱|86 国内VPS工具箱"
 SUB_MENU[9]="87 脚本短链|89 网站部署|90 OpenClaw|91 Emby反代|92 GProxy加速|93 Akile优先DNS|94 全球网络延迟测试|95 1panelapps管理|96 关闭V1SSH|97 卸载哪吒Agent|98 卸载komariAgent"
-SUB_MENU[10]="100 VPS信息通知|101 流量狗|102 VPS遥控器"
-SUB_MENU[11]="103 系统快照恢复|104 本地备份|105 Rsync同步|106 远程文件目录备份|107 Rclone备份|108 压缩文件|109 解压文件"
+SUB_MENU[10]="100 VPS信息通知|101 流量狗|102 VPS遥控器|103 TrafficCop流量监控"
+SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 压缩文件|110 解压文件"
 SUB_MENU[12]="77 自动更新|88 更新脚本|99 卸载脚本"
 
 # 显示一级菜单
@@ -436,13 +436,14 @@ execute_choice() {
         100) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpstg.sh) ;;
         101) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
         102) curl -fsSL https://raw.githubusercontent.com/MEILOI/VPS_BOT_X/main/vps_bot-x/install.sh -o install.sh && chmod +x install.sh && bash install.sh ;;
-        103) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/restore.sh) ;;
-        104) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh) ;;
-        105) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh) ;;
-        106) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Filebackup.sh) ;;
-        107) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rclone.sh) ;;
-        108) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
-        109) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
+        103) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/traffic.sh) ;;
+        104) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/restore.sh) ;;
+        105) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh) ;;
+        106) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh) ;;
+        107) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Filebackup.sh) ;;
+        108) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rclone.sh) ;;
+        109) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
+        110) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
 
         #  自动更新脚本
         77) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/update.sh) ;; 
