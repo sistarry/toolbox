@@ -9,7 +9,7 @@ YELLOW="\e[33m"
 RED="\e[31m"
 RESET="\e[0m"
 
-WORKDIR="${HOME:-/root}/.s5_manager"
+WORKDIR="${HOME:-/root}/Socks5"
 PID_FILE="${WORKDIR}/s5.pid"
 META_FILE="${WORKDIR}/meta.env"
 CONFIG_S5="${WORKDIR}/config.json"
