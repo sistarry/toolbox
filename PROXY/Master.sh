@@ -11,6 +11,22 @@ APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/config.env"
 
+
+get_public_ip() {
+    local ip
+    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
+        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
+        for url in "https://api64.ipify.org" "https://ip.sb"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    echo "无法获取公网 IP 地址。"
+}
+
 function menu() {
     clear
     echo -e "${GREEN}=== FRP-Panel Master 管理菜单 ===${RESET}"
@@ -40,8 +56,8 @@ function install_app() {
         echo -e "已自动生成密钥: $secret"
     fi
     
-    read -p "请输入服务器外网 IP/域名 [默认: 本机IP]: " input_host
-    SERVER_HOST=${input_host:-$(curl -s ifconfig.me || hostname -I | awk '{print $1}')}
+    read -p "请输入服务器外网 IP/域名: " input_host
+    SERVER_HOST=${input_host:-$(get_public_ip)}
     read -p "请输入 RPC 端口 [默认:9001]: " input_rpc
     RPC_PORT=${input_rpc:-9001}
     read -p "请输入 API 端口 [默认:9000]: " input_api
