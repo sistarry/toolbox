@@ -4,6 +4,7 @@
 # ========================================
 
 GREEN="\033[32m"
+YELLOW="\033[33m"
 RESET="\033[0m"
 RED="\033[31m"
 APP_NAME="frpp-master"
@@ -32,15 +33,17 @@ function menu() {
     echo -e "${GREEN}=== FRP-Panel Master 管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装启动${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
-    echo -e "${GREEN}3) 卸载(含数据)${RESET}"
-    echo -e "${GREEN}4) 查看日志${RESET}"
+    echo -e "${GREEN}3) 查看日志${RESET}"
+    echo -e "${GREEN}4) 重启服务${RESET}"
+    echo -e "${GREEN}5) 卸载(含数据)${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
     case $choice in
         1) install_app ;;
         2) update_app ;;
-        3) uninstall_app ;;
-        4) view_logs ;;
+        3) view_logs ;;
+        4) restart_app ;;
+        5) uninstall_app ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选择${RESET}"; sleep 1; menu ;;
     esac
@@ -58,6 +61,8 @@ function install_app() {
     
     read -p "请输入服务器外网 IP/域名: " input_host
     SERVER_HOST=${input_host:-$(get_public_ip)}
+    read -p "请输入 API 协议 (http/https) [默认:http]: " input_scheme
+    API_SCHEME=${input_scheme:-http}
     read -p "请输入 RPC 端口 [默认:9001]: " input_rpc
     RPC_PORT=${input_rpc:-9001}
     read -p "请输入 API 端口 [默认:9000]: " input_api
@@ -69,6 +74,7 @@ APP_GLOBAL_SECRET=$secret
 SERVER_HOST=$SERVER_HOST
 RPC_PORT=$RPC_PORT
 API_PORT=$API_PORT
+API_SCHEME=$API_SCHEME
 EOF
 
     # 写 compose
@@ -85,7 +91,7 @@ services:
       MASTER_RPC_PORT: $RPC_PORT
       MASTER_API_HOST: $SERVER_HOST
       MASTER_API_PORT: $API_PORT
-      MASTER_API_SCHEME: http
+      MASTER_API_SCHEME: $API_SCHEME
     volumes:
       - $APP_DIR/data:/data
     restart: unless-stopped
@@ -96,9 +102,9 @@ EOF
     docker compose up -d
 
     echo -e "${GREEN}✅ FRP-Panel Master 已启动${RESET}"
-    echo -e "${GREEN}🌐 管理面板地址: http://$SERVER_HOST:$API_PORT${RESET}"
-    echo -e "${GREEN}🔑 全局密钥: $secret${RESET}"
-    echo -e "${GREEN}📂 数据目录: $APP_DIR/data${RESET}"
+    echo -e "${YELLOW}🌐 管理面板地址: http://$SERVER_HOST:$API_PORT${RESET}"
+    echo -e "${YELLOW}🔑 全局密钥: $secret${RESET}"
+    echo -e "${YELLOW}📂 数据目录: $APP_DIR/data${RESET}"
     read -p "按回车返回菜单..."
     menu
 }
@@ -117,6 +123,19 @@ function uninstall_app() {
     docker compose down -v
     rm -rf "$APP_DIR"
     echo -e "${GREEN}✅ FRP-Panel Master 已卸载，数据已删除${RESET}"
+    read -p "按回车返回菜单..."
+    menu
+}
+
+function restart_app() {
+    cd "$APP_DIR" || { echo "未检测到安装目录"; sleep 1; menu; }
+
+    echo -e "${GREEN}正在重启 FRP-Panel Master...${RESET}"
+
+    docker compose restart
+
+    echo -e "${GREEN}✅ FRP-Panel Master 已重启${RESET}"
+
     read -p "按回车返回菜单..."
     menu
 }
