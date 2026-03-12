@@ -47,17 +47,17 @@ get_codename() {
 get_codename
 
 # 定义更新源
-aliyun_ubuntu_source="https://v6.gh-proxy.org/http://mirrors.aliyun.com/ubuntu/"
-official_ubuntu_source="https://v6.gh-proxy.org/http://archive.ubuntu.com/ubuntu/"
-tsinghua_ubuntu_source="https://v6.gh-proxy.org/https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+aliyun_ubuntu_source="http://mirrors.aliyun.com/ubuntu/"
+official_ubuntu_source="http://archive.ubuntu.com/ubuntu/"
+tsinghua_ubuntu_source="https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
 
-aliyun_debian_source="https://v6.gh-proxy.org/http://mirrors.aliyun.com/debian/"
-official_debian_source="https://v6.gh-proxy.org/http://deb.debian.org/debian/"
-tsinghua_debian_source="https://v6.gh-proxy.org/https://mirrors.tuna.tsinghua.edu.cn/debian/"
+aliyun_debian_source="http://mirrors.aliyun.com/debian/"
+official_debian_source="http://deb.debian.org/debian/"
+tsinghua_debian_source="https://mirrors.tuna.tsinghua.edu.cn/debian/"
 
-aliyun_centos_source="https://v6.gh-proxy.org/http://mirrors.aliyun.com/centos/"
-official_centos_source="https://v6.gh-proxy.org/http://mirror.centos.org/centos/"
-tsinghua_centos_source="https://v6.gh-proxy.org/https://mirrors.tuna.tsinghua.edu.cn/centos/"
+aliyun_centos_source="http://mirrors.aliyun.com/centos/"
+official_centos_source="http://mirror.centos.org/centos/"
+tsinghua_centos_source="https://mirrors.tuna.tsinghua.edu.cn/centos/"
 
 # 备份当前源
 backup_sources() {
