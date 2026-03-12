@@ -68,7 +68,7 @@ install_v6dd() {
     chmod +x reinstall.sh
 
     # 使用官方镜像 URL 执行 DD
-    bash reinstall.sh dd --img https://v6.gh-proxy.org/https://dl.lamp.sh/vhd/zh-cn_windows10_ltsc.xz
+    bash reinstall.sh dd --img https://dl.lamp.sh/vhd/zh-cn_windows10_ltsc.xz
 
     show_account_info
     prompt_reboot
