@@ -30,14 +30,14 @@ fi
 exec "$SCRIPT_PATH"
 `;
 
-    // CLI 访问 → 返回脚本（不统计）
+    // CLI 访问 → 返回脚本
     if (cli.test(ua)) {
       return new Response(script, {
         headers: { "content-type": "text/plain; charset=utf-8" }
       });
     }
 
-    // 浏览器访问 → 返回 HTML（去掉安装次数统计）
+    // 浏览器访问 → 返回 HTML
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
