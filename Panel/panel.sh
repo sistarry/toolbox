@@ -38,6 +38,7 @@ menu() {
     echo -e "${GREEN}[08] 耗子面板${RESET}"
     echo -e "${GREEN}[09] PandaWiki文档${RESET}"
     echo -e "${GREEN}[10] 雷池WAF${RESET}"
+    echo -e "${GREEN}[11] Halo博客${RESET}"
     echo -e "${YELLOW}[88] 更新脚本${RESET}"
     echo -e "${YELLOW}[99] 卸载脚本${RESET}"
     echo -e "${GREEN}[00] 退出${RESET}"
@@ -83,6 +84,10 @@ menu() {
             ;;
         10)
             bash -c "$(curl -fsSLk https://waf-ce.chaitin.cn/release/latest/manager.sh)"
+            pause
+            ;;
+        11)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Halo.sh)
             pause
             ;;
 
