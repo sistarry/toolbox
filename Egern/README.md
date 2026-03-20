@@ -19,41 +19,87 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDQG.ya
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDBJ.yaml
 ```
 
-## 🚀 Egern脚本
+## 🚀 Egern小组件
 
+
+### 网络信息
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Networkpro.js
+```
+
+### IP检测
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ipexamine.js
+```
 
 ### 加密货币
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Crypto.js
 ```
 
-### VPSTG监控通知脚本
+### 机场订阅
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpstg.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JQDY.js
 ```
 
-### 脚本短链脚本
+### 天气
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/weather.js
 ```
 
-### 网站部署脚本
+### 测速
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dl.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/speedtescs.js
 ```
 
-### CF证书脚本
+### 一言
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/CFSSL.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/miyan.js
 ```
 
-### acme 申请证书脚本
+### 金银看板
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/ACMESSL.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/gold.js
 ```
 
-### systemd-resolved 一键修复脚本
+### 招商金价
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/systemdresolved.sh)
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ZSgold.js
 ```
+
+### 招商金价
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ZSgold.js
+```
+
+### 汇率看板
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/exchangerate.js
+```
+
+### 今日油价
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Youjia.js
+```
+
+### 日历
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/RL.js
+```
+
+### 倒计时
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/DJSZJ.js
+```
+
+### 今日进度
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JRJD.js
+```
+
+### 财联社新闻
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/clxw.js
+```
+
 ```
