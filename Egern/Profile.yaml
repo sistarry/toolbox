@@ -1,12 +1,12 @@
 # ==========================================
-# 📌 配置文件: 𝐄𝐠𝐞𝐫𝐧专用配置
-# 🔗 引用链接: https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Profile.yaml
-# ⏱️ 更新时间: 2026-03-18 08:00
+# 📌 配置文件: 𝐄𝐠𝐞𝐫𝐧配置
+# 🔗 引用链接: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Profile.yaml
+# ⏱️ 更新时间: 2026-03-20 08:00
 # ==========================================
 
 # 自动更新配置 (如需启用请取消注释)
 # auto_update:
-#   url: https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Profile.yaml
+#   url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Profile.yaml
 #   interval: 86400
 
 # --- 基础配置 ---
@@ -502,54 +502,61 @@ rules:
 scriptings:
 - generic:
     name: 网络信息
-    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/refs/heads/main/Network-Pro.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Networkpro.js
 - generic:
     name: ' IP 检测'
-    script_url: https://raw.githubusercontent.com/Roddy-D/modules/refs/heads/main/iptestwidget.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ipexamine.js
 - generic:
     name: 日历
-    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/refs/heads/main/HL.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/RL.js
 - generic:
     name: 汇率看板
-    script_url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/FX_Rate.JS
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/exchangerate.js
 - generic:
     name: 每日油价
-    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/refs/heads/main/Youjia.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Youjia.js
     env:
-      GAS_REGION: sichuan/chengdu
+      GAS_REGION: shanxi
 - generic:
     name: 加密货币
-    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/refs/heads/main/Crypto.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Crypto.js
 - generic:
     name: 金银看板
-    script_url: today-gold-widget.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/gold.js
+- generic:
+    name: 招商金价
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ZSgold.js
 - generic:
     name: 机场订阅
-    script_url: 机场订阅.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JQDY.js
     env:
       URL1: https://sub.store/download/collection/AllServer?target=Egern
       NAME1: 69☁️
 - generic:
+    name: 财联社电报
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/clxw.js
+    disabled: true
+- generic:
     name: 网络测速
-    script_url: https://raw.githubusercontent.com/Ccccf123/EgernX/refs/heads/main/speedtest.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/speedtescs.js
     disabled: true
 - generic:
     name: 天气
-    script_url: https://raw.githubusercontent.com/egerndaddy/quick-start/main/modules/weather.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/weather.js
     env:
       CITY: taiyuan
     disabled: true
 - generic:
     name: 一言
-    script_url: https://raw.githubusercontent.com/egerndaddy/quick-start/main/modules/hitokoto.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/miyan.js
     disabled: true
 - generic:
     name: 今日进度
-    script_url: https://raw.githubusercontent.com/egerndaddy/quick-start/main/modules/daily-progress.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JRJD.js
     disabled: true
 - generic:
     name: 倒计时
-    script_url: https://raw.githubusercontent.com/egerndaddy/quick-start/main/modules/countdown.js
+    script_url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/DJSZJ.js
     env:
       DATE: 2026-12-31T00:00:00+08:00
       TITLE: 生日
@@ -576,6 +583,8 @@ widgets:
   script_name: 加密货币
 - name: 金银看板
   script_name: 金银看板
+- name: 招商金价
+  script_name: 招商金价
 - name: 机场订阅
   script_name: 机场订阅
 
@@ -598,13 +607,16 @@ modules:
 - url: https://raw.githubusercontent.com/Roddy-D/modules/refs/heads/main/nscheckin.module
   compat_arguments:
     开启Cookie抓取:
+    NodeSeek Cookie:
     TG Bot Token:
-    TG User ID: 
+    TG User ID:
     随机奖励模式:
   enabled: true
-- url: https://raw.githubusercontent.com/Ccccf123/EgernX/refs/heads/main/JD.yaml
+- url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDBJ.yaml
   enabled: true
-- url: https://raw.githubusercontent.com/Ccccf123/EgernX/refs/heads/main/JD_Price.yaml
+- url: https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDQG.yaml
+  enabled: true
+- url: http://script.hub/file/_start_/https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/NeteaseAds.conf/_end_/NeteaseAds.sgmodule?type=qx-rewrite&n=%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%E5%8E%BB%E5%B9%BF%E5%91%8A%40ddgksf2013+%E5%BA%94%E7%94%A8%E5%87%80%E5%8C%96&headers=User-Agent:surge&del=true&jqEnabled=true&target=surge-module&category=ddgksf2013
   enabled: true
 - url: https://github.com/DualSubs/YouTube/releases/latest/download/DualSubs.YouTube.sgmodule
   enabled: true
@@ -635,7 +647,7 @@ modules:
 - url: http://script.hub/file/_start_/https://kelee.one/Tool/Loon/Lpx/NetEaseGodlike_remove_ads.lpx/_end_/NetEaseGodlike_remove_ads.sgmodule?type=loon-plugin&target=surge-module&del=true&jqEnabled=true
   enabled: true
 - url: http://script.hub/file/_start_/https://kelee.one/Tool/Loon/Lpx/NeteaseCloudMusic_remove_ads.lpx/_end_/NeteaseCloudMusic_remove_ads.sgmodule?type=loon-plugin&target=surge-module&del=true&jqEnabled=true
-  enabled: true
+  enabled: false
 - url: http://script.hub/file/_start_/https://kelee.one/Tool/Loon/Lpx/QQ_Redirect.lpx/_end_/QQ_Redirect.sgmodule?type=loon-plugin&target=surge-module&del=true&jqEnabled=true
   enabled: true
 - url: http://script.hub/file/_start_/https://kelee.one/Tool/Loon/Lpx/Weixin_Official_Accounts_remove_ads.lpx/_end_/Weixin_Official_Accounts_remove_ads.sgmodule?type=loon-plugin&target=surge-module&del=true&jqEnabled=true
@@ -711,10 +723,10 @@ modules:
 - name: 桌面小组件合集
   url: https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/Widgets.yaml
   env:
-    EXCLUSIVE_NAME_1: 我的生日
+    EXCLUSIVE_NAME_1:
     EXCLUSIVE_DATE_1:
-    PINNED_HOLIDAY: 儿童节
-    GAS_REGION: 
+    PINNED_HOLIDAY:
+    GAS_REGION:
     SSH_NAME:
     SSH_HOST:
     SSH_PORT:
