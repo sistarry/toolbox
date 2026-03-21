@@ -96,3 +96,18 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JRJD.js
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/clxw.js
 ```
+
+### 随机二次元图片
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/loliapi.js
+```
+
+### APPStore限免
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/AppStorexm.js
+```
+
+### 热榜新闻
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/RSXW.js
+```
