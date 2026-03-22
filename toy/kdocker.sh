@@ -107,7 +107,7 @@ while true; do
     echo -e "${green}2) 删除容器${reset}"
     echo -e "${green}3) 查询容器信息${reset}"
     echo -e "${green}0) 退出${reset}"
-    read -p "请输入选项: " choice
+    read -r -p $'\033[32m请输入选项: \033[0m' choice
 
     case "$choice" in
         1) create_container ;;
