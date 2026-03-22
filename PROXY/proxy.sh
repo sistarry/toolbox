@@ -166,13 +166,12 @@ while true; do
     echo -e "${ORANGE}      多协议安装类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] 老王Sing-box${RESET}"
-    echo -e "${YELLOW}[02] F佬Xray-Argo${RESET}"
-    echo -e "${YELLOW}[03] mack-a八合一${RESET}"
-    echo -e "${YELLOW}[04] 甬哥-Sing-box${RESET}"
-    echo -e "${YELLOW}[05] F佬-Sing-box${RESET}"
-    echo -e "${YELLOW}[06] 233boy-Sing-box${RESET}"
-    echo -e "${YELLOW}[07] SS+SNELL+Reality${RESET}"
-    echo -e "${YELLOW}[08] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[02] mack-a八合一${RESET}"
+    echo -e "${YELLOW}[03] 甬哥-Sing-box${RESET}"
+    echo -e "${YELLOW}[04] F佬-Sing-box${RESET}"
+    echo -e "${YELLOW}[05] 233boy-Sing-box${RESET}"
+    echo -e "${YELLOW}[06] SS+SNELL+Reality${RESET}"
+    echo -e "${YELLOW}[07] vless-all-in-one${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -180,13 +179,12 @@ while true; do
 
     case "$sub" in
         01) bash <(curl -Ls https://raw.githubusercontent.com/eooce/sing-box/main/sing-box.sh) ; pause_return ;;
-        02) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) -c ; pause_return ;;
-        03) wget -O install.sh https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh && bash install.sh ; pause_return ;;
-        04) bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/sing-box-yg/main/sb.sh) ; pause_return ;;
-        05) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ; pause_return ;;
-        06) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ; pause_return ;;
-        07) bash <(curl -L -s menu.jinqians.com) ; pause_return ;;
-        08) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ; pause_return ;;
+        02) wget -O install.sh https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh && bash install.sh ; pause_return ;;
+        03) bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/sing-box-yg/main/sb.sh) ; pause_return ;;
+        04) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ; pause_return ;;
+        05) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ; pause_return ;;
+        06) bash <(curl -L -s menu.jinqians.com) ; pause_return ;;
+        07) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
