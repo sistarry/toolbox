@@ -75,7 +75,7 @@ remove_container() {
         rm -rf "$NAME"
         echo "✅ 目录已删除"
     else
-        echo "⚠️ 未找到目录 $NAME"
+        echo "未找到目录 $NAME"
     fi
 }
 
@@ -93,7 +93,7 @@ query_container() {
         echo "📋 容器 [$NAME] 的信息如下:"
         cat "$NAME"
     else
-        echo "⚠️ 未找到容器 $NAME 的信息文件"
+        echo "未找到容器 $NAME 的信息文件"
     fi
 }
 
