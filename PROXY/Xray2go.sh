@@ -131,6 +131,8 @@ get_realip() {
   fi
 }
 
+HOSTNAME=$(hostname -s | sed 's/ /_/g')
+
 # 下载并安装 xray,cloudflared
 install_xray() {
     clear
@@ -334,7 +336,7 @@ get_info() {
 
   cat > ${work_dir}/url.txt <<EOF
 
-vless://${UUID}@${CFIP}:${CFPORT}?encryption=none&security=tls&sni=${argodomain}&fp=chrome&type=ws&host=${argodomain}&path=%2Fvless-argo%3Fed%3D2560#${isp}
+vless://${UUID}@${CFIP}:${CFPORT}?encryption=none&security=tls&sni=${argodomain}&fp=chrome&type=ws&host=${argodomain}&path=%2Fvless-argo%3Fed%3D2560#$HOSTNAME
 
 vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${isp}\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"/vmess-argo?ed=2560\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\", \"fp\": \"chrome\"}" | base64 -w0)
 
@@ -544,7 +546,7 @@ create_shortcut() {
   cat > "$work_dir/2go.sh" << EOF
 #!/usr/bin/env bash
 
-bash <(curl -Ls https://raw.githubusercontent.com/iu683/uu/main/zz.sh) \$1
+bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2go.sh) \$1
 EOF
   chmod +x "$work_dir/2go.sh"
   ln -sf "$work_dir/2go.sh" /usr/bin/2go
