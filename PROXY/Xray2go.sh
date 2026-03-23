@@ -773,7 +773,7 @@ while true; do
    green "4. 查看节点信息"
    green "5. 卸载"
    green "0. 退出"
-   green "请输入选择: " choice
+   reading "请输入选择: " choice
    echo ""
    case "${choice}" in
         1)  
