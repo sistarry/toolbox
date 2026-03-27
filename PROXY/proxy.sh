@@ -135,6 +135,7 @@ while true; do
     echo -e "${YELLOW}[08] Socks5${RESET}"
     echo -e "${YELLOW}[09] NaiveProxy${RESET}"
     echo -e "${YELLOW}[10] Xray-Argo${RESET}"
+    echo -e "${YELLOW}[11] Vmess+tls${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -151,6 +152,7 @@ while true; do
         08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5.sh) ; pause_return ;;
         09) bash -c "$(curl -Ls https://raw.githubusercontent.com/dododook/NaiveProxy/refs/heads/main/install.sh?v=2)" ; pause_return ;;
         10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2go.sh) ; pause_return ;;
+        11) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/VmessWS.sh) ; pause_return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
