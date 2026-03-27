@@ -37,7 +37,7 @@ get_public_ip() {
             ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
         done
     done
-    echo "无法获取公网 IP 地址。"
+    echo "无法获取公网 IP 地址。" && return
 }
 
 menu() {
