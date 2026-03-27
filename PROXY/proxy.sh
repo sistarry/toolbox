@@ -135,7 +135,7 @@ while true; do
     echo -e "${YELLOW}[08] Socks5${RESET}"
     echo -e "${YELLOW}[09] NaiveProxy${RESET}"
     echo -e "${YELLOW}[10] Xray-Argo${RESET}"
-    echo -e "${YELLOW}[11] Vmess+tls${RESET}"
+    echo -e "${YELLOW}[11] Vmess+ws${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
