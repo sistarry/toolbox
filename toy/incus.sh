@@ -84,115 +84,207 @@ install_incus(){
 # =========================================================
 # 管理 Incus 小鸡
 # =========================================================
-manage_incus(){
-    while true; do
-        clear
-        echo -e "${GREEN}======管理 incus 小鸡========${RESET}"
-        echo -e "${GREEN}1. 查看所有小鸡状态${RESET}"
-        echo -e "${GREEN}2. 暂停所有小鸡${RESET}"
-        echo -e "${GREEN}3. 启动所有小鸡${RESET}"
-        echo -e "${GREEN}4. 暂停指定小鸡${RESET}"
-        echo -e "${GREEN}5. 启动指定小鸡${RESET}"
-        echo -e "${GREEN}6. 新增开设小鸡${RESET}"
-        echo -e "${GREEN}7. 删除指定小鸡${RESET}"
-        echo -e "${GREEN}8. 删除所有小鸡和配置${RESET}"
-        echo -e "${GREEN}0. 返回主菜单${RESET}"
-        read -p "$(echo -e ${GREEN}请选择操作: ${RESET})" sub_choice
+manage_incus() {
 
-        case $sub_choice in
-            1)
-                incus list
-                check_log
-                pause
-                ;;
-            2)
-                incus stop --all
-                echo -e "${GREEN}已暂停所有小鸡${RESET}"
-                pause
-                ;;
-            3)
-                incus start --all
-                echo -e "${GREEN}已启动所有小鸡${RESET}"
-                pause
-                ;;
-            4)
-                read -p "请输入小鸡名: " name
-                if incus stop "$name" 2>/dev/null; then
-                    echo -e "${GREEN}$name 已暂停${RESET}"
-                else
-                    echo -e "${RED}小鸡 $name 不存在${RESET}"
-                fi
-                pause
-                ;;
-            5)
-                read -p "请输入小鸡名: " name
-                if incus start "$name" 2>/dev/null; then
-                    echo -e "${GREEN}$name 已启动${RESET}"
-                else
-                    echo -e "${RED}小鸡 $name 不存在${RESET}"
-                fi
-                pause
-                ;;
-            6)
-                install_pkg screen
-                curl -L https://github.com/oneclickvirt/incus/raw/main/scripts/add_more.sh -o add_more.sh
-                chmod +x add_more.sh
-                screen bash add_more.sh
-                check_log
-                pause
-                ;;
-            7)
-                read -p "请输入要删除的小鸡名: " name
-                # 停止小鸡
-                incus stop "$name" 2>/dev/null
-                # 删除小鸡并清理目录
-                if incus delete -f "$name" 2>/dev/null; then
-                    rm -rf "$name" "${name}_v6"
-                    echo -e "${GREEN}$name 已删除，并清理相关目录${RESET}"
-                else
-                    echo -e "${RED}删除失败：小鸡 $name 不存在或已删除${RESET}"
-                fi
-                pause
-                ;;
-            8)
-                read -p $'\033[1;35m删除后无法恢复，确定要继续删除所有 incus 小鸡吗 [y/n]: \033[0m' confirm
-                if [[ "$confirm" =~ ^[Yy]$ ]]; then
-                    # 删除所有小鸡
-                    incus list -c n --format csv | xargs -r -I {} incus delete -f {}
+PASS_DIR="/root/incus_passwd"
+mkdir -p $PASS_DIR
 
-                    # 删除系统临时文件和缓存（慎用）
-                    sudo find /var/log -type f -delete
-                    sudo find /var/tmp -type f -delete
-                    sudo find /tmp -type f -delete
-                    sudo find /var/cache/apt/archives -type f -delete
+while true; do
+    clear
+    echo -e "${GREEN}====== 管理 incus 小鸡 ======${RESET}"
+    echo -e "${GREEN} 1. 查看所有小鸡状态${RESET}"
+    echo -e "${GREEN} 2. 暂停所有小鸡${RESET}"
+    echo -e "${GREEN} 3. 启动所有小鸡${RESET}"
+    echo -e "${GREEN} 4. 暂停指定小鸡${RESET}"
+    echo -e "${GREEN} 5. 启动指定小鸡${RESET}"
+    echo -e "${GREEN} 6. 新增开设小鸡${RESET}"
+    echo -e "${GREEN} 7. 删除指定小鸡${RESET}"
+    echo -e "${GREEN} 8. 删除所有小鸡和配置${RESET}"
+    echo -e "${GREEN} 9. 查看小鸡连接信息${RESET}"
+    echo -e "${GREEN}10. 查看所有小鸡 SSH 信息${RESET}"
+    echo -e "${GREEN} 0. 返回主菜单${RESET}"
 
-                    # 删除脚本和配置文件
-                    rm -f /usr/local/bin/ssh_sh.sh \
-                          /usr/local/bin/config.sh \
-                          /usr/local/bin/ssh_bash.sh \
-                          /usr/local/bin/check-dns.sh \
-                          /root/ssh_sh.sh \
-                          /root/config.sh \
-                          /root/ssh_bash.sh \
-                          /root/buildone.sh \
-                          /root/add_more.sh \
-                          /root/build_ipv6_network.sh
+    read -rp "$(echo -e ${GREEN}请选择操作: ${RESET})" sub_choice
 
-                    echo -e "${GREEN}已删除所有 incus 小鸡及相关文件${RESET}"
+    case "$sub_choice" in
+
+        1)
+            incus list
+            pause
+        ;;
+
+        2)
+            incus stop --all
+            echo -e "${GREEN}已暂停所有小鸡${RESET}"
+            pause
+        ;;
+
+        3)
+            incus start --all
+            echo -e "${GREEN}已启动所有小鸡${RESET}"
+            pause
+        ;;
+
+        4)
+            read -rp "请输入小鸡名: " name
+            incus stop "$name" 2>/dev/null && \
+            echo -e "${GREEN}$name 已暂停${RESET}" || \
+            echo -e "${RED}小鸡不存在${RESET}"
+            pause
+        ;;
+
+        5)
+            read -rp "请输入小鸡名: " name
+            incus start "$name" 2>/dev/null && \
+            echo -e "${GREEN}$name 已启动${RESET}" || \
+            echo -e "${RED}小鸡不存在${RESET}"
+            pause
+        ;;
+
+        6)
+
+            install_pkg screen
+
+            curl -L https://github.com/oneclickvirt/incus/raw/main/scripts/add_more.sh -o add_more.sh
+            chmod +x add_more.sh
+
+            screen bash add_more.sh
+
+            echo -e "${GREEN}正在配置 SSH 和随机密码...${RESET}"
+
+            for c in $(incus list -c n --format csv); do
+
+                PASS=$(openssl rand -base64 8)
+
+                incus exec "$c" -- bash -c "
+                apt update >/dev/null 2>&1
+                apt install -y openssh-server >/dev/null 2>&1
+                echo root:$PASS | chpasswd
+                systemctl enable ssh >/dev/null 2>&1
+                systemctl restart ssh >/dev/null 2>&1
+                "
+
+                echo "$PASS" > $PASS_DIR/$c.pass
+
+                echo -e "${CYAN}$c 密码: $PASS${RESET}"
+
+            done
+
+            echo -e "${GREEN}SSH配置完成${RESET}"
+
+            pause
+        ;;
+
+        7)
+            read -rp "请输入要删除的小鸡名: " name
+
+            incus stop "$name" 2>/dev/null
+            if incus delete -f "$name" 2>/dev/null; then
+                rm -f $PASS_DIR/$name.pass
+                echo -e "${GREEN}$name 已删除${RESET}"
+            else
+                echo -e "${RED}小鸡不存在${RESET}"
+            fi
+
+            pause
+        ;;
+
+        8)
+
+            read -rp $'\033[1;35m确定删除所有小鸡吗 [y/n]: \033[0m' confirm
+
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
+
+                incus list -c n --format csv | xargs -r -I {} incus delete -f {}
+
+                rm -rf $PASS_DIR/*
+
+                echo -e "${GREEN}所有小鸡已删除${RESET}"
+            else
+                echo -e "${YELLOW}已取消${RESET}"
+            fi
+
+            pause
+        ;;
+
+        9)
+
+            read -rp "请输入小鸡名: " name
+
+            if ! incus info "$name" &>/dev/null; then
+                echo -e "${RED}小鸡不存在${RESET}"
+                pause
+                continue
+            fi
+
+            ipv4=$(incus list "$name" -c 4 --format csv)
+            server_ip=$(hostname -I | awk '{print $1}')
+
+            devices=$(incus config device show "$name")
+
+            ssh_port=$(echo "$devices" | awk '/ssh-port:/ {f=1} f && /listen:/ {split($2,a,":"); print a[3]; exit}')
+            tcp_ports=$(echo "$devices" | awk '/nattcp-ports:/ {f=1} f && /listen:/ {split($2,a,":"); print a[3]; exit}')
+            udp_ports=$(echo "$devices" | awk '/natudp-ports:/ {f=1} f && /listen:/ {split($2,a,":"); print a[3]; exit}')
+
+            pass_file="$PASS_DIR/$name.pass"
+
+            if [ -f "$pass_file" ]; then
+                passwd=$(cat "$pass_file")
+            else
+                passwd="未知"
+            fi
+
+            echo
+            echo -e "${GREEN}====== 小鸡连接信息 ======${RESET}"
+            echo -e "小鸡名称 : ${CYAN}$name${RESET}"
+            echo -e "内网 IP  : ${CYAN}$ipv4${RESET}"
+            echo -e "SSH连接  : ${CYAN}ssh root@$server_ip -p $ssh_port${RESET}"
+            echo -e "SSH密码  : ${CYAN}$passwd${RESET}"
+            echo -e "SSH端口  : ${CYAN}$ssh_port${RESET}"
+            echo -e "TCP端口段: ${CYAN}$tcp_ports${RESET}"
+            echo -e "UDP端口段: ${CYAN}$udp_ports${RESET}"
+
+            pause
+        ;;
+
+        10)
+
+            server_ip=$(hostname -I | awk '{print $1}')
+
+            echo
+            echo -e "${GREEN}====== 所有小鸡 SSH 信息 ======${RESET}"
+
+            for c in $(incus list -c n --format csv); do
+
+                devices=$(incus config device show "$c")
+
+                ssh_port=$(echo "$devices" | awk '/ssh-port:/ {f=1} f && /listen:/ {split($2,a,":"); print a[3]; exit}')
+
+                if [ -f "$PASS_DIR/$c.pass" ]; then
+                    passwd=$(cat "$PASS_DIR/$c.pass")
                 else
-                    echo -e "${YELLOW}已取消删除${RESET}"
+                    passwd="未知"
                 fi
-                pause
-                ;;
-            0)
-                break
-                ;;
-            *)
-                echo -e "${RED}无效选项，请重新输入${RESET}"
-                pause
-                ;;
-        esac
-    done
+
+                echo -e "${CYAN}$c${RESET}  ssh root@$server_ip -p $ssh_port  密码: ${YELLOW}$passwd${RESET}"
+
+            done
+
+            pause
+        ;;
+
+        0)
+            break
+        ;;
+
+        *)
+            echo -e "${RED}无效选项${RESET}"
+            pause
+        ;;
+
+    esac
+
+done
 }
 
 
