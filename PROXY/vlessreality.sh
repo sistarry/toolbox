@@ -11,8 +11,7 @@ set -euo pipefail
 readonly SCRIPT_VERSION="V-Final-2.2"
 readonly xray_config_path="/usr/local/etc/xray/config.json"
 readonly xray_binary_path="/usr/local/bin/xray"
-readonly xray_install_script_url="https://github.com/XTLS/Xray-install/raw/main/install-release.sh"
-
+readonly xray_install_script_url="https://raw.githubusercontent.com/XTLS/Xray-install/main/install-release.sh"
 # --- 颜色定义 ---
 readonly red='\e[91m' green='\e[92m' yellow='\e[93m'
 readonly magenta='\e[95m' cyan='\e[96m' none='\e[0m'
@@ -59,14 +58,10 @@ get_public_ip() {
 
 execute_official_script() {
     local args="$1"
-    local script_content
-    script_content=$(curl -L "$xray_install_script_url")
-    if [[ -z "$script_content" ]]; then
-        error "下载 Xray 官方安装脚本失败！请检查网络连接。"
-        return 1
-    fi
-    bash -c "$script_content" @ $args &> /dev/null &
+
+    bash <(curl -L "$xray_install_script_url") $args &> /dev/null &
     spinner $!
+
     if ! wait $!; then
         return 1
     fi
