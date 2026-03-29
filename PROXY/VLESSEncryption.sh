@@ -6,7 +6,7 @@ set -e
 SCRIPT_VERSION="V1.5.7"
 xray_config_path="/usr/local/etc/xray/config.json"
 xray_binary_path="/usr/local/bin/xray"
-xray_install_script_url="https://github.com/XTLS/Xray-install/raw/main/install-release.sh"
+xray_install_script_url="https://raw.githubusercontent.com/XTLS/Xray-install/main/install-release.sh"
 
 xray_status_info=""
 is_quiet=false
@@ -93,19 +93,14 @@ get_public_ip_v6() {
 
 # 改进：采纳 execute_official_script() 安全建议
 execute_official_script() {
-    local args="$1"
-    local script_content
-    info "正在下载官方安装脚本..."
-    script_content=$(curl -sL "$xray_install_script_url")
+    local args="$@"
 
-    # 安全增强：检查脚本内容
-    if [[ -z "$script_content" || ! "$script_content" =~ "install-release" ]]; then
-        error "下载 Xray 官方安装脚本失败或内容异常！请检查网络连接。"
+    info "正在执行官方安装脚本 ($args)..."
+
+    if ! bash <(curl -Ls "$xray_install_script_url") $args; then
+        error "官方安装脚本执行失败！"
         return 1
     fi
-    
-    info "正在执行官方安装脚本 ( $args )..."
-    echo "$script_content" | bash -s -- $args
 }
 
 check_xray_version() {
