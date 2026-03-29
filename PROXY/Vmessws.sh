@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -a # 自动导出变量，增加兼容性
 
 readonly SCRIPT_VERSION="VMESS-WS-1.0"
 readonly xray_config_path="/usr/local/etc/xray/config.json"
