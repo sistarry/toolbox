@@ -70,8 +70,10 @@ pre_check(){
 }
 
 execute_official_script(){
-    bash <(curl -L "$xray_install_script_url") "$@" &>/dev/null &
-    spinner $!
+    bash <(curl -L "$xray_install_script_url") "$@" &
+    pid=$!
+    spinner $pid
+    wait $pid
 }
 
 check_xray_status(){
