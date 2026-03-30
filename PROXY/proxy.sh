@@ -1,4 +1,5 @@
 #!/bin/bash
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # ========================================
 # 代理协议一键菜单（一级+二级分类版）
 # 二级菜单 0 返回 | x 退出 | 自动补零 | 循环菜单
