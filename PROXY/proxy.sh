@@ -1,5 +1,4 @@
 #!/bin/bash
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # ========================================
 # 代理协议一键菜单（一级+二级分类版）
 # 二级菜单 0 返回 | x 退出 | 自动补零 | 循环菜单
@@ -146,7 +145,7 @@ while true; do
 
     case "$sub" in
         01) wget -O ss-rust.sh https://raw.githubusercontent.com/xOS/Shadowsocks-Rust/master/ss-rust.sh && bash ss-rust.sh ;;
-        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vlessreality.sh) ;;
+        02) wget -qO /tmp/vlessreality.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vlessreality.sh && bash /tmp/vlessreality.sh ;;
         03) wget -O snell.sh --no-check-certificate https://git.io/Snell.sh && chmod +x snell.sh && ./snell.sh ;;
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Anytls.sh) ;;
         05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHysteria2.sh) ;;
@@ -155,9 +154,9 @@ while true; do
         08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5.sh) ;;
         09) bash -c "$(curl -Ls https://raw.githubusercontent.com/dododook/NaiveProxy/refs/heads/main/install.sh?v=2)" ;;
         10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2go.sh) ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vmessws.sh) ;;
+        11) wget -qO /tmp/Vmessws.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vmessws.sh && bash /tmp/Vmessws.sh ;;
         12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vlesshttpupgrade.sh) ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/VLESSEncryption.sh) ;;
+        13) wget -qO /tmp/VLESSEncryption.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/VLESSEncryption.sh && bash /tmp/VLESSEncryption.sh ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
