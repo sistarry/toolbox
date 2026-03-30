@@ -41,6 +41,7 @@ declare -A categories=(
     [10]="文件管理"
     [11]="机器人工具"
     [12]="AI项目"
+    [13]="游戏项目"
 )
 
 # ================== 二级菜单应用 ==================
@@ -115,7 +116,6 @@ declare -A apps=(
     [5,32]="Backrest(restic)备份"
     [5,33]="WatchtowerDocker自动更新"
     [5,34]="FOSSBilling VPS托管业务"
-    [5,35]="星露谷物语开服联机"
     [5,36]="网页Telegram"
     [5,37]="Ech0笔记"
     [5,38]="WebSSHGateway"
@@ -249,6 +249,9 @@ declare -A apps=(
     [12,9]="Sub2API"
     [12,10]="octopusAPI聚合"
     [12,11]="AIClient2API"
+    [12,12]="Codeg"
+    [13,1]="星露谷物语开服联机"
+    [13,2]="MCSManager"
 
 )
 
@@ -324,7 +327,6 @@ declare -A commands=(
     [5,32]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Backrest.sh)'
     [5,33]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Watchtower.sh)'
     [5,34]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FOSSBilling.sh)'
-    [5,35]='curl -sSL https://raw.githubusercontent.com/truman-world/puppy-stardew-server/main/quick-start-zh.sh | bash'
     [5,36]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramD.sh)'
     [5,37]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Ech0.sh)'
     [5,38]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WebSSHGateway.sh)'
@@ -458,6 +460,9 @@ declare -A commands=(
     [12,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/sub2api.sh)'
     [12,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Octopus.sh)'
     [12,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AIClient2API.sh)'
+    [12,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CodeG.sh)'
+    [13,1]='curl -sSL https://raw.githubusercontent.com/truman-world/puppy-stardew-server/main/quick-start-zh.sh | bash'
+    [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
 )
 
 # ================== 菜单显示函数 ==================
