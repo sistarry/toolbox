@@ -334,6 +334,7 @@ while true; do
     echo -e "${YELLOW}[04] BBRv3优化脚本${RESET}"
     echo -e "${YELLOW}[05] BBR+TCP智能调参${RESET}"
     echo -e "${YELLOW}[06] MicroWARP${RESET}"
+    echo -e "${YELLOW}[07] IP屏蔽助手${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -346,6 +347,7 @@ while true; do
         04)  bash <(curl -fsSL "https://raw.githubusercontent.com/Eric86777/vps-tcp-tune/main/install-alias.sh?$(date +%s)") ; pause_return ;;
         05) bash <(curl -sL https://raw.githubusercontent.com/yahuisme/network-optimization/main/script.sh) ; pause_return ;;
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicroWarp.sh) ; pause_return ;;
+        07) curl -fsSL https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -365,6 +367,7 @@ while true; do
     echo -e "${YELLOW}[02] 自建DNS解锁${RESET}"
     echo -e "${YELLOW}[03] DnsmasqSNIproxy-One-click${RESET}"
     echo -e "${YELLOW}[04] 自定义DNS解锁${RESET}"
+    echo -e "${YELLOW}[05] 谷歌分流Warp${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -376,6 +379,7 @@ while true; do
         02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DNSjiesuo.sh) ; pause_return ;;
         03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Dnsmasqsniproxy.sh) ; pause_return ;;
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ; pause_return ;;
+        05) bash <(curl -sL https://raw.githubusercontent.com/vpsjk/warp-google/main/warp-google.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
