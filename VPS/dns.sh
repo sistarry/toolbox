@@ -101,9 +101,10 @@ menu() {
     echo -e "${GREEN}2) Cloudflare DNS (1.1.1.1 / 1.0.0.1)${RESET}"
     echo -e "${GREEN}3) 阿里云 DNS (223.5.5.5 / 223.6.6.6)${RESET}"
     echo -e "${GREEN}4) claw (100.100.2.136 / 100.100.2.138)${RESET}"
-    echo -e "${GREEN}5) 自定义 DNS${RESET}"
-    echo -e "${GREEN}6) 恢复默认${RESET}"
-    echo -e "${GREEN}7) 查看当前 DNS${RESET}"
+    echo -e "${GREEN}5) IPv6 DNS (Cloudflare+Google)${RESET}"
+    echo -e "${GREEN}6) 自定义 DNS${RESET}"
+    echo -e "${GREEN}7) 恢复默认${RESET}"
+    echo -e "${GREEN}8) 查看当前 DNS${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
 
     read -p $'\033[32m请选择: \033[0m' choice
@@ -113,9 +114,10 @@ menu() {
         2) set_dns_resolvconf 1.1.1.1 1.0.0.1 ;;
         3) set_dns_resolvconf 223.5.5.5 223.6.6.6 ;;
         4) set_dns_resolvconf 100.100.2.136 100.100.2.138 ;;
-        5) custom_dns ;;
-        6) restore_default ;;
-        7) show_dns ;;
+        5) set_dns_resolvconf 2606:4700:4700::1111 2001:4860:4860::8888 ;;
+        6) custom_dns ;;
+        7) restore_default ;;
+        8) show_dns ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选择${RESET}" ;;
     esac
