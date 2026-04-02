@@ -159,7 +159,7 @@ configure_locale() {
 }
 
 configure_firewall() {
-    log "\n${YELLOW}=============== 4. 防火墙全开 (多系统适配版) ===============${RESET}"
+    log "\n${YELLOW}=============== 4. 防火墙全开===============${RESET}"
     
     # 1. 处理 firewalld (RHEL/CentOS 系)
     if command -v firewall-cmd >/dev/null 2>&1; then
@@ -215,7 +215,7 @@ configure_firewall() {
 # 6. BBR 高性能动态配置 (优化版)
 # -----------------------------
 configure_bbr() {
-    log "\n${YELLOW}=============== 5. BBR 高性能配置 ===============${NC}"
+    log "\n${YELLOW}=============== 5. BBR 调优配置 ===============${NC}"
     local config_file="/etc/sysctl.d/99-bbr.conf"
     
     if ! is_kernel_version_ge "4.9"; then
@@ -264,7 +264,7 @@ net.ipv4.tcp_notsent_lowat = 16384
 net.ipv4.tcp_mtu_probing = 1
 EOF
     sysctl --system >/dev/null
-    log "${GREEN}✅ BBR高性能参数已应用 (内存适配: ${mem_mb}MB)${NC}"
+    log "${GREEN}✅ BBR调优参数已应用 (内存适配: ${mem_mb}MB)${NC}"
 }
 
 # -----------------------------
@@ -272,7 +272,7 @@ EOF
 # -----------------------------
 
 configure_dns() {
-    log "\n${YELLOW}=============== 6. DNS 配置 (双栈优化) ===============${NC}"
+    log "\n${YELLOW}=============== 6. DNS 配置 ===============${NC}"
     
     # 构造 DNS 列表字符串
     local dns_v4="${PRIMARY_DNS_V4} ${SECONDARY_DNS_V4}"
@@ -319,7 +319,7 @@ configure_swap() {
     [[ "$SWAP_SIZE_MB" = "0" ]] && { log "${BLUE}Swap已禁用${NC}"; return; }
 
     local swap_mb=1024  # 固定 1GB
-    log "${BLUE}固定设置Swap: ${swap_mb}MB${NC}"
+    log "${BLUE}设置Swap: ${swap_mb}MB${NC}"
 
     # 检查磁盘空间
     check_disk_space $((swap_mb + 100)) || return 1
@@ -838,7 +838,7 @@ main() {
 
     show_vps_info
 
-    log "\n${GREEN}✨ 所有任务已执行完毕！${RESET}"
+    log "${GREEN}✨ 所有任务已执行完毕！${RESET}"
     log "${YELLOW}系统将在 5 秒后自动重启...${RESET}"
     
     for i in {5..1}; do
