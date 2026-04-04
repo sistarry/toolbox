@@ -179,7 +179,8 @@ while true; do
     echo -e "${YELLOW}[04] F佬-Sing-box${RESET}"
     echo -e "${YELLOW}[05] 233boy-Sing-box${RESET}"
     echo -e "${YELLOW}[06] SS+SNELL+Reality${RESET}"
-    echo -e "${YELLOW}[07] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[07] SS-Xray-2go${RESET}"
+    echo -e "${YELLOW}[08] vless-all-in-one${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -192,7 +193,8 @@ while true; do
         04) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
         05) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ;;
         06) bash <(curl -L -s menu.jinqians.com) ;;
-        07) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
+        07) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ;;
+        08) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
