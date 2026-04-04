@@ -42,6 +42,8 @@ menu() {
     echo -e "${GREEN}[12] 个人主页${RESET}"
     echo -e "${GREEN}[13] MomentsBlog${RESET}"
     echo -e "${GREEN}[14] Flarum论坛${RESET}"
+    echo -e "${GREEN}[15] WordPress${RESET}"
+    echo -e "${GREEN}[16] Typecho${RESET}"
     echo -e "${YELLOW}[88] 更新脚本${RESET}"
     echo -e "${YELLOW}[99] 卸载脚本${RESET}"
     echo -e "${GREEN}[00] 退出${RESET}"
@@ -105,7 +107,15 @@ menu() {
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Flarum.sh)
             pause
             ;;
-
+        15)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/WordPress.sh)
+            pause
+            ;;
+        16)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Typecho.sh)
+            pause
+            ;;
+         
         # =============================
         # 更新脚本
         # =============================
