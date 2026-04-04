@@ -231,7 +231,7 @@ SUB_MENU[7]="68 系统清理|69 重装系统|70 系统组件|71 开发环境|72 
 SUB_MENU[8]="80 科技lion工具箱|81 老王工具箱|82 酷雪云工具箱|83 Alpine工具箱|84 甲骨文工具箱|85 开小鸡工具箱|86 国内VPS工具箱"
 SUB_MENU[9]="87 脚本短链|89 网站部署|90 ssh登录信息|91 Emby反代|92 GProxy加速|93 Akile优先DNS|94 自动机场签到|95 1panelapps管理|96 关闭V1SSH|97 卸载哪吒Agent|98 卸载komariAgent"
 SUB_MENU[10]="100 VPS信息通知|101 流量狗|102 VPS遥控器|103 TrafficCop流量监控"
-SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 压缩文件|110 解压文件"
+SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 Croc文件传输|110 压缩文件|111 解压文件"
 SUB_MENU[12]="77 自动更新|88 更新脚本|99 卸载脚本"
 
 # 显示一级菜单
@@ -460,8 +460,9 @@ execute_choice() {
         106) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh) ;;
         107) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Filebackup.sh) ;;
         108) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rclone.sh) ;;
-        109) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
-        110) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
+        109) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Croc.sh) ;;
+        110) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
+        111) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
 
         #  自动更新脚本
         77) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/update.sh) ;; 
