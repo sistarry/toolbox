@@ -43,7 +43,8 @@ menu() {
     echo -e "${GREEN}[13] MomentsBlog${RESET}"
     echo -e "${GREEN}[14] Flarum论坛${RESET}"
     echo -e "${GREEN}[15] WordPress${RESET}"
-    echo -e "${GREEN}[16] Typecho${RESET}"
+    echo -e "${GREEN}[16] WordPress(MYSQL)${RESET}"
+    echo -e "${GREEN}[17] Typecho${RESET}"
     echo -e "${YELLOW}[88] 更新脚本${RESET}"
     echo -e "${YELLOW}[99] 卸载脚本${RESET}"
     echo -e "${GREEN}[00] 退出${RESET}"
@@ -112,6 +113,10 @@ menu() {
             pause
             ;;
         16)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/WordPressmsql.sh)
+            pause
+            ;;
+        17)
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Typecho.sh)
             pause
             ;;
