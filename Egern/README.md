@@ -27,6 +27,11 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDBJ.ya
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Networkpro.js
 ```
 
+### 网络雷达
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/NetworkLD.js
+```
+
 ### IP检测
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ipexamine.js
