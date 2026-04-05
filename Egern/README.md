@@ -126,3 +126,13 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/goldxt.
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ServerMonito.js
 ```
+
+### 联通话费
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ChinaUnicom.js
+```
+
+### 彩票开奖
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/lotteryticket.js
+```
