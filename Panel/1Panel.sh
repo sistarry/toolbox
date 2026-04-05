@@ -8,7 +8,8 @@ menu() {
     clear
     echo -e "${GREEN}=== 1Panel 面板管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装 1Panel${RESET}"
-    echo -e "${GREEN}2) 卸载 1Panel${RESET}"
+    echo -e "${GREEN}2) 1Panel 菜单管理${RESET}"
+    echo -e "${GREEN}3) 卸载 1Panel${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
@@ -18,6 +19,11 @@ menu() {
             pause
             ;;
         2)
+            echo -e "${GREEN}1Panel 菜单管理...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/1PanelCD.sh)
+            pause
+            ;;
+        3)
             echo -e "${GREEN}正在卸载 1Panel...${RESET}"
             1pctl uninstall
             pause
