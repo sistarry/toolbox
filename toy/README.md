@@ -57,3 +57,8 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTD.sh)
 ```
 
+### VPSDD
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/VPSDD.sh)
+```
+
