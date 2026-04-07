@@ -1,7 +1,7 @@
 #!/bin/bash
 # 万能 DNS 切换脚本（Ubuntu 自动关闭 resolved + 可锁定）
 
-dns_order=( "HK" "JP" "TW" "SG" "KR" "US" "UK" "DE" "RFC" "自定义" )
+dns_order=( "HK" "JP" "TW" "SG" "KR" "US" "UK" "DE" "RFC" "NHK" "自定义" )
 
 declare -A dns_list=(
   ["HK"]="154.83.83.83"
@@ -13,6 +13,7 @@ declare -A dns_list=(
   ["UK"]="45.32.179.189"
   ["DE"]="80.240.28.27"
   ["RFC"]="22.22.22.22"
+  ["NHK"]="151.247.88.3"
 )
 
 green="\033[32m"
