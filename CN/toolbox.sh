@@ -210,7 +210,7 @@ MAIN_MENU=(
 # 二级菜单（编号去掉前导零，显示时格式化为两位数）
 SUB_MENU[1]="1 更新系统|2 系统信息|3 修改root密码|4 root密码登录管理|5 root公钥登录管理|6 修改SSH端口|7 修改时区|8 时间同步|9 切换v4V6|10 开放所有端口|11 更换系统源|12 DDdebian12|13 DDwindows10|14 DD飞牛|15 修改语言|16 修改主机名|17 美化命令|18 VPS重启"
 SUB_MENU[2]="19 BBR+TCP智能调参|20 Realm-xwPF|21 EZRealm|22 EZGost|23 流量狗|24 FRP工具|25 nftables端口转发|26 easytier组网|27 Lucky内网穿透|28 LuckyDocker"
-SUB_MENU[3]="29 网络测速 speedtest|30 路由追踪 nexttrace|31 网络性能测试 iperf3|32 网络诊断工具 MTR"
+SUB_MENU[3]="29 网络测速 speedtest|30 路由追踪 nexttrace|31 网络性能测试 iperf3|32 网络诊断工具 MTR|56 NodeQuality"
 SUB_MENU[4]="33 Docker管理"
 SUB_MENU[5]="34 系统清理|35 系统组件|36 开发环境|37 添加SWAP|38 DNS管理|39 工作区管理|40 系统监控|41 防火墙管理|42 Fail2ban|43 定时任务"
 SUB_MENU[6]="44 酷雪云工具箱|45 科技lion"
@@ -371,6 +371,7 @@ execute_choice() {
         30) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NextTrace.sh) ;;
         31) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/iperf3.sh) ;;
         32) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/mtr.sh) ;;
+        56) wget -N https://gitlab.com/dabao/nodequality-proxy/-/raw/main/nodequality-proxy.sh && bash nodequality-proxy.sh ghproxy ;;
         33) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Docker.sh) ;;
         34) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNclear.sh) ;;
         35) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/package.sh) ;;
