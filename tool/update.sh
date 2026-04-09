@@ -62,30 +62,23 @@ update_one() {
     FILE="$2"
     URL="$3"
 
-    TARGET="$ROOT/$FILE"
-
-    if [ ! -f "$TARGET" ]; then
+    if [ ! -f "$ROOT/$FILE" ]; then
         echo -e "${YELLOW}跳过 $NAME（未安装）${RESET}"
         return
     fi
 
-    echo -e "${GREEN}检查更新 $NAME ...${RESET}"
-
+    echo -e "${GREEN}运行 $NAME ...${RESET}"
+    rm -f "$ROOT/$FILE"
     TMP=$(mktemp)
 
-    if ! curl -fsSL --retry 3 --retry-delay 2 "$URL" -o "$TMP"; then
-        echo -e "${RED}下载失败，保留旧版本${RESET}"
-        rm -f "$TMP"
-        return
+    if curl -fsSL "$URL" -o "$TMP"; then
+        chmod +x "$TMP"
+        if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
+            UPDATED_LIST+=("$NAME")
+        fi
     fi
 
-    chmod +x "$TMP"
-
-    # 直接替换，不运行
-    mv "$TMP" "$TARGET"
-
-    UPDATED_LIST+=("$NAME")
-    echo -e "${GREEN}$NAME 更新成功${RESET}"
+    rm -f "$TMP"
 }
 
 run_update() {
