@@ -73,8 +73,7 @@ update_one() {
 
     TMP=$(mktemp)
 
-    # 下载（失败自动重试3次）
-    if ! curl -fsSL --connect-timeout 10 --retry 3 --retry-delay 2 "$URL" -o "$TMP"; then
+    if ! curl -fsSL --retry 3 --retry-delay 2 "$URL" -o "$TMP"; then
         echo -e "${RED}下载失败，保留旧版本${RESET}"
         rm -f "$TMP"
         return
@@ -82,15 +81,11 @@ update_one() {
 
     chmod +x "$TMP"
 
-    # 测试运行
-    if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
-        mv "$TMP" "$TARGET"
-        UPDATED_LIST+=("$NAME")
-        echo -e "${GREEN}$NAME 更新成功${RESET}"
-    else
-        echo -e "${RED}$NAME 更新失败，保留旧版本${RESET}"
-        rm -f "$TMP"
-    fi
+    # 直接替换，不运行
+    mv "$TMP" "$TARGET"
+
+    UPDATED_LIST+=("$NAME")
+    echo -e "${GREEN}$NAME 更新成功${RESET}"
 }
 
 run_update() {
