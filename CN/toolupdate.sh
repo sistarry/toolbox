@@ -87,7 +87,7 @@ run_update() {
 
     # 更新各脚本
     update_one "toolbox" "toolbox.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolbox.sh"
+    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh"
 
     if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
         MSG="🚀 脚本已更新
