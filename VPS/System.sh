@@ -16,7 +16,8 @@ menu() {
     echo -e "${GREEN} 7) 删除文件${RESET}"
     echo -e "${GREEN} 8) 国家IP屏蔽${RESET}"
     echo -e "${GREEN} 9) 磁盘占用${RESET}"
-    echo -e "${GREEN}10) 安全扫描${RESET}"
+    echo -e "${GREEN}10) 挂载磁盘${RESET}"
+    echo -e "${GREEN}11) 安全扫描${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择操作: \033[0m' choice
     case $choice in
@@ -66,6 +67,11 @@ menu() {
             pause
             ;;
         10)
+            echo -e "${GREEN}正在挂载磁盘...${RESET}"
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/DISKGL.sh)
+            pause
+            ;;
+        11)
             echo -e "${GREEN}正在安全扫描...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Security.sh)
             pause
