@@ -549,7 +549,7 @@ declare -A commands=(
 show_category_menu() {
     clear
     echo -e "${ORANGE}${BOLD}╔══════════════════════════════╗${RESET}"
-    echo -e "${ORANGE}${BOLD}          应用分类菜单${RESET}"
+    echo -e "${ORANGE}${BOLD}   应用分类菜单(快捷指令:D/d)    ${RESET}"
     echo -e "${ORANGE}${BOLD}╚══════════════════════════════╝${RESET}"
 
     for i in $(seq 1 ${#categories[@]}); do
