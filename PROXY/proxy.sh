@@ -93,6 +93,7 @@ main_menu() {
     echo -e "${YELLOW}[07] DNS 解锁类${RESET}"
     echo -e "${YELLOW}[08] Docker单协议类${RESET}"
     echo -e "${YELLOW}[09] Docker多协议类${RESET}"
+    echo -e "${YELLOW}[10] 监控通知类${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -109,6 +110,7 @@ main_menu() {
         07) dns_menu ;;
         08) docker_menu ;;
         09) dockers_menu ;;
+        10) monitor_menu ;;
         88) update_script ; pause_return ;;
         99) uninstall_script ;;
         00) exit 0 ;;
@@ -487,6 +489,40 @@ while true; do
     esac
 done
 }
+
+
+# =============================
+# 监控通知 类
+# =============================
+monitor_menu() {
+while true; do
+    clear
+    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
+    echo -e "${ORANGE}      监控通知类        ${RESET}"
+    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+    echo -e "${YELLOW}[01] IP-Sentinel${RESET}"
+    echo -e "${YELLOW}[02] TrafficCop流量监控${RESET}"
+    echo -e "${YELLOW}[03] VPS遥控器${RESET}"
+    echo -e "${YELLOW}[04] vnstat${RESET}"
+    echo -e "${YELLOW}[05] 流量狗${RESET}"
+    echo -e "${GREEN}[0]  返回${RESET}"
+    echo -e "${GREEN}[x]  退出${RESET}"
+    
+    read_submenu || return
+   
+
+    case "$sub" in
+        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/IPSentinel.sh) ; pause_return ;;
+        02) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/traffic.sh) ; pause_return ;;
+        03) curl -fsSL https://raw.githubusercontent.com/MEILOI/VPS_BOT_X/main/vps_bot-x/install.sh -o install.sh && chmod +x install.sh && bash install.sh ; pause_return ;;
+        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vnStat.sh) ; pause_return ;;
+        05) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ; pause_return ;;
+        0) return ;;
+        *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
+    esac
+done
+}
+
 
 # =============================
 # 更新 & 卸载
