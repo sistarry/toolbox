@@ -37,9 +37,9 @@ fi
 # ================== 菜单函数 ==================
 menu() {
     clear
-    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-    echo -e "${ORANGE}      Alpine工具箱     ${RESET}"
-    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+    echo -e "${ORANGE}╔════════════════════════════╗${RESET}"
+    echo -e "${ORANGE}   Alpine工具箱(快捷指令:A/a)  ${RESET}"
+    echo -e "${ORANGE}╚════════════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] 系统更新${RESET}"
     echo -e "${YELLOW}[02] 修改SSH端口${RESET}"
     echo -e "${YELLOW}[03] 防火墙管理${RESET}"
