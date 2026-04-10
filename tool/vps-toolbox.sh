@@ -241,7 +241,7 @@ show_main_menu() {
     rainbow_animate "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # 标题文字改为纯黄色
-    echo -e "${yellow}       📦 VPS Toolbox工具箱 📦  ${reset}"
+    echo -e "${yellow}📦 VPS Toolbox工具箱${reset}${ORANGE}(快捷指令:M/m)${reset} ${yellow}📦${reset}"
 
     # 下边框保留彩虹效果
     rainbow_animate "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
