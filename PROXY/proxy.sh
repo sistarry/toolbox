@@ -81,9 +81,9 @@ pause_return() {
 # =============================
 main_menu() {
     clear
-    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-    echo -e "${ORANGE}      代理工具箱        ${RESET}"
-    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+    echo -e "${ORANGE}╔═════════════════════════╗${RESET}"
+    echo -e "${ORANGE}  代理工具箱(快捷指令:F/f)  ${RESET}"
+    echo -e "${ORANGE}╚═════════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] 单协议安装类${RESET}"
     echo -e "${YELLOW}[02] 多协议安装类${RESET}"
     echo -e "${YELLOW}[03] 面板管理类${RESET}"
