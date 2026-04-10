@@ -26,15 +26,16 @@ if [ ! -f "$SCRIPT_PATH" ]; then
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/n"
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/N"
 
-    echo -e "${GREEN}✅ 安装完成，可使用 n 或 N 启动${RESET}"
+    echo -e "${GREEN}✅ 安装完成${RESET}"
+    echo -e "${GREEN}✅ 快捷键已添加：N 或 n 可快速启动${RESET}"
 fi
 
 # ================== 菜单 ==================
 menu() {
     clear
-    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-    echo -e "${ORANGE}      开小鸡工具箱       ${RESET}"
-    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+    echo -e "${ORANGE}╔═════════════════════════════╗${RESET}"
+    echo -e "${ORANGE}   开小鸡工具箱(快捷指令:N/n)   ${RESET}"
+    echo -e "${ORANGE}╚═════════════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] PVE管理${RESET}"
     echo -e "${YELLOW}[02] LXC小鸡${RESET}"
     echo -e "${YELLOW}[03] Docker小鸡${RESET}"
