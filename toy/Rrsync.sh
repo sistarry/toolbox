@@ -319,6 +319,7 @@ if [ ! -f "$SCRIPT_PATH" ]; then
     chmod +x "$SCRIPT_PATH"
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/s"
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/S"
+    echo -e "${GREEN}✅ 安装完成${RESET}"
     echo -e "${GREEN}✅ 快捷键已添加：s 或 S 可快速启动${RESET}"
 fi
 
@@ -327,7 +328,7 @@ fi
 #################################
 while true; do
     clear
-    echo -e "${GREEN}===== Rsync 同步管理器 =====${RESET}"
+    echo -e "${GREEN}===== Rsync 同步管理器(快捷指令:S/s) =====${RESET}"
     list_tasks
     echo
     echo -e "${GREEN} 1) 添加同步任务${RESET}"
