@@ -23,10 +23,13 @@ RESET='\033[0m'
 # 自动下载安装管理器
 #################################
 if [ ! -f "$SCRIPT_PATH" ]; then
-    curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
-        exit 1
+    if ! curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
+        echo -e "${YELLOW}首次下载失败，正在重试一次...${RESET}"
+        sleep 2
+        if ! curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
+            echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
+            exit 1
+        fi
     fi
     chmod +x "$SCRIPT_PATH"
 fi
@@ -68,14 +71,30 @@ update_one() {
     fi
 
     echo -e "${GREEN}运行 $NAME ...${RESET}"
+
+    # 先删除旧脚本，再下载
     rm -f "$ROOT/$FILE"
     TMP=$(mktemp)
 
-    if curl -fsSL "$URL" -o "$TMP"; then
-        chmod +x "$TMP"
-        if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
-            UPDATED_LIST+=("$NAME")
+    # 第一次下载
+    if ! curl -fsSL "$URL" -o "$TMP"; then
+        echo -e "${YELLOW}$NAME 下载失败，正在重试一次...${RESET}"
+        sleep 2
+
+        # 第二次下载
+        if ! curl -fsSL "$URL" -o "$TMP"; then
+            echo -e "${RED}$NAME 下载失败，重试后仍失败，已跳过${RESET}"
+            rm -f "$TMP"
+            return
         fi
+    fi
+
+    chmod +x "$TMP"
+
+    if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
+        UPDATED_LIST+=("$NAME")
+    else
+        echo -e "${RED}$NAME 更新脚本执行失败${RESET}"
     fi
 
     rm -f "$TMP"
@@ -199,9 +218,17 @@ self_update() {
 
     TMP=$(mktemp)
 
+    # 第一次下载
     if ! curl -fsSL "$SCRIPT_URL" -o "$TMP"; then
-        echo -e "${RED}下载失败${RESET}"
-        return
+        echo -e "${YELLOW}管理器下载失败，正在重试一次...${RESET}"
+        sleep 2
+
+        # 第二次下载
+        if ! curl -fsSL "$SCRIPT_URL" -o "$TMP"; then
+            echo -e "${RED}下载失败，重试后仍无法完成${RESET}"
+            rm -f "$TMP"
+            return
+        fi
     fi
 
     chmod +x "$TMP"
@@ -209,13 +236,14 @@ self_update() {
 
     MSG="🚀 管理器已更新
 服务器: ${SERVER_NAME}
-文件: toolboxupdate.sh"
+文件: toolupdate.sh"
 
     tg_send "$MSG"
 
     echo -e "${GREEN}更新完成，重新启动中...${RESET}"
     exec "$SCRIPT_PATH"
 }
+
 #################################
 # 查看定时任务
 #################################
@@ -232,7 +260,6 @@ list_cron() {
 
     echo
 }
-
 
 #################################
 # 菜单循环
