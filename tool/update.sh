@@ -69,7 +69,7 @@ update_one() {
 
     echo -e "${GREEN}运行 $NAME ...${RESET}"
 
-    # 按你的要求：先删除旧脚本，再下载新脚本
+    # 先删除旧脚本，再下载新脚本
     rm -f "$ROOT/$FILE"
 
     TMP=$(mktemp)
