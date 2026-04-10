@@ -29,7 +29,8 @@ if [ ! -f "$SCRIPT_PATH" ]; then
     chmod +x "$SCRIPT_PATH"
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/f"
     ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/F"
-    echo -e "${GREEN}✅ 安装完成，输入 f 或 F 启动${RESET}"
+    echo -e "${GREEN}✅ 安装完成${RESET}"
+    echo -e "${GREEN}✅ 快捷键：F 或 f 可快速启动${RESET}"
 fi
 
 # =============================
