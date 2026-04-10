@@ -25,9 +25,9 @@ pause() {
 # =============================
 menu() {
     clear
-    echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-    echo -e "${ORANGE}      面板管理菜单      ${RESET}"
-    echo -e "${ORANGE}╚══════════════════════╝${RESET}"
+    echo -e "${ORANGE}╔══════════════════════════════╗${RESET}"
+    echo -e "${ORANGE}    面板管理菜单(快捷指令:P/p)   ${RESET}"
+    echo -e "${ORANGE}╚══════════════════════════════╝${RESET}"
     echo -e "${GREEN}[01] 宝塔面板${RESET}"
     echo -e "${GREEN}[02] 国际版宝塔${RESET}"
     echo -e "${GREEN}[03] 开心版宝塔${RESET}"
