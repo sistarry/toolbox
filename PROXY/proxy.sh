@@ -228,6 +228,8 @@ while true; do
     echo -e "${YELLOW}[14] PPanel(MSQL)${RESET}"
     echo -e "${YELLOW}[15] ppnode 节点${RESET}"
     echo -e "${YELLOW}[16] ConfluxMihomo代理${RESET}"
+    echo -e "${YELLOW}[17] ClashDocker${RESET}"
+    echo -e "${YELLOW}[18] FreeGFW${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -250,6 +252,8 @@ while true; do
         14) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanel.sh) ; pause_return ;;
         15) bash <(wget -qO- https://raw.githubusercontent.com/perfect-panel/ppanel-node/master/scripts/install.sh) ; pause_return ;;
         16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh) ; pause_return ;;
+        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
+        18) curl -fsSL https://raw.githubusercontent.com/haradakashiwa/freegfw/main/install.sh | bash ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
