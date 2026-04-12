@@ -47,6 +47,7 @@ run_test() {
         echo -e "${RED}大小包路由不一致 ❌${RESET}"
         echo "$diff_output"
     fi
+    read -rp $'\n\033[33m按回车返回菜单...\033[0m'
 }
 
 # ==============================
