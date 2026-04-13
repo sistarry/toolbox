@@ -359,7 +359,7 @@ execute_choice() {
         16) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/home.sh) ;;
         17) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/cnmhml.sh) ;;
         18) sudo reboot ;;
-        19) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/yahuisme/network-optimization/main/script.sh) ;;
+        19) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNBBRTCP.sh) ;;
         20) wget -qO- https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
         21) wget -N https://ghfast.top/https://raw.githubusercontent.com/qqrrooty/EZrealm/main/CN/realm.sh && chmod +x realm.sh && ./realm.sh ;;
         22) wget --no-check-certificate -O gost.sh https://mirror.ghproxy.com/https://raw.githubusercontent.com/qqrrooty/EZgost/main/CN/gost.sh && chmod +x gost.sh && ./gost.sh ;;
