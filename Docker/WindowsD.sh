@@ -161,7 +161,7 @@ services:
     cap_add:
       - NET_ADMIN
     ports:
-      - "${PORT}:8006"
+      - "127.0.0.1:${PORT}:8006"
       - "${RDP_PORT}:3389/tcp"
       - "${RDP_PORT}:3389/udp"
     volumes:
@@ -175,7 +175,7 @@ EOF
 
     echo
     echo -e "${GREEN}✅ Windows 已启动${RESET}"
-    echo -e "${YELLOW}🌐 Web 控制台: http://${SERVER_IP}:${PORT}${RESET}"
+    echo -e "${YELLOW}🌐 Web 控制台: http://127.0.0.1:${PORT}${RESET}"
     echo -e "${YELLOW}🖥 RDP: ${SERVER_IP}:${RDP_PORT}${RESET}"
     echo -e "${GREEN}👤 用户名: $USERNAME${RESET}"
     echo -e "${GREEN}🔑 密码: $PASSWORD${RESET}"
