@@ -13,11 +13,10 @@ menu() {
     echo -e "${GREEN} 4) 删除进程${RESET}"
     echo -e "${GREEN} 5) 查看自启动服务${RESET}"
     echo -e "${GREEN} 6) 自启动服务管理${RESET}"
-    echo -e "${GREEN} 7) 删除文件${RESET}"
-    echo -e "${GREEN} 8) 国家IP屏蔽${RESET}"
-    echo -e "${GREEN} 9) 磁盘占用${RESET}"
-    echo -e "${GREEN}10) 挂载磁盘${RESET}"
-    echo -e "${GREEN}11) 安全扫描${RESET}"
+    echo -e "${GREEN} 7) 国家IP屏蔽${RESET}"
+    echo -e "${GREEN} 8) 磁盘占用${RESET}"
+    echo -e "${GREEN} 9) 挂载磁盘${RESET}"
+    echo -e "${GREEN}10) 安全扫描${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择操作: \033[0m' choice
     case $choice in
@@ -52,26 +51,21 @@ menu() {
             pause
             ;;
         7)
-            echo -e "${GREEN}正在删除文件...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rmdocument.sh)
-            pause
-            ;;
-        8)
             echo -e "${GREEN}正在国家IP屏蔽...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/GeoFirewall.sh)
             pause
             ;;
-        9)
+        8)
             echo -e "${GREEN}正在查看磁盘占用...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/DHGL.sh)
             pause
             ;;
-        10)
+        9)
             echo -e "${GREEN}正在挂载磁盘...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/DISKGL.sh)
             pause
             ;;
-        11)
+        10)
             echo -e "${GREEN}正在安全扫描...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Security.sh)
             pause
