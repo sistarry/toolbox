@@ -223,7 +223,7 @@ MAIN_MENU=(
 # 二级菜单（编号去掉前导零，显示时格式化为两位数）
 SUB_MENU[1]="1 更新系统|2 系统信息|3 修改root密码|4 root密码登录管理|5 root公钥登录管理|6 修改SSH端口|7 修改时区|8 时间同步|9 切换v4V6|10 开放所有端口|11 更换系统源|12 DDdebian12|13 DDwindows10|14 DDNAT|15 DD飞牛|16 修改语言|17 修改主机名|18 一键优化|19 VPS重启"
 SUB_MENU[2]="20 代理工具箱|21 FRP管理|22 BBRv3优化|23 WARP|24 BBR+TCP智能调参|25 Reality|26 SurgeSnell|27 Shadowsocks|28 自定义DNS解锁|29 DDNS|30 Hysteria2|31 3X-UI|32 Realm|33 GOST|34 哆啦A梦转发面板|35 easytier组网"
-SUB_MENU[3]="36 NodeQuality脚本|37 融合怪测试|38 YABS测试|39 网络质量体检脚本|40 IP质量体检脚本|41 硬盘质量体检脚本|42 三网延迟检测|43 简单回程测试|44 完整路由检测|45 流媒体解锁|46 三网延迟测速|47 检查25端口开放|48 网络工具箱"
+SUB_MENU[3]="36 NodeQuality|37 融合怪测试|38 YABS测试|39 网络质量体检|40 IP质量体检|41 硬盘质量体检|42 三网延迟检测|43 简单回程测试|44 完整路由检测|45 流媒体解锁|46 三网延迟测速|47 检查25端口开放|48 网络工具箱"
 SUB_MENU[4]="49 Docker管理|50 DockerCompose管理|51 DockerCompose备份恢复|52 DockerCompose自动更新"
 SUB_MENU[5]="53 应用管理|54 面板管理|55 监控管理|56 yt-dlp视频下载|57 镜像加速|58 独角数卡|59 小雅全家桶|60 qbittorrent"
 SUB_MENU[6]="61 NGINXV4反代|62 NGINXV6反代|63 Caddy反代|64 NginxProxyManager面板|65 acme申请证书|66 Cloudflare证书管理|67 证书备份与恢复"
@@ -231,7 +231,7 @@ SUB_MENU[7]="68 系统清理|69 重装系统|70 系统组件|71 开发环境|72 
 SUB_MENU[8]="80 科技lion工具箱|81 老王工具箱|82 酷雪云工具箱|83 Alpine工具箱|84 甲骨文工具箱|85 开小鸡工具箱|86 国内VPS工具箱"
 SUB_MENU[9]="87 脚本短链|89 网站部署|90 ssh登录信息|91 Emby反代|92 GProxy加速|93 Akile优先DNS|94 自动机场签到|95 1panelapps管理|96 关闭V1SSH|97 卸载哪吒Agent|98 卸载komariAgent"
 SUB_MENU[10]="100 VPS信息通知|101 流量狗|102 VPS遥控器|103 TrafficCop流量监控"
-SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 Croc文件传输|110 压缩文件|111 解压文件"
+SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 Croc文件传输|110 压缩文件|111 解压文件|112 删除文件"
 SUB_MENU[12]="77 自动更新|88 更新脚本|99 卸载脚本"
 
 # 显示一级菜单
@@ -463,6 +463,7 @@ execute_choice() {
         109) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Croc.sh) ;;
         110) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
         111) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
+        112) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rmdocument.sh) ;;
 
         #  自动更新脚本
         77) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/tool/update.sh) ;; 
