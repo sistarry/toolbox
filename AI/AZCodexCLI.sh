@@ -271,6 +271,12 @@ show_env() {
   else
     echo "codex        : 未安装"
   fi
+
+  if command -v bwrap >/dev/null 2>&1; then
+    echo "bubblewrap   : $(bwrap --version 2>/dev/null | head -n1 || echo '已安装但版本读取失败')"
+  else
+    echo "bubblewrap   : 未安装"
+  fi
 }
 
 fix_path_hint() {
@@ -293,9 +299,102 @@ fix_path_hint() {
   echo "  source ~/.zshrc"
 }
 
+check_bwrap() {
+  if command -v bwrap >/dev/null 2>&1; then
+    ok "bubblewrap 已安装: $(bwrap --version 2>/dev/null | head -n1 || echo '版本读取失败')"
+    return 0
+  fi
+  warn "未检测到 bubblewrap (bwrap)"
+  return 1
+}
+
+install_bwrap_debian() {
+  require_sudo || return 1
+  info "使用 apt 安装 bubblewrap"
+  run_root apt update
+  run_root apt install -y bubblewrap
+}
+
+install_bwrap_rhel() {
+  require_sudo || return 1
+  info "使用 dnf/yum 安装 bubblewrap"
+  if command -v dnf >/dev/null 2>&1; then
+    run_root dnf install -y bubblewrap
+  elif command -v yum >/dev/null 2>&1; then
+    run_root yum install -y bubblewrap
+  else
+    err "未找到 dnf 或 yum"
+    return 1
+  fi
+}
+
+install_bwrap_alpine() {
+  require_sudo || return 1
+  info "使用 apk 安装 bubblewrap"
+  run_root apk add bubblewrap
+}
+
+install_bwrap_macos() {
+  if ! command -v brew >/dev/null 2>&1; then
+    err "未检测到 Homebrew，请先安装 brew"
+    return 1
+  fi
+  info "使用 brew 安装 bubblewrap"
+  brew install bubblewrap
+}
+
+install_bwrap() {
+  if check_bwrap; then
+    return 0
+  fi
+
+  detect_os
+
+  case "$OS_ID" in
+    ubuntu|debian)
+      install_bwrap_debian
+      ;;
+    centos|rhel|rocky|almalinux|ol|fedora)
+      install_bwrap_rhel
+      ;;
+    alpine)
+      install_bwrap_alpine
+      ;;
+    macos|darwin)
+      install_bwrap_macos
+      ;;
+    *)
+      case "$OS_LIKE" in
+        *debian*)
+          install_bwrap_debian
+          ;;
+        *rhel*|*fedora*)
+          install_bwrap_rhel
+          ;;
+        *)
+          if [ "$(uname -s)" = "Darwin" ]; then
+            install_bwrap_macos
+          else
+            err "暂不支持自动安装 bubblewrap，系统类型: ${OS_ID:-unknown}"
+            return 1
+          fi
+          ;;
+      esac
+      ;;
+  esac
+
+  if check_bwrap; then
+    ok "bubblewrap 安装完成"
+  else
+    err "bubblewrap 安装失败"
+    return 1
+  fi
+}
+
 install_all() {
   install_node
   install_codex
+  install_bwrap
 }
 
 menu() {
@@ -303,7 +402,7 @@ menu() {
   green "=================================="
   green "     Codex CLI 菜单管理"
   green "=================================="
-  green " 1. 安装 Node.js + Codex CLI"
+  green " 1. 安装 Node.js + Codex CLI + bubblewrap"
   green " 2. 仅安装 Node.js"
   green " 3. 安装 Codex CLI"
   green " 4. 检查 Codex 版本"
@@ -315,6 +414,8 @@ menu() {
   green "10. 卸载 Codex CLI"
   green "11. 查看环境信息"
   green "12. PATH 修复提示"
+  green "13. 安装 bubblewrap (bwrap)"
+  green "14. 检查 bubblewrap"
   green " 0. 退出"
   green "=================================="
 }
@@ -370,6 +471,14 @@ main() {
         ;;
       12)
         fix_path_hint
+        pause
+        ;;
+      13)
+        install_bwrap
+        pause
+        ;;
+      14)
+        check_bwrap || true
         pause
         ;;
       0)
