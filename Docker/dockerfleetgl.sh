@@ -32,7 +32,6 @@ menu() {
     echo -e "${GREEN} 1) 部署主控 (Master)${RESET}"
     echo -e "${GREEN} 2) 部署节点 (Node)${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
-    echo
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
