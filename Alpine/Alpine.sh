@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# Alpine/Ubuntu/Debian/CentOS 系统管理菜单
+# Alpine系统管理菜单
 # 支持永久快捷键 A/a + 自调用循环菜单
 # ========================================
 
@@ -49,15 +49,16 @@ menu() {
     echo -e "${YELLOW}[07] 切换字体${RESET}"
     echo -e "${YELLOW}[08] 修改主机名${RESET}"
     echo -e "${YELLOW}[09] Docker管理${RESET}"
-    echo -e "${YELLOW}[10] Reality${RESET}"
-    echo -e "${YELLOW}[11] Hysteria2${RESET}"
-    echo -e "${YELLOW}[12] Xray-Argo${RESET}"
-    echo -e "${YELLOW}[13] F佬Sing-box${RESET}"
-    echo -e "${YELLOW}[14] vless-all-in-one${RESET}"
-    echo -e "${YELLOW}[15] 3X-UI面板${RESET}"
-    echo -e "${YELLOW}[16] Realm-xwPF${RESET}"
-    echo -e "${YELLOW}[17] 应用商店${RESET}"
-    echo -e "${YELLOW}[18] Emby反代${RESET}"
+    echo -e "${YELLOW}[10] 应用商店${RESET}"
+    echo -e "${YELLOW}[11] Shadowsocks${RESET}"
+    echo -e "${YELLOW}[12] Reality${RESET}"
+    echo -e "${YELLOW}[13] Hysteria2${RESET}"
+    echo -e "${YELLOW}[14] Xray-Argo${RESET}"
+    echo -e "${YELLOW}[15] F佬Sing-box${RESET}"
+    echo -e "${YELLOW}[16] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[17] 3X-UI面板${RESET}"
+    echo -e "${YELLOW}[18] Realm-xwPF${RESET}"
+    echo -e "${YELLOW}[19] Emby反代${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -75,15 +76,16 @@ menu() {
         7) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apcn.sh) ;;
         8) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/aphome.sh) ;;
         9) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/apdocker.sh) ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AZAPReality.sh) ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AZAPHysteria2.sh) ;;
-        12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2go.sh) ;;
-        13) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
-        14) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
-        15) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh) ;;
-        16) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
-        17) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
-        18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/EmbyAlpine.sh) ;;
+        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
+        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AZAPSS.sh) ;;
+        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AZAPReality.sh) ;;
+        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AZAPHysteria2.sh) ;;
+        14) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2go.sh) ;;
+        15) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
+        16) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
+        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh) ;;
+        18) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
+        19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/EmbyAlpine.sh) ;;
         88)
             echo -e "${YELLOW}🔄 正在更新脚本...${RESET}"
             curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL" || {
