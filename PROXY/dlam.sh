@@ -4,7 +4,7 @@ GREEN="\033[32m"
 RED="\033[31m"
 RESET="\033[0m"
 
-BASE_DIR="/root/flux-panel"
+BASE_DIR="/opt/flux-panel"
 
 # ==============================
 # 初始化目录
