@@ -879,7 +879,7 @@ def handle_text_command(chat_id: str, text: str) -> None:
         code, out = run_compose(project, ["up", "-d"])
         send_message(chat_id, f"[{project.name}] 启动完成(退出码={code})\n{localize_docker_text(out)}", project_keyboard(project.name))
         return
-    if cmd == "/down":
+    if cmd == "/stop":
         code, out = run_compose(project, ["stop"])
         send_message(chat_id, f"[{project.name}] 停止完成(退出码={code})\n{localize_docker_text(out)}", project_keyboard(project.name))
         return
@@ -1060,7 +1060,7 @@ def handle_callback(callback: dict) -> None:
         elif action == "up":
             code, out = run_compose(project, ["up", "-d"])
             text = f"[{project.name}] 启动完成(退出码={code})\n{localize_docker_text(out)}"
-        elif action == "down":
+        elif action == "stop":
             code, out = run_compose(project, ["stop"])
             text = f"[{project.name}] 停止完成(退出码={code})\n{localize_docker_text(out)}"
         elif action == "delete_container":
