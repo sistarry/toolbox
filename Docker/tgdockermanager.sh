@@ -367,7 +367,7 @@ def project_keyboard(project_name: str) -> dict:
         "inline_keyboard": [
             [
                 {"text": "▶️ 启动", "callback_data": f"action:up:{project_name}"},
-                {"text": "⏹ 停止", "callback_data": f"action:down:{project_name}"},
+                {"text": "⏹ 停止", "callback_data": f"action:stop:{project_name}"},
             ],
             [
                 {"text": "🔄 重启", "callback_data": f"action:restart:{project_name}"},
@@ -880,7 +880,7 @@ def handle_text_command(chat_id: str, text: str) -> None:
         send_message(chat_id, f"[{project.name}] 启动完成(退出码={code})\n{localize_docker_text(out)}", project_keyboard(project.name))
         return
     if cmd == "/down":
-        code, out = run_compose(project, ["down"])
+        code, out = run_compose(project, ["stop"])
         send_message(chat_id, f"[{project.name}] 停止完成(退出码={code})\n{localize_docker_text(out)}", project_keyboard(project.name))
         return
     if cmd == "/delete":
@@ -1061,7 +1061,7 @@ def handle_callback(callback: dict) -> None:
             code, out = run_compose(project, ["up", "-d"])
             text = f"[{project.name}] 启动完成(退出码={code})\n{localize_docker_text(out)}"
         elif action == "down":
-            code, out = run_compose(project, ["down"])
+            code, out = run_compose(project, ["stop"])
             text = f"[{project.name}] 停止完成(退出码={code})\n{localize_docker_text(out)}"
         elif action == "delete_container":
             code, out = run_compose(project, ["down", "-v", "--rmi", "all"])
