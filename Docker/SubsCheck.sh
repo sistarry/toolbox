@@ -129,7 +129,7 @@ EOF
     echo
     echo -e "${GREEN}✅ Subs-Check 已启动${RESET}"
     echo -e "${YELLOW}🌐 API 地址: http://127.0.0.1:${PORT1}${RESET}"
-    echo -e "${YELLOW}🔐 Web 地址: http://127.0.0.1:${PORT2}${RESET}"
+    echo -e "${YELLOW}🔐 Web 地址: http://127.0.0.1:${PORT2}/admin${RESET}"
     echo -e "${YELLOW}🔐 API_KEY: $API_KEY${RESET}"
     echo -e "${GREEN}📂 配置目录: $APP_DIR/config${RESET}"
     echo -e "${GREEN}📂 输出目录: $APP_DIR/output${RESET}"
