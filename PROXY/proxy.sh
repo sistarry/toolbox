@@ -538,6 +538,10 @@ while true; do
 done
 }
 
+# =============================
+# 核心状态检测
+# =============================
+
 check_panel() {
     clear
     echo -e "${ORANGE}╔══════════════════════════╗${RESET}"
@@ -559,18 +563,26 @@ check_panel() {
     }
 
     # =============================
-    # Xray
+    # Xray（兼容 3x-ui）
     # =============================
     echo -e "${YELLOW}▶ Xray${RESET}"
-    if command -v xray &>/dev/null; then
+    if command -v xray &>/dev/null || pgrep -f xray &>/dev/null; then
+
         status=$(systemctl is-active xray 2>/dev/null)
+        [[ "$status" != "active" && $(pgrep -f xray) ]] && status="active"
+
         echo -e "状态: $(format_status "$status")"
 
-        ver=$(xray version 2>/dev/null | head -n1 | awk '{print $2}')
-        echo -e "版本: ${ver:-未知}"
+        if command -v xray &>/dev/null; then
+            ver=$(xray version 2>/dev/null | head -n1 | awk '{print $2}')
+        else
+            ver=$(ps -ef | grep xray | grep -v grep | grep -oE 'v[0-9.]+' | head -n1)
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
 
         ports=$(get_ports xray)
         [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
@@ -595,7 +607,7 @@ check_panel() {
     echo ""
 
     # =============================
-    # Mihomo / Clash
+    # Mihomo
     # =============================
     echo -e "${YELLOW}▶ Mihomo${RESET}"
     if command -v mihomo &>/dev/null || command -v clash &>/dev/null; then
@@ -605,30 +617,85 @@ check_panel() {
         ver=$(mihomo -v 2>/dev/null | head -n1 || clash -v 2>/dev/null | head -n1)
         echo -e "版本: ${ver:-未知}"
 
-        ports=$(get_ports mihomo; get_ports clash)
-        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ' | sort -u)" || echo -e "${YELLOW}端口: 无${RESET}"
+        ports=$( (get_ports mihomo; get_ports clash) | sort -u )
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
 
     # =============================
-    # WARP
+    # CF WARP（兼容 warp-cli + wgcf）
     # =============================
     echo -e "${YELLOW}▶ CF WARP${RESET}"
+
+    warp_found=0
+
     if command -v warp-cli &>/dev/null; then
-        status=$(warp-cli status 2>/dev/null | grep -i 'Connected')
-        if [[ -n "$status" ]]; then
+        warp_found=1
+        if warp-cli status 2>/dev/null | grep -qi 'Connected'; then
             echo -e "状态: ${GREEN}已连接${RESET}"
         else
             echo -e "状态: ${YELLOW}未连接${RESET}"
         fi
-
-        ip=$(curl -s --max-time 2 https://www.cloudflare.com/cdn-cgi/trace | grep warp=)
-        [[ "$ip" == *"on"* ]] && echo -e "模式: ${GREEN}WARP中${RESET}" || echo -e "模式: ${YELLOW}普通网络${RESET}"
-    else
-        echo -e "状态: ${RED}未安装${RESET}"
     fi
+
+    if ip a 2>/dev/null | grep -q 'wgcf'; then
+        warp_found=1
+        echo -e "状态: ${GREEN}WGCF运行中${RESET}"
+    fi
+
+    if [[ $warp_found -eq 0 ]]; then
+        echo -e "状态: ${RED}未安装${RESET}"
+    else
+        trace=$(curl -s --max-time 2 https://www.cloudflare.com/cdn-cgi/trace)
+
+        if echo "$trace" | grep -q "warp=on"; then
+            echo -e "模式: ${GREEN}WARP中${RESET}"
+        elif echo "$trace" | grep -q "warp=plus"; then
+            echo -e "模式: ${GREEN}WARP+${RESET}"
+        else
+            echo -e "模式: ${YELLOW}普通网络${RESET}"
+        fi
+    fi
+    echo ""
+
+    # =============================
+    # 网络出口
+    # =============================
+    echo -e "${YELLOW}▶ 网络出口${RESET}"
+
+    # IPv4（多接口）
+    ipv4=$(curl -4 -s --max-time 3 ip.sb 2>/dev/null)
+    [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ifconfig.me 2>/dev/null)
+    [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ipv4.icanhazip.com 2>/dev/null)
+
+    # IPv6
+    ipv6=$(curl -6 -s --max-time 3 ip.sb 2>/dev/null)
+
+    # 国家识别（多接口兜底）
+    get_country() {
+        local ip="$1"
+        local country=""
+
+        country=$(curl -s --max-time 3 "https://ip.sb/geoip/$ip" | grep country_code | cut -d '"' -f4)
+        [[ -z "$country" ]] && country=$(curl -s --max-time 3 "http://ip-api.com/line/$ip?fields=countryCode")
+        [[ -z "$country" || "$country" == *"limit"* ]] && country=$(curl -s --max-time 3 "https://ipinfo.io/$ip/country")
+
+        echo "${country:-未知}"
+    }
+
+    if [[ -n "$ipv4" ]]; then
+        country=$(get_country "$ipv4")
+        echo -e "IPv4: ${GREEN}$ipv4${RESET}  国家: ${GREEN}$country${RESET}"
+    else
+        echo -e "IPv4: ${RED}获取失败${RESET}"
+    fi
+
+    if [[ -n "$ipv6" ]]; then
+        echo -e "IPv6: ${GREEN}$ipv6${RESET}"
+    fi
+
     echo ""
 
     # =============================
@@ -636,7 +703,7 @@ check_panel() {
     # =============================
     echo -e "${YELLOW}▶ Docker${RESET}"
     if command -v docker &>/dev/null; then
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard')
         if [[ -n "$containers" ]]; then
             echo -e "${GREEN}运行中:${RESET} $(echo $containers | tr '\n' ' ')"
         else
