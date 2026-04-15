@@ -12,7 +12,7 @@ APP_NAME="xray-realityxhttp"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/config.json"
-CONTAINER_NAME="Xray-Reality"
+CONTAINER_NAME="Xray-Realityxhttp"
 NODE_INFO_FILE="$APP_DIR/node.txt"
 
 check_docker() {
