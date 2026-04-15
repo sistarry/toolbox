@@ -405,7 +405,7 @@ def run_local(action,project=None):
     base=['docker','compose','-f',p['compose']]
     if action=='status': return compose_status_text(p, project)
     if action=='up': c,o=shell(base+['up','-d'],cwd=Path(p['dir'])); return f'[{project}] 启动完成（退出码={c}）\n{loc(o)}'
-    if action=='down': c,o=shell(base+['down'],cwd=Path(p['dir'])); return f'[{project}] 停止完成（退出码={c}）\n{loc(o)}'
+    if action=='down': c,o=shell(base+['stop'],cwd=Path(p['dir'])); return f'[{project}] 停止完成（退出码={c}）\n{loc(o)}'
     if action=='delete_container':
         c,o=shell(base+['down','-v','--rmi','all'],cwd=Path(p['dir']))
         return f'[{project}] 删除容器完成（退出码={c}）\n{loc(o)}'
