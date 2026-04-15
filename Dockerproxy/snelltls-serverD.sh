@@ -152,7 +152,7 @@ services:
 
   shadow-tls:
     image: ghcr.io/ihciah/shadow-tls:latest
-    container_name: shadow-tls
+    container_name: sshadow-tls
     restart: unless-stopped
     network_mode: host
     environment:
@@ -199,7 +199,7 @@ update_app() {
 
 # 重启两个容器
 restart_app() {
-    docker restart snell shadow-tls
+    docker restart snell sshadow-tls
     echo -e "${GREEN}✅ Snell + ShadowTLS 已重启${RESET}"
     read -p "按回车返回菜单..."
 }
@@ -211,7 +211,7 @@ view_logs() {
     read -p "请选择: " choice
     case $choice in
         1) docker logs -f snell ;;
-        2) docker logs -f shadow-tls ;;
+        2) docker logs -f sshadow-tls ;;
         *) echo "取消" ;;
     esac
 }
@@ -234,7 +234,7 @@ view_node_info() {
 
 # 查看状态
 check_status() {
-    docker ps | grep -E "snell|shadow-tls"
+    docker ps | grep -E "snell|sshadow-tls"
     read -p "按回车返回菜单..."
 }
 
