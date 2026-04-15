@@ -541,7 +541,6 @@ done
 # =============================
 # 核心状态检测
 # =============================
-
 check_panel() {
     clear
     echo -e "${ORANGE}╔══════════════════════════╗${RESET}"
@@ -557,7 +556,6 @@ check_panel() {
         esac
     }
 
-    # 提取端口
     get_ports() {
         ss -tulnp 2>/dev/null | grep -E "$1" | awk '{print $5}' | awk -F: '{print $NF}' | sort -u
     }
@@ -625,31 +623,52 @@ check_panel() {
     echo ""
 
     # =============================
-    # CF WARP（兼容 warp-cli + wgcf）
+    # CF WARP
     # =============================
     echo -e "${YELLOW}▶ CF WARP${RESET}"
 
     warp_found=0
 
+    # warp-cli
     if command -v warp-cli &>/dev/null; then
         warp_found=1
         if warp-cli status 2>/dev/null | grep -qi 'Connected'; then
             echo -e "状态: ${GREEN}已连接${RESET}"
         else
-            echo -e "状态: ${YELLOW}未连接${RESET}"
+            echo -e "状态: ${YELLOW}已安装(未连接)${RESET}"
         fi
     fi
 
-    if ip a 2>/dev/null | grep -q 'wgcf'; then
+    # wgcf / WireGuard
+    if command -v wgcf &>/dev/null || ip a 2>/dev/null | grep -q 'wgcf'; then
         warp_found=1
-        echo -e "状态: ${GREEN}WGCF运行中${RESET}"
+        echo -e "状态: ${GREEN}WGCF已安装${RESET}"
+    fi
+
+    # warp-svc
+    if systemctl list-unit-files 2>/dev/null | grep -q warp-svc; then
+        warp_found=1
+        if systemctl is-active warp-svc &>/dev/null; then
+            echo -e "状态: ${GREEN}服务运行中${RESET}"
+        else
+            echo -e "状态: ${YELLOW}服务已安装${RESET}"
+        fi
+    fi
+
+    # ⭐ warp 脚本
+    if command -v warp &>/dev/null; then
+        warp_found=1
+        if warp status 2>/dev/null | grep -q "WARP 网络接口已开启"; then
+            echo -e "状态: ${GREEN}已开启${RESET}"
+        else
+            echo -e "状态: ${YELLOW}已安装${RESET}"
+        fi
     fi
 
     if [[ $warp_found -eq 0 ]]; then
         echo -e "状态: ${RED}未安装${RESET}"
     else
         trace=$(curl -s --max-time 2 https://www.cloudflare.com/cdn-cgi/trace)
-
         if echo "$trace" | grep -q "warp=on"; then
             echo -e "模式: ${GREEN}WARP中${RESET}"
         elif echo "$trace" | grep -q "warp=plus"; then
@@ -665,15 +684,12 @@ check_panel() {
     # =============================
     echo -e "${YELLOW}▶ 网络出口${RESET}"
 
-    # IPv4（多接口）
     ipv4=$(curl -4 -s --max-time 3 ip.sb 2>/dev/null)
     [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ifconfig.me 2>/dev/null)
     [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ipv4.icanhazip.com 2>/dev/null)
 
-    # IPv6
     ipv6=$(curl -6 -s --max-time 3 ip.sb 2>/dev/null)
 
-    # 国家识别（多接口兜底）
     get_country() {
         local ip="$1"
         local country=""
