@@ -142,6 +142,7 @@ while true; do
     echo -e "${YELLOW}[12] Vless+httpupgrade${RESET}"
     echo -e "${YELLOW}[13] VlessEncryption${RESET}"
     echo -e "${YELLOW}[14] VlessRealityxhttp${RESET}"
+    echo -e "${YELLOW}[15] AnyReality${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -162,6 +163,7 @@ while true; do
         12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vlesshttpupgrade.sh) ;;
         13) wget -qO /tmp/VLESSEncryption.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/VLESSEncryption.sh && bash /tmp/VLESSEncryption.sh ;;
         14) wget -qO /tmp/vlessrealityxhttp.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vlessrealityxhttp.sh && bash /tmp/vlessrealityxhttp.sh ;;
+        15) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/singboxanyreality.sh) ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
