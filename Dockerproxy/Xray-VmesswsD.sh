@@ -126,7 +126,7 @@ cat > "$COMPOSE_FILE" <<EOF
 services:
   xray:
     image: ghcr.io/xtls/xray-core:latest
-    container_name: xray-server
+    container_name: $CONTAINER_NAME
     restart: unless-stopped
     command: ["run","-c","/etc/xray/config.json"]
     volumes:
