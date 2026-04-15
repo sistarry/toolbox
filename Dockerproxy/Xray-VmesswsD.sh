@@ -8,7 +8,7 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-CONTAINER_NAME="xray-server"
+CONTAINER_NAME="xray-vmess"
 APP_NAME="xray-vmess-ws"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
