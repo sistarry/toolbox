@@ -450,7 +450,7 @@ STATE_DIR=/opt/docker-fleet-node/state
 TG_LOG_LINES=80
 EOF
 chmod 600 "$ENV_FILE"; write_service; systemctl daemon-reload; systemctl enable --now "$APP_NAME"; info '节点安装完成'; echo "主控地址: $MASTER_URL"; echo "节点名称: $NODE_NAME"; }
-uninstall_app() { require_root; systemctl disable --now "$APP_NAME" >/dev/null 2>&1 || true; rm -f "$SERVICE_FILE" "$ENV_FILE"; systemctl daemon-reload; rm -rf "$INSTALL_DIR"; info '已卸载 docker-fleet-node'; }
+uninstall_app() { require_root; systemctl disable --now "$APP_NAME" >/dev/null 2>&1 || true; rm -f "$SERVICE_FILE" "$ENV_FILE"; systemctl daemon-reload; rm -rf "$INSTALL_DIR"; info '已卸载'; }
 status_app() { systemctl --no-pager status "$APP_NAME" || true; [[ -f "$ENV_FILE" ]] && echo && grep -E '^(MASTER_URL|NODE_NAME)=' "$ENV_FILE" || true; }
 restart_app() { require_root; systemctl restart "$APP_NAME"; info '已重启'; }
 show_menu() { echo; echo '====== Docker Fleet 节点 ======'; echo '1. 安装'; echo '2. 卸载'; echo '3. 查看状态'; echo '4. 重启服务'; echo '0. 退出'; }
