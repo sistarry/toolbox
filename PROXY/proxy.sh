@@ -95,6 +95,7 @@ main_menu() {
     echo -e "${YELLOW}[08] Docker单协议类${RESET}"
     echo -e "${YELLOW}[09] Docker多协议类${RESET}"
     echo -e "${YELLOW}[10] 监控通知类${RESET}"
+    echo -e "${YELLOW}[11] 核心状态检测${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -112,6 +113,7 @@ main_menu() {
         08) docker_menu ;;
         09) dockers_menu ;;
         10) monitor_menu ;;
+        11) check_panel ; pause_return ;;
         88) update_script ; pause_return ;;
         99) uninstall_script ;;
         00) exit 0 ;;
@@ -536,7 +538,116 @@ while true; do
 done
 }
 
+check_panel() {
+    clear
+    echo -e "${ORANGE}╔══════════════════════════╗${RESET}"
+    echo -e "${ORANGE}       核心状态检测          ${RESET}"
+    echo -e "${ORANGE}╚══════════════════════════╝${RESET}"
+    echo ""
 
+    format_status() {
+        case "$1" in
+            active) echo -e "${GREEN}运行中${RESET}" ;;
+            inactive|failed) echo -e "${YELLOW}未运行${RESET}" ;;
+            *) echo -e "${RED}未安装${RESET}" ;;
+        esac
+    }
+
+    # 提取端口
+    get_ports() {
+        ss -tulnp 2>/dev/null | grep -E "$1" | awk '{print $5}' | awk -F: '{print $NF}' | sort -u
+    }
+
+    # =============================
+    # Xray
+    # =============================
+    echo -e "${YELLOW}▶ Xray${RESET}"
+    if command -v xray &>/dev/null; then
+        status=$(systemctl is-active xray 2>/dev/null)
+        echo -e "状态: $(format_status "$status")"
+
+        ver=$(xray version 2>/dev/null | head -n1 | awk '{print $2}')
+        echo -e "版本: ${ver:-未知}"
+
+        ports=$(get_ports xray)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # Sing-box
+    # =============================
+    echo -e "${YELLOW}▶ Sing-box${RESET}"
+    if command -v sing-box &>/dev/null; then
+        status=$(systemctl is-active sing-box 2>/dev/null)
+        echo -e "状态: $(format_status "$status")"
+
+        ver=$(sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
+        echo -e "版本: ${ver:-未知}"
+
+        ports=$(get_ports sing-box)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # Mihomo / Clash
+    # =============================
+    echo -e "${YELLOW}▶ Mihomo${RESET}"
+    if command -v mihomo &>/dev/null || command -v clash &>/dev/null; then
+        status=$(systemctl is-active mihomo 2>/dev/null || systemctl is-active clash 2>/dev/null)
+        echo -e "状态: $(format_status "$status")"
+
+        ver=$(mihomo -v 2>/dev/null | head -n1 || clash -v 2>/dev/null | head -n1)
+        echo -e "版本: ${ver:-未知}"
+
+        ports=$(get_ports mihomo; get_ports clash)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ' | sort -u)" || echo -e "${YELLOW}端口: 无${RESET}"
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # WARP
+    # =============================
+    echo -e "${YELLOW}▶ CF WARP${RESET}"
+    if command -v warp-cli &>/dev/null; then
+        status=$(warp-cli status 2>/dev/null | grep -i 'Connected')
+        if [[ -n "$status" ]]; then
+            echo -e "状态: ${GREEN}已连接${RESET}"
+        else
+            echo -e "状态: ${YELLOW}未连接${RESET}"
+        fi
+
+        ip=$(curl -s --max-time 2 https://www.cloudflare.com/cdn-cgi/trace | grep warp=)
+        [[ "$ip" == *"on"* ]] && echo -e "模式: ${GREEN}WARP中${RESET}" || echo -e "模式: ${YELLOW}普通网络${RESET}"
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # Docker
+    # =============================
+    echo -e "${YELLOW}▶ Docker${RESET}"
+    if command -v docker &>/dev/null; then
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp')
+        if [[ -n "$containers" ]]; then
+            echo -e "${GREEN}运行中:${RESET} $(echo $containers | tr '\n' ' ')"
+        else
+            echo -e "${GREEN}无相关容器${RESET}"
+        fi
+    else
+        echo -e "${RED}未安装${RESET}"
+    fi
+
+    echo ""
+}
 # =============================
 # 更新 & 卸载
 # =============================
