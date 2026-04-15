@@ -27,7 +27,7 @@ check_docker() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Subscription Bot 管理菜单 ===${RESET}"
+        echo -e "${GREEN}=== countdown-bot 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
