@@ -285,6 +285,7 @@ while true; do
     echo -e "${YELLOW}[08] Realm转发(Web面板)${RESET}"
     echo -e "${YELLOW}[09] NodePass${RESET}"
     echo -e "${YELLOW}[10] nftables端口转发${RESET}"
+    echo -e "${YELLOW}[11] 哆啦A梦面板重制版${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -301,6 +302,7 @@ while true; do
         08) bash <(curl -fsSL https://raw.githubusercontent.com/hiapb/hia-realm/main/install.sh) ; pause_return ;;
         09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/NodePass.sh) ; pause_return ;;
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftables.sh) ; pause_return ;;
+        11) curl -fsSL https://raw.githubusercontent.com/0xNetuser/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
