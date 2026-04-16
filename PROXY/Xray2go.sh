@@ -157,18 +157,13 @@ install_xray() {
 
    # 生成随机UUID和密码
     password=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c 24)
-    GRPC_PORT=$(($PORT + 1))
-    XHTTP_PORT=$(($PORT + 2))
 
     # 关闭防火墙
     iptables -F > /dev/null 2>&1 && iptables -P INPUT ACCEPT > /dev/null 2>&1 && iptables -P FORWARD ACCEPT > /dev/null 2>&1 && iptables -P OUTPUT ACCEPT > /dev/null 2>&1
     command -v ip6tables &> /dev/null && ip6tables -F > /dev/null 2>&1 && ip6tables -P INPUT ACCEPT > /dev/null 2>&1 && ip6tables -P FORWARD ACCEPT > /dev/null 2>&1 && ip6tables -P OUTPUT ACCEPT > /dev/null 2>&1
 
-    output=$(/etc/xray/xray x25519)
-    private_key=$(echo "${output}" | grep "PrivateKey:" | awk '{print $2}')
-    public_key=$(echo "${output}" | grep "Password:" | awk '{print $2}')
 
-   # 生成配置文件
+   #配置文件生成部分
 cat > "${config_dir}" << EOF
 {
   "log": { "access": "/dev/null", "error": "/dev/null", "loglevel": "none" },
@@ -177,54 +172,33 @@ cat > "${config_dir}" << EOF
       "port": $ARGO_PORT,
       "protocol": "vless",
       "settings": {
-        "clients": [{ "id": "$UUID", "flow": "xtls-rprx-vision" }],
+        "clients": [{ "id": "$UUID" }],
         "decryption": "none",
         "fallbacks": [
-          { "dest": 3001 }, { "path": "/vless-argo", "dest": 3002 },
+          { "dest": 3001 }, 
+          { "path": "/vless-argo", "dest": 3002 },
           { "path": "/vmess-argo", "dest": 3003 }
         ]
       },
-      "streamSettings": { "network": "tcp" }
+      "streamSettings": { "network": "tcp" },
+      "sniffing": { "enabled": true, "destOverride": ["http", "tls"] }
     },
     {
       "port": 3001, "listen": "127.0.0.1", "protocol": "vless",
-      "settings": { "clients": [{ "id": "$UUID" }], "decryption": "none" },
-      "streamSettings": { "network": "tcp", "security": "none" }
+      "settings": { "clients": [{ "id": "$UUID" }], "decryption": "none" }
     },
     {
       "port": 3002, "listen": "127.0.0.1", "protocol": "vless",
-      "settings": { "clients": [{ "id": "$UUID", "level": 0 }], "decryption": "none" },
-      "streamSettings": { "network": "ws", "security": "none", "wsSettings": { "path": "/vless-argo" } },
-      "sniffing": { "enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false }
+      "settings": { "clients": [{ "id": "$UUID" }], "decryption": "none" },
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vless-argo" } }
     },
     {
       "port": 3003, "listen": "127.0.0.1", "protocol": "vmess",
-      "settings": { "clients": [{ "id": "$UUID", "alterId": 0 }] },
-      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vmess-argo" } },
-      "sniffing": { "enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false }
-    },
-    {
-      "listen":"::","port": $XHTTP_PORT, "protocol": "vless","settings": {"clients": [{"id": "$UUID"}],"decryption": "none"},
-      "streamSettings": {"network": "xhttp","security": "reality","realitySettings": {"target": "www.nazhumi.com:443","xver": 0,"serverNames": 
-      ["www.nazhumi.com"],"privateKey": "$private_key","shortIds": [""]}},"sniffing": {"enabled": true,"destOverride": ["http","tls","quic"]}
-    },
-    {
-      "listen":"::","port":$GRPC_PORT,"protocol":"vless","settings":{"clients":[{"id":"$UUID"}],"decryption":"none"},
-      "streamSettings":{"network":"grpc","security":"reality","realitySettings":{"dest":"www.iij.ad.jp:443","serverNames":["www.iij.ad.jp"],
-      "privateKey":"$private_key","shortIds":[""]},"grpcSettings":{"serviceName":"grpc"}},"sniffing":{"enabled":true,"destOverride":["http","tls","quic"]}
+      "settings": { "clients": [{ "id": "$UUID" }] },
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vmess-argo" } }
     }
   ],
-  "dns": { "servers": ["https+local://8.8.8.8/dns-query"] },
-   "outbounds": [
-        {
-            "protocol": "freedom",
-            "tag": "direct"
-        },
-        {
-            "protocol": "blackhole",
-            "tag": "block"
-        }
-    ]
+  "outbounds": [{ "protocol": "freedom", "tag": "direct" }]
 }
 EOF
 }
@@ -508,7 +482,7 @@ fi
 
 # 卸载 xray
 uninstall_xray() {
-   reading "确定要卸载 xray-2go 吗? (y/n): " choice
+   reading "确定要卸载Xray-Argo吗? (y/n): " choice
    case "${choice}" in
        y|Y)
            yellow "正在卸载 xray"
@@ -531,7 +505,8 @@ uninstall_xray() {
             fi
            # 删除配置文件和日志
            rm -rf "${work_dir}" || true
-	       rm -rf /etc/systemd/system/xray.service /etc/systemd/system/tunnel.service 2>/dev/null	
+	       rm -rf /etc/systemd/system/xray.service /etc/systemd/system/tunnel.service 2>/dev/null
+           rm -f /usr/bin/2go	
 
             green "\n卸载完成\n"
            ;;
@@ -776,7 +751,6 @@ while true; do
    green "5. 卸载"
    green "0. 退出"
    reading "请输入选择: " choice
-   echo ""
    case "${choice}" in
         1)  
             if [ ${check_xray} -eq 0 ]; then
