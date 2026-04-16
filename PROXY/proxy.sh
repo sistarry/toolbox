@@ -96,6 +96,7 @@ main_menu() {
     echo -e "${YELLOW}[09] Docker多协议类${RESET}"
     echo -e "${YELLOW}[10] 监控通知类${RESET}"
     echo -e "${YELLOW}[11] 核心状态检测${RESET}"
+    echo -e "${YELLOW}[12] 核心卸载管理${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -114,6 +115,7 @@ main_menu() {
         09) dockers_menu ;;
         10) monitor_menu ;;
         11) check_panel ; pause_return ;;
+        12) uninstall_core_menu ;;
         88) update_script ; pause_return ;;
         99) uninstall_script ;;
         00) exit 0 ;;
@@ -561,7 +563,7 @@ check_panel() {
     }
 
     # =============================
-    # Xray（兼容 3x-ui）
+    # Xray
     # =============================
     echo -e "${YELLOW}▶ Xray${RESET}"
     if command -v xray &>/dev/null || pgrep -f xray &>/dev/null; then
@@ -623,13 +625,88 @@ check_panel() {
     echo ""
 
     # =============================
+    # Nginx（本机 + Docker）
+    # =============================
+    echo -e "${YELLOW}▶ Nginx${RESET}"
+
+    nginx_found=0
+
+    if command -v nginx &>/dev/null; then
+        nginx_found=1
+        status=$(systemctl is-active nginx 2>/dev/null)
+        echo -e "状态: $(format_status "$status")"
+
+        ver=$(nginx -v 2>&1 | awk -F/ '{print $2}')
+        echo -e "版本: ${ver:-未知}"
+
+        ports=$(get_ports nginx)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')"
+    fi
+
+    if command -v docker &>/dev/null; then
+        docker_nginx=$(docker ps --format "{{.Names}}" | grep -i nginx)
+        if [[ -n "$docker_nginx" ]]; then
+            nginx_found=1
+            echo -e "Docker: ${GREEN}运行中${RESET} ($docker_nginx)"
+        fi
+    fi
+
+    [[ $nginx_found -eq 0 ]] && echo -e "状态: ${RED}未安装${RESET}"
+    echo ""
+
+    # =============================
+    # Caddy（本机 + Docker）
+    # =============================
+    echo -e "${YELLOW}▶ Caddy${RESET}"
+
+    caddy_found=0
+
+    if command -v caddy &>/dev/null; then
+        caddy_found=1
+        status=$(systemctl is-active caddy 2>/dev/null)
+        echo -e "状态: $(format_status "$status")"
+
+        ver=$(caddy version 2>/dev/null)
+        echo -e "版本: ${ver:-未知}"
+
+        ports=$(get_ports caddy)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')"
+    fi
+
+    if command -v docker &>/dev/null; then
+        docker_caddy=$(docker ps --format "{{.Names}}" | grep -i caddy)
+        if [[ -n "$docker_caddy" ]]; then
+            caddy_found=1
+            echo -e "Docker: ${GREEN}运行中${RESET} ($docker_caddy)"
+        fi
+    fi
+
+    [[ $caddy_found -eq 0 ]] && echo -e "状态: ${RED}未安装${RESET}"
+    echo ""
+
+    # =============================
+    # ACME（仅 acme.sh）
+    # =============================
+    echo -e "${YELLOW}▶ ACME${RESET}"
+    if command -v acme.sh &>/dev/null || [[ -f ~/.acme.sh/acme.sh ]]; then
+        echo -e "状态: ${GREEN}已安装${RESET}"
+
+        if command -v acme.sh &>/dev/null; then
+            ver=$(acme.sh --version 2>/dev/null | head -n1)
+            echo -e "版本: ${ver:-未知}"
+        fi
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
     # CF WARP
     # =============================
     echo -e "${YELLOW}▶ CF WARP${RESET}"
 
     warp_found=0
 
-    # warp-cli
     if command -v warp-cli &>/dev/null; then
         warp_found=1
         if warp-cli status 2>/dev/null | grep -qi 'Connected'; then
@@ -639,13 +716,11 @@ check_panel() {
         fi
     fi
 
-    # wgcf / WireGuard
     if command -v wgcf &>/dev/null || ip a 2>/dev/null | grep -q 'wgcf'; then
         warp_found=1
         echo -e "状态: ${GREEN}WGCF已安装${RESET}"
     fi
 
-    # warp-svc
     if systemctl list-unit-files 2>/dev/null | grep -q warp-svc; then
         warp_found=1
         if systemctl is-active warp-svc &>/dev/null; then
@@ -655,7 +730,6 @@ check_panel() {
         fi
     fi
 
-    # ⭐ warp 脚本
     if command -v warp &>/dev/null; then
         warp_found=1
         if warp status 2>/dev/null | grep -q "WARP 网络接口已开启"; then
@@ -677,6 +751,57 @@ check_panel() {
             echo -e "模式: ${YELLOW}普通网络${RESET}"
         fi
     fi
+    echo ""
+
+
+
+    # =============================
+    # Docker
+    # =============================
+    echo -e "${YELLOW}▶ Docker${RESET}"
+    if command -v docker &>/dev/null; then
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard')
+        if [[ -n "$containers" ]]; then
+            echo -e "${GREEN}运行中:${RESET} $(echo $containers | tr '\n' ' ')"
+        else
+            echo -e "${GREEN}无相关容器${RESET}"
+        fi
+    else
+        echo -e "${RED}未安装${RESET}"
+    fi
+
+    echo ""
+
+    # =============================
+    # BBR
+    # =============================
+    echo -e "${YELLOW}▶ BBR${RESET}"
+
+    sysctl_cc=$(sysctl net.ipv4.tcp_congestion_control 2>/dev/null | awk '{print $3}')
+    sysctl_qdisc=$(sysctl net.core.default_qdisc 2>/dev/null | awk '{print $3}')
+    actual_cc=$(cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null)
+
+    echo -e "当前算法: ${YELLOW}${sysctl_cc:-未知}${RESET}"
+    echo -e "队列算法: ${YELLOW}${sysctl_qdisc:-未知}${RESET}"
+
+    if [[ "$actual_cc" == "bbr" ]]; then
+        echo -e "BBR状态: ${GREEN}已生效${RESET}"
+    else
+        echo -e "BBR状态: ${RED}未生效${RESET}"
+    fi
+
+    if [[ "$sysctl_qdisc" == "fq" ]]; then
+        echo -e "FQ状态: ${GREEN}正常${RESET}"
+    else
+        echo -e "FQ状态: ${YELLOW}未优化${RESET}"
+    fi
+
+    if lsmod | grep -q bbr; then
+        echo -e "内核模块: ${GREEN}已加载${RESET}"
+    else
+        echo -e "内核模块: ${YELLOW}内置或未检测${RESET}"
+    fi
+
     echo ""
 
     # =============================
@@ -713,24 +838,48 @@ check_panel() {
     fi
 
     echo ""
-
-    # =============================
-    # Docker
-    # =============================
-    echo -e "${YELLOW}▶ Docker${RESET}"
-    if command -v docker &>/dev/null; then
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard')
-        if [[ -n "$containers" ]]; then
-            echo -e "${GREEN}运行中:${RESET} $(echo $containers | tr '\n' ' ')"
-        else
-            echo -e "${GREEN}无相关容器${RESET}"
-        fi
-    else
-        echo -e "${RED}未安装${RESET}"
-    fi
-
-    echo ""
+    
 }
+
+# =============================
+# 核心卸载菜单
+# =============================
+uninstall_core_menu() {
+while true; do
+    clear
+    echo -e "${RED}╔══════════════════════╗${RESET}"
+    echo -e "${RED}      核心卸载管理        ${RESET}"
+    echo -e "${RED}╚══════════════════════╝${RESET}"
+    echo -e "${YELLOW}[01] 卸载 Xray${RESET}"
+    echo -e "${YELLOW}[02] 卸载 Sing-box${RESET}"
+    echo -e "${YELLOW}[03] 卸载 Mihomo${RESET}"
+    echo -e "${YELLOW}[04] 卸载 Nginx${RESET}"
+    echo -e "${YELLOW}[05] 卸载 Caddy${RESET}"
+    echo -e "${YELLOW}[06] 卸载 ACME证书${RESET}"
+    echo -e "${YELLOW}[07] 卸载 WARP${RESET}"
+    echo -e "${YELLOW}[08] 卸载 BBR${RESET}"
+    echo -e "${YELLOW}[09] 清理 Docke代理容器${RESET}"
+    echo -e "${GREEN}[0] 返回${RESET}"
+    echo -e "${GREEN}[x] 退出${RESET}"
+
+    read_submenu || return
+
+    case "$sub" in
+        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xaryuninstall.sh) ; pause_return ;;
+        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/singboxuninstall.sh) ; pause_return ;;
+        03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/mihomouninstall.sh) ; pause_return ;;
+        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nginxuninstall.sh) ; pause_return ;;
+        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/caddyuninstall.sh) ; pause_return ;;
+        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/acmeuninstall.sh) ; pause_return ;;
+        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/warpuninstall.sh) ; pause_return ;;
+        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbruninstall.sh) ; pause_return ;;
+        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dockerprouninstall.sh) ; pause_return ;;
+        0) return ;;
+        *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
+    esac
+done
+}
+
 # =============================
 # 更新 & 卸载
 # =============================
