@@ -252,7 +252,7 @@ add_config() {
     read DOMAIN
     check_domain_resolution "$DOMAIN"
 
-    echo -ne "${GREEN}请输入反代目标: ${RESET}"
+    echo -ne "${GREEN}请输入反代目标(例如http://127.0.0.1:5788): ${RESET}"
     read TARGET
 
     EMAIL_FILE="/etc/nginx/.cert_emails"
@@ -327,7 +327,7 @@ modify_config() {
 
     DOMAIN="${DOMAINS[$((choice-1))]}"
     CONFIG_PATH="/etc/nginx/sites-available/$DOMAIN"
-    echo -ne "${GREEN}请输入新反代目标: ${RESET}"; read TARGET
+    echo -ne "${GREEN}请输入新反代目标(例如http://127.0.0.1:5788): ${RESET}"; read TARGET
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n，回车默认 y): ${RESET}"; read IS_WS
     IS_WS=${IS_WS:-y}
     echo -ne "${GREEN}请输入最大上传大小 (默认 200M): ${RESET}"
