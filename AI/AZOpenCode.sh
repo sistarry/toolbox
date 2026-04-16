@@ -147,15 +147,15 @@ env_info() {
 menu() {
     clear
     echo -e "${GREEN}==== $APP_NAME ==== ${RESET}"
-    echo "1. 安装 OpenCode"
-    echo "2. 登录"
-    echo "3. 查看登录状态"
-    echo "4. 检查版本"
-    echo "5. 进入交互模式"
-    echo "6. 更新"
-    echo "7. 卸载"
-    echo "8. 环境信息"
-    echo "0. 退出"
+    echo -e "${GREEN}1. 安装 OpenCode${RESET}"
+    echo -e "${GREEN}2. 登录${RESET}"
+    echo -e "${GREEN}3. 查看登录状态${RESET}"
+    echo -e "${GREEN}4. 检查版本${RESET}"
+    echo -e "${GREEN}5. 进入交互模式${RESET}"
+    echo -e "${GREEN}6. 更新${RESET}"
+    echo -e "${GREEN}7. 卸载${RESET}"
+    echo -e "${GREEN}8. 环境信息${RESET}"
+    echo -e "${GREEN}0. 退出${RESET}"
 
     read -rp "请输入选项: " choice
 
