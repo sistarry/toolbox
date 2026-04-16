@@ -92,7 +92,7 @@ if [ -n "$RUN" ]; then
 echo
 echo "运行容器"
 for i in $RUN; do
-echo -e " ${G}✔ $i${X}"
+echo -e " ${G}✅ $i${X}"
 done
 fi
 
@@ -100,12 +100,10 @@ if [ -n "$STOP" ]; then
 echo
 echo "停止容器"
 for i in $STOP; do
-echo -e " ${R}✘ $i${X}"
+echo -e " ${R}❌ $i${X}"
 done
 fi
 
-echo
-docker stats --no-stream --format "  {{.Name}} CPU:{{.CPUPerc}} MEM:{{.MemUsage}}"
 
 else
 echo -e "${R}Docker 未安装${X}"
