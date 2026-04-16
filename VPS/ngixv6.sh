@@ -275,7 +275,7 @@ add_config() {
     mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
     echo -ne "${GREEN}请输入域名: ${RESET}"; read DOMAIN
     check_domain_resolution "$DOMAIN"
-    echo -ne "${GREEN}请输入反代目标: ${RESET}"; read TARGET
+    echo -ne "${GREEN}请输入反代目标(例如http://[2026:f92a:222:ffff::88]:8888): ${RESET}"; read TARGET
 
     EMAIL_FILE="/etc/nginx/.cert_emails"
     # 如果已有邮箱记录，默认使用第一个
@@ -341,7 +341,7 @@ modify_config() {
 
     DOMAIN="${DOMAINS[$((choice-1))]}"
     CONFIG_PATH="/etc/nginx/sites-available/$DOMAIN"
-    echo -ne "${GREEN}请输入新反代目标: ${RESET}"; read TARGET
+    echo -ne "${GREEN}请输入新反代目标(例如http://[2026:f92a:222:ffff::88]:8888): ${RESET}"; read TARGET
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n，回车默认 y): ${RESET}"; read IS_WS
     IS_WS=${IS_WS:-y}
     echo -ne "${GREEN}请输入最大上传大小 (默认 200M): ${RESET}"
