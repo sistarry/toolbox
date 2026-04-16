@@ -359,6 +359,8 @@ while true; do
     echo -e "${YELLOW}[06] MicroWARP${RESET}"
     echo -e "${YELLOW}[07] IP屏蔽助手${RESET}"
     echo -e "${YELLOW}[08] 专线优化${RESET}"
+    echo -e "${YELLOW}[09] CFWARP${RESET}"
+    echo -e "${YELLOW}[10] tun2socks${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -373,6 +375,8 @@ while true; do
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicroWarp.sh) ; pause_return ;;
         07) curl -fsSL https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
         08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbry.sh) ; pause_return ;;
+        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/CFWARP.sh) ; pause_return ;;
+        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tun2socks.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -524,6 +528,8 @@ while true; do
     echo -e "${YELLOW}[03] VPS遥控器${RESET}"
     echo -e "${YELLOW}[04] vnstat${RESET}"
     echo -e "${YELLOW}[05] 流量狗${RESET}"
+    echo -e "${YELLOW}[06] 阿里云CDT流量监控${RESET}"
+    echo -e "${YELLOW}[07] 3XUI面板流量监控${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -536,6 +542,8 @@ while true; do
         03) curl -fsSL https://raw.githubusercontent.com/MEILOI/VPS_BOT_X/main/vps_bot-x/install.sh -o install.sh && chmod +x install.sh && bash install.sh ;;
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vnStat.sh) ;;
         05) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
+        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ECSController.sh) ;;
+        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/xtrafficdash.sh) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
