@@ -777,32 +777,16 @@ check_panel() {
     # =============================
     echo -e "${YELLOW}▶ BBR${RESET}"
 
-    sysctl_cc=$(sysctl net.ipv4.tcp_congestion_control 2>/dev/null | awk '{print $3}')
-    sysctl_qdisc=$(sysctl net.core.default_qdisc 2>/dev/null | awk '{print $3}')
     actual_cc=$(cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null)
 
-    echo -e "当前算法: ${YELLOW}${sysctl_cc:-未知}${RESET}"
-    echo -e "队列算法: ${YELLOW}${sysctl_qdisc:-未知}${RESET}"
-
     if [[ "$actual_cc" == "bbr" ]]; then
-        echo -e "BBR状态: ${GREEN}已生效${RESET}"
+        echo -e "状态: ${GREEN}已启用 BBR${RESET}"
     else
-        echo -e "BBR状态: ${RED}未生效${RESET}"
-    fi
-
-    if [[ "$sysctl_qdisc" == "fq" ]]; then
-        echo -e "FQ状态: ${GREEN}正常${RESET}"
-    else
-        echo -e "FQ状态: ${YELLOW}未优化${RESET}"
-    fi
-
-    if lsmod | grep -q bbr; then
-        echo -e "内核模块: ${GREEN}已加载${RESET}"
-    else
-        echo -e "内核模块: ${YELLOW}内置或未检测${RESET}"
+        echo -e "状态: ${RED}未启用 BBR${RESET}"
     fi
 
     echo ""
+
 
     # =============================
     # 网络出口
