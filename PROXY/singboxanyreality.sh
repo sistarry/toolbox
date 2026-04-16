@@ -39,9 +39,33 @@ require_debian_ubuntu() {
 }
 
 install_deps() {
-  info '安装依赖...'
+  info '检查依赖...'
+
+  local pkgs=(
+    curl
+    wget
+    unzip
+    ca-certificates
+    uuid-runtime
+    python3
+  )
+
+  local need_install=()
+
+  for pkg in "${pkgs[@]}"; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+      need_install+=("$pkg")
+    fi
+  done
+
+  if [[ ${#need_install[@]} -eq 0 ]]; then
+    info '依赖已满足，跳过安装。'
+    return
+  fi
+
+  info "安装缺失依赖: ${need_install[*]}"
   apt-get update
-  apt-get install -y curl wget unzip ca-certificates uuid-runtime
+  apt-get install -y "${need_install[@]}"
 }
 
 install_singbox() {
