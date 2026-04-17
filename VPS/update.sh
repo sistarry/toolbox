@@ -19,9 +19,9 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # -------------------------
-# 常用依赖（新增 dnsutils, iperf3, mtr）
+# 常用依赖
 # -------------------------
-deps=(curl wget git net-tools lsof tar unzip rsync pv sudo nc dnsutils iperf3 mtr jq openssl)
+deps=(curl wget git net-tools lsof tar unzip rsync pv sudo iperf3 mtr jq openssl)
 
 # -------------------------
 # 检查并安装依赖（兼容不同系统）
@@ -140,6 +140,63 @@ update_system() {
     fi
 
     echo -e "${GREEN}✅ 系统更新和依赖安装完成！${RESET}"
+}
+
+
+install_netcat() {
+    echo -e "${YELLOW}🔍 检查 netcat (nc)...${RESET}"
+
+    if command -v nc >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ nc 已安装${RESET}"
+        return
+    fi
+
+    echo -e "${YELLOW}👉 安装 netcat-openbsd...${RESET}"
+
+    if [ "$OS_TYPE" = "debian" ]; then
+        apt install -y netcat-openbsd
+    elif [ "$OS_TYPE" = "rhel" ]; then
+        yum install -y nc 2>/dev/null || dnf install -y nc
+    elif [ "$OS_TYPE" = "alpine" ]; then
+        apk add netcat-openbsd
+    else
+        echo -e "${RED}❌ 未知系统，无法安装 nc${RESET}"
+        return 1
+    fi
+
+    if command -v nc >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ nc 安装成功${RESET}"
+    else
+        echo -e "${RED}❌ nc 安装失败${RESET}"
+    fi
+}
+
+install_dnsutils() {
+    echo -e "${YELLOW}🔍 检查 DNS 工具 (dig/nslookup)...${RESET}"
+
+    if command -v dig >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ DNS 工具已安装${RESET}"
+        return
+    fi
+
+    echo -e "${YELLOW}👉 安装 DNS 工具...${RESET}"
+
+    if [ "$OS_TYPE" = "debian" ]; then
+        apt install -y bind9-dnsutils
+    elif [ "$OS_TYPE" = "rhel" ]; then
+        yum install -y bind-utils 2>/dev/null || dnf install -y bind-utils
+    elif [ "$OS_TYPE" = "alpine" ]; then
+        apk add bind-tools
+    else
+        echo -e "${RED}❌ 未知系统，无法安装 DNS 工具${RESET}"
+        return 1
+    fi
+
+    if command -v dig >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ DNS 工具安装成功${RESET}"
+    else
+        echo -e "${RED}❌ DNS 工具安装失败${RESET}"
+    fi
 }
 # -------------------------
 # 安装并启动 cron
@@ -319,6 +376,8 @@ enable_time_sync() {
 # -------------------------
 clear
 update_system
+install_netcat
+install_dnsutils
 install_cron
 install_nexttrace
 enable_bbr
