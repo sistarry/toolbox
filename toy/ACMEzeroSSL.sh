@@ -202,6 +202,7 @@ fi
 
 rm -rf $ACME_HOME
 rm -rf etc/acme
+rm -rf root/ssl
 
 # 删除 cron
 crontab -l 2>/dev/null | grep -v acme.sh | crontab -
