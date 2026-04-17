@@ -43,7 +43,7 @@ get_public_ip() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== magnet_fix 管理菜单 ===${RESET}"
+        echo -e "${GREEN}=== magnetfix 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
