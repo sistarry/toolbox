@@ -26,9 +26,6 @@ list_sites() {
     ls "$SITES_AVAILABLE" 2>/dev/null | grep "\.conf$" | sed 's/\.conf$//'
 }
 
-nginx_reload() {
-    nginx -t && systemctl reload nginx
-}
 
 # ---------------------------
 # 系统检测
