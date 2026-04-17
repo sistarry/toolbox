@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
 # 一键系统更新 & 常用依赖安装 & 修复 APT 源（Debian 11/12 兼容版）
@@ -41,7 +42,6 @@ check_and_install() {
         echo -e "${YELLOW}👉 安装缺失依赖: ${missing[*]}${RESET}"
         # Debian 系统处理 netcat
         if [ "$OS_TYPE" = "debian" ]; then
-            apt update -y
             # 让 iperf3 安装时自动选择 No（不启动 daemon）
             echo "iperf3 iperf3/start_daemon boolean false" | debconf-set-selections
             for pkg in "${missing[@]}"; do
