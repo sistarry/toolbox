@@ -545,7 +545,7 @@ while true; do
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vnStat.sh) ;;
         05) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ECSController.sh) ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/xtrafficdash.sh) ;;
+        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xtrafficdash.sh) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
