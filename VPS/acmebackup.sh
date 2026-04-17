@@ -264,8 +264,8 @@ while true; do
     echo -e "${GREEN}2. 恢复备份${RESET}"
     echo -e "${GREEN}3. 设置定时任务${RESET}"
     echo -e "${GREEN}4. 删除定时任务${RESET}"
-    echo -e "${GREEN}5. 设置备份目录${RESET}"
-    echo -e "${GREEN}6. 设置保留天数${RESET}"
+    echo -e "${GREEN}5. 设置备份目录(当前: $DATA_DIR)${RESET}"
+    echo -e "${GREEN}6. 设置保留天数(当前: $RETAIN_DAYS 天)${RESET}"
     echo -e "${GREEN}7. 设置Telegram${RESET}"
     echo -e "${GREEN}8. 查看定时任务${RESET}"
     echo -e "${GREEN}9. 卸载${RESET}"
@@ -277,7 +277,7 @@ while true; do
         2) restore ;;
         3) add_cron ;;
         4) remove_cron ;;
-        5) read -p "目录: " DATA_DIR; mkdir -p "$DATA_DIR"; save_config ;;
+        5) read -p "备份目录: " DATA_DIR; mkdir -p "$DATA_DIR"; save_config ;;
         6) read -p "备份文件保留天数: " RETAIN_DAYS; save_config ;;
         7)
             read -p "服务器名称(默认: $(hostname)): " SERVICE_NAME
