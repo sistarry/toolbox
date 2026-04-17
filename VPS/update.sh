@@ -111,7 +111,9 @@ update_system() {
         if [[ "$ID" =~ debian|ubuntu ]]; then
             OS_TYPE="debian"
             fix_duplicate_docker_sources
-            fix_sources_for_version "$VERSION_CODENAME"
+            if [[ "$ID" == "debian" ]]; then
+                fix_sources_for_version "$VERSION_CODENAME"
+            fi
             apt update && apt upgrade -y
             check_and_install "dpkg -s" "apt install -y"
         elif [[ "$ID" =~ fedora ]]; then
