@@ -359,7 +359,7 @@ while true; do
     echo -e "${YELLOW}[06] MicroWARP${RESET}"
     echo -e "${YELLOW}[07] IP屏蔽助手${RESET}"
     echo -e "${YELLOW}[08] 专线优化${RESET}"
-    echo -e "${YELLOW}[09] CFWARP${RESET}"
+    echo -e "${YELLOW}[09] warp-yg${RESET}"
     echo -e "${YELLOW}[10] tun2socks${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
@@ -375,7 +375,7 @@ while true; do
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicroWarp.sh) ; pause_return ;;
         07) curl -fsSL https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
         08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbry.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/CFWARP.sh) ; pause_return ;;
+        09) bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/warp-yg/main/CFwarp.sh) ; pause_return ;;
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tun2socks.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
@@ -397,6 +397,7 @@ while true; do
     echo -e "${YELLOW}[03] DnsmasqSNIproxy-One-click${RESET}"
     echo -e "${YELLOW}[04] 自定义DNS解锁${RESET}"
     echo -e "${YELLOW}[05] 谷歌分流Warp${RESET}"
+    echo -e "${YELLOW}[06] 谷歌定位解锁${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -409,6 +410,7 @@ while true; do
         03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Dnsmasqsniproxy.sh) ; pause_return ;;
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ; pause_return ;;
         05) bash <(curl -sL https://raw.githubusercontent.com/vpsjk/warp-google/main/warp-google.sh) ; pause_return ;;
+        06) bash <(curl -fsSL https://vpszdm.com/warp-google.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
