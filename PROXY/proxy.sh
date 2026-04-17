@@ -727,6 +727,20 @@ check_panel() {
             echo -e "状态: ${YELLOW}已安装(未连接)${RESET}"
         fi
     fi
+    
+    if command -v warp-go &>/dev/null || command -v warpgo &>/dev/null; then
+        warp_found=1
+        echo -e "状态: ${GREEN}WarpGo已安装${RESET}"
+    fi
+
+    if systemctl list-unit-files 2>/dev/null | grep -q warp-go; then
+        warp_found=1
+        if systemctl is-active warp-go &>/dev/null; then
+            echo -e "状态: ${GREEN}WarpGo服务运行中${RESET}"
+        else
+            echo -e "状态: ${YELLOW}WarpGo已安装(未运行)${RESET}"
+        fi
+    fi
 
     if command -v wgcf &>/dev/null || ip a 2>/dev/null | grep -q 'wgcf'; then
         warp_found=1
