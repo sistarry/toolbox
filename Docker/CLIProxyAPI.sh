@@ -15,7 +15,7 @@ APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/config.yaml"
 
-REPO_URL="https://github.com/luispater/CLIProxyAPI.git"
+REPO_URL="https://github.com/router-for-me/CLIProxyAPI.git"
 
 # ==============================
 # 基础检测
