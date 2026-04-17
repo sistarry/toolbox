@@ -168,6 +168,7 @@ uninstall_acme(){
     # 删除安装目录
     [ -d "$ACME_HOME" ] && rm -rf "$ACME_HOME"
     [ -d "/etc/acme" ] && rm -rf "/etc/acme"
+    [ -d "/root/ssl" ] && rm -rf "/root/ssl"
 
     # 删除 cron
     crontab -l 2>/dev/null | grep -v acme.sh | crontab -
