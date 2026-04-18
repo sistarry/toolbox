@@ -871,33 +871,58 @@ check_panel() {
     echo ""
 
     # =============================
-    # Caddy（本机 + Docker）
+    # Caddy
     # =============================
     echo -e "${YELLOW}▶ Caddy${RESET}"
+    
+    # 查找 Docker 容器 (不区分大小写)
+    caddy_containers=""
+    if command -v docker &>/dev/null; then
+        caddy_containers=$(docker ps -a --format "{{.Names}}" | grep -i "caddy")
+    fi
 
-    caddy_found=0
+    if command -v caddy &>/dev/null || pgrep -x caddy &>/dev/null || [[ -n "$caddy_containers" ]]; then
 
-    if command -v caddy &>/dev/null; then
-        caddy_found=1
         status=$(systemctl is-active caddy 2>/dev/null)
+        if [[ "$status" != "active" ]]; then
+            if pgrep -x caddy &>/dev/null; then
+                status="active"
+            elif [[ -n "$caddy_containers" ]]; then
+                for name in $caddy_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
         echo -e "状态: $(format_status "$status")"
 
-        ver=$(caddy version 2>/dev/null)
-        echo -e "版本: ${ver:-未知}"
-
-        ports=$(get_ports caddy)
-        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')"
-    fi
-
-    if command -v docker &>/dev/null; then
-        docker_caddy=$(docker ps --format "{{.Names}}" | grep -i caddy)
-        if [[ -n "$docker_caddy" ]]; then
-            caddy_found=1
-            echo -e "状态: ${GREEN}已安装(Docker)${RESET}"
+        # 版本获取：增加 awk 处理，只保留 v2.x.x
+        if command -v caddy &>/dev/null; then
+            ver=$(caddy version 2>/dev/null | awk '{print $1}')
+        elif [[ -n "$caddy_containers" ]]; then
+            first_c=$(echo "$caddy_containers" | head -n1)
+            ver=$(docker exec "$first_c" caddy version 2>/dev/null | awk '{print $1}')
         fi
-    fi
+        echo -e "版本: ${ver:-运行中(内置)}"
 
-    [[ $caddy_found -eq 0 ]] && echo -e "状态: ${RED}未安装${RESET}"
+        # 端口获取
+        ports=$(get_ports caddy)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # Docker 容器列表
+        if [[ -n "$caddy_containers" ]]; then
+            for name in $caddy_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
     echo ""
 
     # =============================
