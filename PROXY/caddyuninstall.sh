@@ -28,21 +28,11 @@ pkill -9 caddy 2>/dev/null
 # =============================
 echo -e "${YELLOW}[2/6] 清理 Docker Caddy...${RESET}"
 
-if command -v docker &>/dev/null; then
-    caddy_containers=$(docker ps -a --format "{{.Names}}" | grep -Ei "caddy")
+docker ps -a --format '{{.ID}} {{.Names}}' | grep -Ei "caddy" | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null
 
-    if [[ -n "$caddy_containers" ]]; then
-        echo "$caddy_containers" | xargs -r docker rm -f
-        echo -e "${GREEN}Docker Caddy 容器已删除${RESET}"
-    else
-        echo -e "${GREEN}无 Caddy Docker 容器${RESET}"
-    fi
+docker images --format '{{.Repository}} {{.ID}}' | grep -Ei "caddy" | awk '{print $2}' | xargs -r docker rmi -f 2>/dev/null
 
-    # 删除镜像（可选）
-    docker images | grep caddy &>/dev/null && {
-        docker rmi -f $(docker images | grep caddy | awk '{print $3}') 2>/dev/null
-    }
-fi
+docker volume ls --format '{{.Name}}' | grep -Ei "caddy" | xargs -r docker volume rm 2>/dev/null
 
 # =============================
 # 3. 包管理卸载
