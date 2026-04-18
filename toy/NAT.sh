@@ -40,6 +40,7 @@ menu() {
     echo -e "${YELLOW}[02] LXC小鸡${RESET}"
     echo -e "${YELLOW}[03] Docker小鸡${RESET}"
     echo -e "${YELLOW}[04] Incus小鸡${RESET}"
+    echo -e "${YELLOW}[05] LXDAPI小鸡${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -72,6 +73,10 @@ menu() {
         04)
             echo -e "${GREEN}正在运行 Incus 小鸡脚本...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/incus.sh)
+            ;;
+        05)
+            echo -e "${GREEN}正在运行 LXDAPI 小鸡脚本...${RESET}"
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/LXDAPI.sh)
             ;;
         88)
             echo -e "${YELLOW}🔄 正在更新脚本...${RESET}"
