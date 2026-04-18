@@ -8,7 +8,7 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-APP_NAME="conflux"
+APP_NAME="Mihomo"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 
@@ -34,7 +34,7 @@ check_port() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Conflux 管理菜单 ===${RESET}"
+        echo -e "${GREEN}=== Mihomo 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
@@ -88,7 +88,7 @@ cat > "$COMPOSE_FILE" <<EOF
 services:
   conflux:
     image: veildawn/conflux:latest
-    container_name: conflux
+    container_name: Mihomo
     restart: unless-stopped
     ports:
       - "127.0.0.1:${WEB_PORT}:80"
@@ -114,7 +114,7 @@ EOF
     fi
 
     echo
-    echo -e "${GREEN}✅ Conflux 已启动${RESET}"
+    echo -e "${GREEN}✅ Mihomo 已启动${RESET}"
     echo -e "${YELLOW}🌐 面板地址: http://127.0.0.1:${WEB_PORT}${RESET}"
     echo -e "${GREEN}🔑 管理密码: ${ADMIN_PASS}${RESET}"
     echo -e "${GREEN}🔐 JWT_SECRET: ${JWT_SECRET}${RESET}"
@@ -127,22 +127,22 @@ update_app() {
     cd "$APP_DIR" || return
     docker compose pull
     docker compose up -d
-    echo -e "${GREEN}✅ Conflux 更新完成${RESET}"
+    echo -e "${GREEN}✅ Mihomo 更新完成${RESET}"
     read -p "按回车返回菜单..."
 }
 
 restart_app() {
-    docker restart conflux
-    echo -e "${GREEN}✅ Conflux 已重启${RESET}"
+    docker restart Mihomo
+    echo -e "${GREEN}✅ Mihomo 已重启${RESET}"
     read -p "按回车返回菜单..."
 }
 
 view_logs() {
-    docker logs -f conflux
+    docker logs -f Mihomo
 }
 
 check_status() {
-    docker ps | grep conflux
+    docker ps | grep Mihomo
     read -p "按回车返回菜单..."
 }
 
@@ -150,7 +150,7 @@ uninstall_app() {
     cd "$APP_DIR" || return
     docker compose down -v
     rm -rf "$APP_DIR"
-    echo -e "${RED}✅ Conflux 已卸载${RESET}"
+    echo -e "${RED}✅ Mihomo 已卸载${RESET}"
     read -p "按回车返回菜单..."
 }
 
