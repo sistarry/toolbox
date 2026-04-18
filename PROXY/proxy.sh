@@ -359,7 +359,7 @@ while true; do
     echo -e "${YELLOW}[06] MicroWARP${RESET}"
     echo -e "${YELLOW}[07] IP屏蔽助手${RESET}"
     echo -e "${YELLOW}[08] 专线优化${RESET}"
-    echo -e "${YELLOW}[09] warp-yg${RESET}"
+    echo -e "${YELLOW}[09] 甬哥-WARP${RESET}"
     echo -e "${YELLOW}[10] tun2socks${RESET}"
     echo -e "${YELLOW}[11] WARP面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
@@ -608,15 +608,24 @@ check_panel() {
     # Sing-box
     # =============================
     echo -e "${YELLOW}▶ Sing-box${RESET}"
-    if command -v sing-box &>/dev/null; then
+    if command -v sing-box &>/dev/null || pgrep -f sing-box &>/dev/null; then
+
         status=$(systemctl is-active sing-box 2>/dev/null)
+        [[ "$status" != "active" && $(pgrep -f sing-box) ]] && status="active"
+
         echo -e "状态: $(format_status "$status")"
 
-        ver=$(sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
-        echo -e "版本: ${ver:-未知}"
+        if command -v sing-box &>/dev/null; then
+            # Sing-box 的版本号获取通常在第 3 列
+            ver=$(sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
+        else
+            ver=$(ps -ef | grep sing-box | grep -v grep | grep -oE 'v[0-9.]+' | head -n1)
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
 
         ports=$(get_ports sing-box)
         [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
@@ -626,15 +635,206 @@ check_panel() {
     # Mihomo
     # =============================
     echo -e "${YELLOW}▶ Mihomo${RESET}"
-    if command -v mihomo &>/dev/null || command -v clash &>/dev/null; then
+    if command -v mihomo &>/dev/null || command -v clash &>/dev/null || pgrep -f mihomo &>/dev/null || pgrep -f clash &>/dev/null; then
+        
+        # 获取状态：优先查系统服务，如果服务没开但进程在，标记为 active
         status=$(systemctl is-active mihomo 2>/dev/null || systemctl is-active clash 2>/dev/null)
+        [[ "$status" != "active" && ($(pgrep -f mihomo) || $(pgrep -f clash)) ]] && status="active"
+
         echo -e "状态: $(format_status "$status")"
 
-        ver=$(mihomo -v 2>/dev/null | head -n1 || clash -v 2>/dev/null | head -n1)
-        echo -e "版本: ${ver:-未知}"
+        if command -v mihomo &>/dev/null || command -v clash &>/dev/null; then
+            # 提取版本号
+            ver=$(mihomo -v 2>/dev/null | head -n1 || clash -v 2>/dev/null | head -n1)
+        else
+            # 从进程名中提取版本信息
+            ver=$(ps -ef | grep -E 'mihomo|clash' | grep -v grep | grep -oE 'v[0-9.]+' | head -n1)
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
 
         ports=$( (get_ports mihomo; get_ports clash) | sort -u )
         [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # Realm
+    # =============================
+    echo -e "${YELLOW}▶ Realm${RESET}"
+    
+    # 查找 Docker 容器名包含 realm 的容器 ID (不区分大小写)
+    realm_containers=""
+    if command -v docker &>/dev/null; then
+        realm_containers=$(docker ps -a --format "{{.Names}}" | grep -i "realm")
+    fi
+
+    # 1. 检测原生安装、进程或 Docker 容器
+    if command -v realm &>/dev/null || pgrep -f realm &>/dev/null || [[ -n "$realm_containers" ]]; then
+
+        status=$(systemctl is-active realm 2>/dev/null)
+        # 如果 systemctl 没过，但进程在，或者 Docker 在运行，也算 active
+        if [[ "$status" != "active" ]]; then
+            if pgrep -f realm &>/dev/null; then
+                status="active"
+            elif [[ -n "$realm_containers" ]]; then
+                # 检查是否有任一 realm 容器在运行
+                for name in $realm_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取
+        if command -v realm &>/dev/null; then
+            ver=$(realm --version 2>/dev/null | awk '{print $2}')
+        elif [[ -n "$realm_containers" ]]; then
+            # 尝试从第一个容器内提取版本
+            first_c=$(echo "$realm_containers" | head -n1)
+            ver=$(docker exec "$first_c" realm --version 2>/dev/null | awk '{print $2}')
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
+
+        # 端口获取
+        ports=$(get_ports realm)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 如果有 Docker 容器，额外列出容器名 (保持简洁)
+        if [[ -n "$realm_containers" ]]; then
+            for name in $realm_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # Gost
+    # =============================
+    echo -e "${YELLOW}▶ Gost${RESET}"
+    
+    # 查找 Docker 容器名包含 gost 的容器 ID (不区分大小写)
+    gost_containers=""
+    if command -v docker &>/dev/null; then
+        gost_containers=$(docker ps -a --format "{{.Names}}" | grep -i "gost")
+    fi
+
+    # 1. 检测原生安装、进程或 Docker 容器
+    if command -v gost &>/dev/null || pgrep -f gost &>/dev/null || [[ -n "$gost_containers" ]]; then
+
+        status=$(systemctl is-active gost 2>/dev/null)
+        # 如果 systemctl 没过，但进程在，或者 Docker 在运行，也算 active
+        if [[ "$status" != "active" ]]; then
+            if pgrep -f gost &>/dev/null; then
+                status="active"
+            elif [[ -n "$gost_containers" ]]; then
+                # 检查是否有任一 gost 容器在运行
+                for name in $gost_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取
+        if command -v gost &>/dev/null; then
+            ver=$(gost -V 2>/dev/null | head -n1 | awk '{print $2}')
+        elif [[ -n "$gost_containers" ]]; then
+            # 尝试从第一个容器内提取版本
+            first_c=$(echo "$gost_containers" | head -n1)
+            ver=$(docker exec "$first_c" gost -V 2>/dev/null | head -n1 | awk '{print $2}')
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
+
+        # 端口获取
+        ports=$(get_ports gost)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 如果有 Docker 容器，额外列出容器名 (保持简洁)
+        if [[ -n "$gost_containers" ]]; then
+            for name in $gost_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+    # =============================
+    # FRP (frpc/frps)
+    # =============================
+    echo -e "${YELLOW}▶ FRP${RESET}"
+    
+    # 查找 Docker 容器名包含 frp 的容器 (不区分大小写)
+    frp_containers=""
+    if command -v docker &>/dev/null; then
+        frp_containers=$(docker ps -a --format "{{.Names}}" | grep -i "frp")
+    fi
+
+    # 1. 检测原生安装、进程或 Docker 容器
+    if command -v frpc &>/dev/null || command -v frps &>/dev/null || pgrep -x frpc &>/dev/null || pgrep -x frps &>/dev/null || [[ -n "$frp_containers" ]]; then
+
+        # 判定状态：优先看系统服务，其次看进程，最后看容器
+        status=$(systemctl is-active frpc 2>/dev/null || systemctl is-active frps 2>/dev/null)
+        if [[ "$status" != "active" ]]; then
+            if pgrep -x frpc &>/dev/null || pgrep -x frps &>/dev/null; then
+                status="active"
+            elif [[ -n "$frp_containers" ]]; then
+                for name in $frp_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取逻辑
+        if command -v frpc &>/dev/null; then
+            ver=$(frpc -v 2>/dev/null)
+        elif command -v frps &>/dev/null; then
+            ver=$(frps -v 2>/dev/null)
+        elif [[ -n "$frp_containers" ]]; then
+            first_c=$(echo "$frp_containers" | head -n1)
+            # 尝试在容器内分别测试 frpc 或 frps
+            ver=$(docker exec "$first_c" frpc -v 2>/dev/null || docker exec "$first_c" frps -v 2>/dev/null)
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
+
+        # 端口获取
+        ports=$( (get_ports frpc; get_ports frps) | sort -u )
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 如果有 Docker 容器，列出所有相关容器名
+        if [[ -n "$frp_containers" ]]; then
+            for name in $frp_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
@@ -701,28 +901,43 @@ check_panel() {
     echo ""
 
     # =============================
-    # ACME（仅 acme.sh）
+    # ACME (acme.sh)
     # =============================
     echo -e "${YELLOW}▶ ACME${RESET}"
-    if command -v acme.sh &>/dev/null || [[ -f ~/.acme.sh/acme.sh ]]; then
-        echo -e "状态: ${GREEN}已安装${RESET}"
-
-        if command -v acme.sh &>/dev/null; then
-            ver=$(acme.sh --version 2>/dev/null | head -n1)
-            echo -e "版本: ${ver:-未知}"
+    # 检测原生二进制、家目录脚本或 Docker 容器
+    if command -v acme.sh &>/dev/null || [[ -f ~/.acme.sh/acme.sh ]] || (command -v docker &>/dev/null && docker ps -a --format '{{.Names}}' | grep -qi "acme"); then
+        
+        # 确定状态
+        if command -v acme.sh &>/dev/null || [[ -f ~/.acme.sh/acme.sh ]]; then
+            echo -e "状态: ${GREEN}已安装${RESET}"
+        else
+            echo -e "状态: ${GREEN}已安装(Docker)${RESET}"
         fi
+
+        # 版本获取逻辑：增加 grep 过滤掉 URL 干扰
+        if command -v acme.sh &>/dev/null; then
+            ver=$(acme.sh --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+        elif [[ -f ~/.acme.sh/acme.sh ]]; then
+            ver=$(~/.acme.sh/acme.sh --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+        elif command -v docker &>/dev/null; then
+            container_id=$(docker ps -a --format "{{.Names}}" | grep -i "acme" | head -n1)
+            # 从容器内部提取版本，并过滤出纯数字版本号
+            ver=$(docker exec "$container_id" acme.sh --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+        fi
+        echo -e "版本: ${ver:-未知}"
+        
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
-
     # =============================
     # CF WARP
     # =============================
-    echo -e "${YELLOW}▶ CF WARP${RESET}"
+    echo -e "${YELLOW}▶ Cloudflare WARP${RESET}"
 
     warp_found=0
 
+    # 1. 官方 warp-cli
     if command -v warp-cli &>/dev/null; then
         warp_found=1
         if warp-cli status 2>/dev/null | grep -qi 'Connected'; then
@@ -732,6 +947,7 @@ check_panel() {
         fi
     fi
     
+    # 2. WarpGo
     if command -v warp-go &>/dev/null || command -v warpgo &>/dev/null; then
         warp_found=1
         echo -e "状态: ${GREEN}WarpGo已安装${RESET}"
@@ -746,11 +962,13 @@ check_panel() {
         fi
     fi
 
+    # 3. WGCF
     if command -v wgcf &>/dev/null || ip a 2>/dev/null | grep -q 'wgcf'; then
         warp_found=1
         echo -e "状态: ${GREEN}WGCF已安装${RESET}"
     fi
 
+    # 4. 官方服务进程
     if systemctl list-unit-files 2>/dev/null | grep -q warp-svc; then
         warp_found=1
         if systemctl is-active warp-svc &>/dev/null; then
@@ -760,6 +978,7 @@ check_panel() {
         fi
     fi
 
+    # 5. 其他快捷命令
     if command -v warp &>/dev/null; then
         warp_found=1
         if warp status 2>/dev/null | grep -q "WARP 网络接口已开启"; then
@@ -769,7 +988,26 @@ check_panel() {
         fi
     fi
 
+    # 6. Docker 模糊检测 (不区分大小写)
+    if command -v docker &>/dev/null; then
+        # 获取所有容器名，通过 grep -i 匹配包含 warp 的名称
+        warp_containers=$(docker ps -a --format "{{.Names}}" | grep -i "warp")
+        if [[ -n "$warp_containers" ]]; then
+            warp_found=1
+            for name in $warp_containers; do
+                # 直接获取状态
+                raw_status=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)
+                # 对 Docker 状态进行简单转换，确保 format_status 能识别
+                [[ "$raw_status" == "running" ]] && c_status="active" || c_status="$raw_status"
+                
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_status")"
+            done
+        fi
+    fi
+
+    # 网络模式检测
     if [[ $warp_found -eq 0 ]]; then
+        # 只有在没有任何发现时才显示未安装
         echo -e "状态: ${RED}未安装${RESET}"
     else
         trace=$(curl -s --max-time 2 https://www.cloudflare.com/cdn-cgi/trace)
@@ -783,21 +1021,83 @@ check_panel() {
     fi
     echo ""
 
+    # =============================
+    # Cloudflare Tunnel (Argo)
+    # =============================
+    # 定义你脚本中的路径，假设 ${work_dir} 你已经全局定义了
+    local argo_path="${work_dir}/argo"
 
+    echo -e "${YELLOW}▶ Cloudflare Tunnel${RESET}"
+    
+    # 查找 Docker 容器 (保持模糊匹配)
+    cf_containers=""
+    if command -v docker &>/dev/null; then
+        cf_containers=$(docker ps -a --format "{{.Names}}" | grep -iE "cloudflared|tunnel|argo")
+    fi
+
+    # 1. 检测：自定义路径文件、系统命令、进程或 Docker
+    if [[ -f "$argo_path" ]] || command -v cloudflared &>/dev/null || pgrep -f "argo|cloudflared" &>/dev/null || [[ -n "$cf_containers" ]]; then
+
+        status=$(systemctl is-active cloudflared 2>/dev/null || systemctl is-active argo 2>/dev/null)
+        
+        # 进程检测 (优先匹配你重命名后的 argo)
+        if [[ "$status" != "active" ]]; then
+            if pgrep -f "$argo_path" &>/dev/null || pgrep -f "cloudflared" &>/dev/null; then
+                status="active"
+            elif [[ -n "$cf_containers" ]]; then
+                for name in $cf_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取
+        if [[ -f "$argo_path" ]]; then
+            ver=$("$argo_path" --version 2>/dev/null | awk '{print $3}')
+        elif command -v cloudflared &>/dev/null; then
+            ver=$(cloudflared --version 2>/dev/null | awk '{print $3}')
+        elif [[ -n "$cf_containers" ]]; then
+            first_c=$(echo "$cf_containers" | head -n1)
+            ver=$(docker exec "$first_c" cloudflared --version 2>/dev/null | awk '{print $3}')
+        fi
+        echo -e "版本: ${ver:-运行中(内置)}"
+
+        # 如果有 Docker 容器，列出所有相关容器名
+        if [[ -n "$cf_containers" ]]; then
+            for name in $cf_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
 
     # =============================
     # Docker
     # =============================
     echo -e "${YELLOW}▶ Docker${RESET}"
+
     if command -v docker &>/dev/null; then
+        # Docker 已安装
         containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client')
+
         if [[ -n "$containers" ]]; then
-            echo -e "${GREEN}运行中:${RESET} $(echo $containers | tr '\n' ' ')"
+            echo -e "状态: ${GREEN}运行中${RESET}"
+            echo -e "${YELLOW}容器:${RESET} $(echo "$containers" | tr '\n' ' ')"
         else
-            echo -e "${GREEN}无相关容器${RESET}"
+            echo -e "状态: ${GREEN}已安装${RESET}"
         fi
     else
-        echo -e "${RED}未安装${RESET}"
+        echo -e "状态: ${RED}未安装${RESET}"
     fi
 
     echo ""
@@ -852,8 +1152,48 @@ check_panel() {
     fi
 
     echo ""
+
+
+    # =============================
+    # DNS 检测
+    # =============================
+    echo -e "${YELLOW}▶ DNS 信息${RESET}"
+
+    # 提取 DNS 地址
+    dns_all=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}')
+    dns_v4=$(echo "$dns_all" | grep -v ":" | tr '\n' ' ')
+    dns_v6=$(echo "$dns_all" | grep ":" | tr '\n' ' ')
+
+    # --- IPv4 DNS ---
+    if [[ -n "$dns_v4" ]]; then
+        echo -e "DNSv4: ${CYAN}${dns_v4}${RESET}"
+        # 使用第一个 v4 DNS 测试解析 google.com
+        test_v4=$(first_dns=$(echo $dns_v4 | awk '{print $1}'); dig +short +time=1 +tries=1 google.com @$first_dns >/dev/null 2>&1 && echo "ok" || echo "fail")
+        if [[ "$test_v4" == "ok" ]]; then
+            echo -e "解析: ${GREEN}IPv4 正常${RESET}"
+        else
+            echo -e "解析: ${RED}IPv4 失败或超时${RESET}"
+        fi
+    else
+        echo -e "DNSv4: ${RED}无${RESET}"
+    fi
+
+    # --- IPv6 DNS (仅在存在时显示) ---
+    if [[ -n "$dns_v6" ]]; then
+        echo -e "DNSv6: ${CYAN}${dns_v6}${RESET}"
+        # 使用第一个 v6 DNS 测试解析 google.com (AAAA)
+        test_v6=$(first_dns6=$(echo $dns_v6 | awk '{print $1}'); dig +short +time=1 +tries=1 google.com AAAA @$first_dns6 >/dev/null 2>&1 && echo "ok" || echo "fail")
+        if [[ "$test_v6" == "ok" ]]; then
+            echo -e "解析: ${GREEN}IPv6 正常${RESET}"
+        else
+            echo -e "解析: ${RED}IPv6 失败或超时${RESET}"
+        fi
+    fi
+    echo ""
     
 }
+
+
 
 # =============================
 # 核心卸载菜单
@@ -872,7 +1212,11 @@ while true; do
     echo -e "${YELLOW}[06] 卸载 ACME证书${RESET}"
     echo -e "${YELLOW}[07] 卸载 WARP${RESET}"
     echo -e "${YELLOW}[08] 卸载 BBR${RESET}"
-    echo -e "${YELLOW}[09] 清理 Docke代理容器${RESET}"
+    echo -e "${YELLOW}[09] 卸载 Realm${RESET}"
+    echo -e "${YELLOW}[10] 卸载 GOST${RESET}"
+    echo -e "${YELLOW}[11] 卸载 FRP${RESET}"
+    echo -e "${YELLOW}[12] 卸载 CloudflareTunnel${RESET}"
+    echo -e "${YELLOW}[13] 清理 Docke代理容器${RESET}"
     echo -e "${GREEN}[0] 返回${RESET}"
     echo -e "${GREEN}[x] 退出${RESET}"
 
@@ -887,7 +1231,11 @@ while true; do
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/acmeuninstall.sh) ; pause_return ;;
         07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/warpuninstall.sh) ; pause_return ;;
         08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbruninstall.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dockerprouninstall.sh) ; pause_return ;;
+        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/realmuninstall.sh) ; pause_return ;;
+        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/gostuninstall.sh) ; pause_return ;;
+        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frpuninstall.sh) ; pause_return ;;
+        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/cftunneluninstall.sh) ; pause_return ;;
+        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dockerprouninstall.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
