@@ -7,7 +7,7 @@ GREEN="\033[32m"
 RESET="\033[0m"
 YELLOW="\033[33m"
 RED="\033[31m"
-APP_NAME="nginx-proxy-manager"
+APP_NAME="nginx"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_FILE="$APP_DIR/config.env"
@@ -63,8 +63,9 @@ function install_app() {
     # 生成 docker-compose.yml
     cat > "$COMPOSE_FILE" <<EOF
 services:
-  app:
+  nginx:
     image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx
     restart: unless-stopped
     ports:
       - '80:80'       # HTTP 固定
@@ -111,7 +112,7 @@ function uninstall_app() {
 }
 
 function view_logs() {
-    docker logs -f app
+    docker logs -f nginx
     read -p "按回车返回菜单..."
     menu
 }
