@@ -863,7 +863,7 @@ check_panel() {
         docker_nginx=$(docker ps --format "{{.Names}}" | grep -i nginx)
         if [[ -n "$docker_nginx" ]]; then
             nginx_found=1
-            echo -e "Docker: ${GREEN}运行中${RESET} ($docker_nginx)"
+            echo -e "状态: ${GREEN}已安装(Docker)${RESET}"
         fi
     fi
 
@@ -893,7 +893,7 @@ check_panel() {
         docker_caddy=$(docker ps --format "{{.Names}}" | grep -i caddy)
         if [[ -n "$docker_caddy" ]]; then
             caddy_found=1
-            echo -e "Docker: ${GREEN}运行中${RESET} ($docker_caddy)"
+            echo -e "状态: ${GREEN}已安装(Docker)${RESET}"
         fi
     fi
 
@@ -1117,42 +1117,36 @@ check_panel() {
 
     echo ""
 
-
     # =============================
     # 网络出口
     # =============================
     echo -e "${YELLOW}▶ 网络出口${RESET}"
 
-    ipv4=$(curl -4 -s --max-time 3 ip.sb 2>/dev/null)
-    [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ifconfig.me 2>/dev/null)
-    [[ -z "$ipv4" ]] && ipv4=$(curl -4 -s --max-time 3 ipv4.icanhazip.com 2>/dev/null)
-
+    # 获取 IP
+    ipv4=$(curl -4 -s --max-time 3 ip.sb 2>/dev/null || curl -4 -s --max-time 3 ifconfig.me 2>/dev/null)
     ipv6=$(curl -6 -s --max-time 3 ip.sb 2>/dev/null)
 
-    get_country() {
+    get_country_cn() {
         local ip="$1"
-        local country=""
-
-        country=$(curl -s --max-time 3 "https://ip.sb/geoip/$ip" | grep country_code | cut -d '"' -f4)
-        [[ -z "$country" ]] && country=$(curl -s --max-time 3 "http://ip-api.com/line/$ip?fields=countryCode")
-        [[ -z "$country" || "$country" == *"limit"* ]] && country=$(curl -s --max-time 3 "https://ipinfo.io/$ip/country")
-
-        echo "${country:-未知}"
+        # 优先从 ip-api 获取中文名称
+        local res=$(curl -s --max-time 3 "http://ip-api.com/json/$ip?lang=zh-CN")
+        local name=$(echo "$res" | grep -oP '"country":"\K[^"]+')
+        echo "${name:-未知}"
     }
 
     if [[ -n "$ipv4" ]]; then
-        country=$(get_country "$ipv4")
-        echo -e "IPv4: ${GREEN}$ipv4${RESET}  国家: ${GREEN}$country${RESET}"
+        country4=$(get_country_cn "$ipv4")
+        echo -e "IPv4: ${GREEN}$ipv4${RESET}         国家: ${GREEN}$country4${RESET}"
     else
         echo -e "IPv4: ${RED}获取失败${RESET}"
     fi
 
     if [[ -n "$ipv6" ]]; then
-        echo -e "IPv6: ${GREEN}$ipv6${RESET}"
+        country6=$(get_country_cn "$ipv6")
+        echo -e "IPv6: ${GREEN}$ipv6${RESET}  国家: ${GREEN}$country6${RESET}"
     fi
 
     echo ""
-
 
     # =============================
     # DNS 检测
