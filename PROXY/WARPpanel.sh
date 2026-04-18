@@ -8,7 +8,7 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-APP_NAME="lumina"
+APP_NAME="WARP"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 
@@ -35,7 +35,7 @@ check_port() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Lumina 管理菜单 ===${RESET}"
+        echo -e "${GREEN}=== WARP Panel 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
@@ -83,7 +83,7 @@ install_app() {
 services:
   lumina:
     image: crisocean/lumina:latest
-    container_name: lumina-client
+    container_name: WARP
     restart: unless-stopped
     environment:
       WARP_BACKEND: usque
@@ -113,7 +113,7 @@ EOF
     docker compose up -d
 
     echo
-    echo -e "${GREEN}✅ Lumina 已启动${RESET}"
+    echo -e "${GREEN}✅ WARP 已启动${RESET}"
     echo -e "${YELLOW}🌐 Web UI: http://127.0.0.1:${WEB_PORT}${RESET}"
     echo -e "${YELLOW}🧦 SOCKS5: 127.0.0.1:${SOCKS_PORT}${RESET}"
 
