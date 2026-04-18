@@ -198,7 +198,15 @@ update_claude() {
 uninstall_claude() {
   check_node || return 1
   info "开始卸载 Claude Code..."
+
   npm uninstall -g "$PKG" || true
+
+  # 强制删除所有相关内容
+  run_root rm -rf "$HOME/.claude" 2>/dev/null || true
+  run_root rm -f /usr/local/bin/claude /usr/bin/claude 2>/dev/null || true
+
+  hash -r 2>/dev/null || true
+
   ok "卸载完成"
 }
 
