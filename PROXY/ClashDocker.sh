@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# Glash 一键管理脚本
+# Clash 一键管理脚本
 # ========================================
 
 GREEN="\033[32m"
@@ -8,7 +8,7 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-APP_NAME="glash"
+APP_NAME="clash"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 CONFIG_DIR="$APP_DIR/config"
@@ -50,7 +50,7 @@ get_public_ip() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Glash 管理菜单 ===${RESET}"
+        echo -e "${GREEN}=== clash 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
@@ -119,7 +119,7 @@ install_app() {
 services:
   glash:
     image: gangz1o/glash:latest
-    container_name: glash
+    container_name: clash
     restart: always
     ports:
       - '${HTTP_PORT}:7890'
@@ -141,7 +141,7 @@ EOF
     SERVER_IP=$(get_public_ip)
 
     echo
-    echo -e "${GREEN}✅ Glash 已启动${RESET}"
+    echo -e "${GREEN}✅ Clash 已启动${RESET}"
     echo -e "${YELLOW}🌐 HTTP 代理:  http://${SERVER_IP}:${HTTP_PORT}${RESET}"
     echo -e "${YELLOW}🌐 SOCKS5 代理: socks5://${SERVER_IP}:${SOCKS_PORT}${RESET}"
     echo -e "${YELLOW}⚙️ Dashboard:  http://127.0.0.1:${DASHBOARD_PORT}/ui/${RESET}"
@@ -155,22 +155,22 @@ update_app() {
     cd "$APP_DIR" || return
     docker compose pull
     docker compose up -d
-    echo -e "${GREEN}✅ Glash 更新完成${RESET}"
+    echo -e "${GREEN}✅ Clash 更新完成${RESET}"
     read -p "按回车返回菜单..."
 }
 
 restart_app() {
-    docker restart glash
-    echo -e "${GREEN}✅ Glash 已重启${RESET}"
+    docker restart clash
+    echo -e "${GREEN}✅ Clash 已重启${RESET}"
     read -p "按回车返回菜单..."
 }
 
 view_logs() {
-    docker logs -f glash
+    docker logs -f clash
 }
 
 check_status() {
-    docker ps | grep glash
+    docker ps | grep clash
     read -p "按回车返回菜单..."
 }
 
@@ -178,7 +178,7 @@ uninstall_app() {
     cd "$APP_DIR" || return
     docker compose down -v
     rm -rf "$APP_DIR"
-    echo -e "${RED}✅ Glash 已彻底卸载${RESET}"
+    echo -e "${RED}✅ Clash 已彻底卸载${RESET}"
     read -p "按回车返回菜单..."
 }
 
