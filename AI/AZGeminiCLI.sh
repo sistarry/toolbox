@@ -221,7 +221,17 @@ update_gemini() {
 uninstall_gemini() {
   check_node || return 1
   info "开始卸载 Gemini CLI..."
+
   npm uninstall -g "$PKG" || true
+
+  run_root rm -rf \
+    "$HOME/.gemini" \
+    "$HOME/.config/gemini" \
+    /usr/local/bin/gemini \
+    /usr/bin/gemini 2>/dev/null || true
+
+  hash -r 2>/dev/null || true
+
   ok "卸载完成"
 }
 
