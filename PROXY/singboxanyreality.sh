@@ -309,7 +309,7 @@ pause_return() {
 }
 
 show_menu() {
-  echo
+  clear
   echo '====== sing-box anytls+reality 管理 ======'
   echo '1. 安装'
   echo '2. 卸载'
