@@ -198,7 +198,17 @@ update_codex() {
 uninstall_codex() {
   check_node || return 1
   info "开始卸载 Codex CLI..."
+
   npm uninstall -g "$PKG" || true
+
+  run_root rm -rf \
+    "$HOME/.codex" \
+    "$HOME/.config/codex" \
+    /usr/local/bin/codex \
+    /usr/bin/codex 2>/dev/null || true
+
+  hash -r 2>/dev/null || true
+
   ok "卸载完成"
 }
 
