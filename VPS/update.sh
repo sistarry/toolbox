@@ -3,7 +3,7 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
-# 一键系统更新 & 常用依赖安装 & 修复 APT 源（Debian 11/12 兼容版）
+# 系统更新 & 常用依赖安装 & 修复 APT 源
 # ==========================================
 
 # 颜色定义
@@ -144,7 +144,7 @@ update_system() {
 
 
 install_netcat() {
-    echo -e "${YELLOW}🔍 检查 netcat (nc)...${RESET}"
+    echo -e "${YELLOW}🔍 检查 netcat...${RESET}"
 
     if command -v nc >/dev/null 2>&1; then
         echo -e "${GREEN}✔ nc 已安装${RESET}"
@@ -172,7 +172,7 @@ install_netcat() {
 }
 
 install_dnsutils() {
-    echo -e "${YELLOW}🔍 检查 DNS 工具 (dig/nslookup)...${RESET}"
+    echo -e "${YELLOW}🔍 检查 DNS 工具(dnsutils)...${RESET}"
 
     if command -v dig >/dev/null 2>&1; then
         echo -e "${GREEN}✔ DNS 工具已安装${RESET}"
