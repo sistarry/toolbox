@@ -1,7 +1,7 @@
 #!/bin/bash
 # ========================================
-# Cloudflare WARP 彻底卸载脚本
-# 支持 warp u / warp-cli / wgcf / wireguard / 脚本安装
+# Cloudflare WARP 彻底卸载脚本（含 Docker）
+# 支持 warp u / warp-cli / wgcf / wireguard / docker
 # ========================================
 
 RED="\033[31m"
@@ -14,18 +14,18 @@ echo -e "${RED}      Cloudflare WARP 彻底卸载${RESET}"
 echo -e "${RED}========================================${RESET}"
 
 # =============================
-# 1. 优先使用 warp u 卸载
+# 1. warp u 卸载
 # =============================
-echo -e "${YELLOW}[1/6] 尝试 warp u 卸载...${RESET}"
+echo -e "${YELLOW}[1/7] 尝试 warp u 卸载...${RESET}"
 
 if command -v warp &>/dev/null; then
     warp u 2>/dev/null && echo -e "${GREEN}warp u 已执行${RESET}"
 fi
 
 # =============================
-# 2. warp-cli 卸载
+# 2. warp-cli 清理
 # =============================
-echo -e "${YELLOW}[2/6] 清理 warp-cli...${RESET}"
+echo -e "${YELLOW}[2/7] 清理 warp-cli...${RESET}"
 
 if command -v warp-cli &>/dev/null; then
     warp-cli disconnect 2>/dev/null
@@ -35,7 +35,7 @@ fi
 # =============================
 # 3. systemd 服务清理
 # =============================
-echo -e "${YELLOW}[3/6] 停止 WARP 服务...${RESET}"
+echo -e "${YELLOW}[3/7] 停止 WARP 服务...${RESET}"
 
 systemctl stop warp-svc 2>/dev/null
 systemctl disable warp-svc 2>/dev/null
@@ -49,7 +49,7 @@ systemctl disable wgcf 2>/dev/null
 # =============================
 # 4. wgcf / wireguard 清理
 # =============================
-echo -e "${YELLOW}[4/6] 清理 WGCF / WireGuard...${RESET}"
+echo -e "${YELLOW}[4/7] 清理 WGCF / WireGuard...${RESET}"
 
 wg-quick down wgcf 2>/dev/null
 
@@ -59,34 +59,54 @@ ip link show 2>/dev/null | grep -E "wgcf|warp" && {
 }
 
 # =============================
-# 5. 删除二进制与脚本
+# 5. 删除程序文件
 # =============================
-echo -e "${YELLOW}[5/6] 删除程序文件...${RESET}"
+echo -e "${YELLOW}[5/7] 删除程序文件...${RESET}"
 
-rm -f /usr/bin/warp
-rm -f /usr/local/bin/warp
-rm -f /usr/bin/warp-cli
-rm -f /usr/local/bin/warp-cli
-rm -f /usr/bin/wgcf
-rm -f /usr/local/bin/wgcf
+rm -f /usr/bin/warp /usr/local/bin/warp
+rm -f /usr/bin/warp-cli /usr/local/bin/warp-cli
+rm -f /usr/bin/wgcf /usr/local/bin/wgcf
 
-rm -rf /opt/warp
-rm -rf /etc/warp
+rm -rf /opt/warp /etc/warp
 rm -rf /etc/wireguard
-rm -rf ~/.warp
-rm -rf ~/.wgcf
+rm -rf ~/.warp ~/.wgcf
 
 # =============================
-# 6. apt / yum 卸载
+# 6. 包管理卸载
 # =============================
-echo -e "${YELLOW}[6/6] 检测包管理安装...${RESET}"
+echo -e "${YELLOW}[6/7] 检测包管理安装...${RESET}"
 
 if command -v apt &>/dev/null && dpkg -l 2>/dev/null | grep -qi warp; then
-    apt purge -y warp-cli
-    apt purge -y cloudflare-warp
+    apt purge -y warp-cli cloudflare-warp
     apt autoremove -y
 elif command -v yum &>/dev/null && rpm -qa | grep -qi warp; then
     yum remove -y cloudflare-warp
+fi
+
+# =============================
+# 7. Docker 清理（新增）
+# =============================
+echo -e "${YELLOW}[7/7] 清理 Docker WARP 相关残留...${RESET}"
+
+if command -v docker &>/dev/null; then
+
+    # 1️⃣ 容器
+    echo -e "${YELLOW}检查 WARP 相关容器...${RESET}"
+    docker ps -a --format '{{.ID}} {{.Names}}' | grep -Ei "warp|wgcf|cloudflare" | awk '{print $1}' | xargs -r docker stop 2>/dev/null
+    docker ps -a --format '{{.ID}} {{.Names}}' | grep -Ei "warp|wgcf|cloudflare" | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null
+
+    # 2️⃣ 镜像
+    echo -e "${YELLOW}检查 WARP 相关镜像...${RESET}"
+    docker images --format '{{.Repository}} {{.ID}}' | grep -Ei "warp|wgcf|cloudflare" | awk '{print $2}' | xargs -r docker rmi -f 2>/dev/null
+
+    # 3️⃣ volume
+    echo -e "${YELLOW}检查 WARP 相关数据卷...${RESET}"
+    docker volume ls --format '{{.Name}}' | grep -Ei "warp|wgcf|cloudflare" | xargs -r docker volume rm 2>/dev/null
+
+    echo -e "${GREEN}Docker WARP 清理完成${RESET}"
+
+else
+    echo -e "${YELLOW}未检测到 Docker，跳过${RESET}"
 fi
 
 # =============================
