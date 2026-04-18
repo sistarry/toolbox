@@ -125,6 +125,8 @@ uninstall_opencode() {
     warn "卸载 OpenCode..."
 
     npm uninstall -g opencode-ai || true
+    rm -rf /root/.cache/opencode
+    rm -rf /root/.config/opencode
 
     info "已卸载"
 }
