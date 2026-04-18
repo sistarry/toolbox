@@ -21,8 +21,6 @@ setup_logging() {
   mkdir -p "$(dirname "$LOG_FILE")"
   touch "$LOG_FILE"
   exec > >(tee -a "$LOG_FILE") 2>&1
-  echo
-  echo "[$(date '+%F %T %Z')] anyreality-singbox script started"
 }
 
 require_root() {
