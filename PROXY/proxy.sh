@@ -634,7 +634,7 @@ check_panel() {
     # =============================
     # Mihomo (Clash Meta)
     # =============================
-    echo -e "${YELLOW}▶ Mihomo${RESET}"
+    echo -e "${YELLOW}▶ Mihomo/Clash${RESET}"
     
     mihomo_found=0
     mi_ports=""
