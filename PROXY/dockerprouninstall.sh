@@ -48,6 +48,11 @@ KEYWORDS=(
 "wireguard"
 "gostpanel"
 "xboard"
+"xtrafficdash"
+"lumina-client"
+"freegfw"
+"sing-box"
+"Mihomo"
 )
 
 # =============================
