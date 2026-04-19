@@ -233,9 +233,9 @@ while true; do
     echo -e "${YELLOW}[13] PPanel${RESET}"
     echo -e "${YELLOW}[14] PPanel(MSQL)${RESET}"
     echo -e "${YELLOW}[15] ppnode 节点${RESET}"
-    echo -e "${YELLOW}[16] ConfluxMihomo代理${RESET}"
-    echo -e "${YELLOW}[17] ClashDocker${RESET}"
-    echo -e "${YELLOW}[18] FreeGFW${RESET}"
+    echo -e "${YELLOW}[16] Mihomo代理${RESET}"
+    echo -e "${YELLOW}[17] Clash代理${RESET}"
+    echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -259,7 +259,7 @@ while true; do
         15) bash <(wget -qO- https://raw.githubusercontent.com/perfect-panel/ppanel-node/master/scripts/install.sh) ; pause_return ;;
         16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh) ; pause_return ;;
         17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
-        18) curl -fsSL https://raw.githubusercontent.com/haradakashiwa/freegfw/main/install.sh | bash ;;
+        18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -632,33 +632,74 @@ check_panel() {
     echo ""
 
     # =============================
-    # Mihomo
+    # Mihomo (Clash Meta)
     # =============================
     echo -e "${YELLOW}▶ Mihomo${RESET}"
-    if command -v mihomo &>/dev/null || command -v clash &>/dev/null || pgrep -f mihomo &>/dev/null || pgrep -f clash &>/dev/null; then
-        
-        # 获取状态：优先查系统服务，如果服务没开但进程在，标记为 active
-        status=$(systemctl is-active mihomo 2>/dev/null || systemctl is-active clash 2>/dev/null)
-        [[ "$status" != "active" && ($(pgrep -f mihomo) || $(pgrep -f clash)) ]] && status="active"
+    
+    mihomo_found=0
+    mi_ports=""
 
+    # 1. 检测：系统命令、进程或 Docker (保持之前的逻辑)
+    if command -v docker &>/dev/null; then
+        mi_containers=$(docker ps -a --format "{{.Names}}" | grep -iE "mihomo|clash")
+    fi
+
+    if command -v mihomo &>/dev/null || pgrep -iE "mihomo|clash" &>/dev/null || [[ -n "$mi_containers" ]]; then
+        mihomo_found=1
+        
+        # 状态判定
+        status=$(systemctl is-active mihomo 2>/dev/null || systemctl is-active clash 2>/dev/null)
+        if [[ "$status" != "active" ]]; then
+            if pgrep -iE "mihomo|clash" &>/dev/null; then status="active"
+            elif [[ -n "$mi_containers" ]]; then
+                for name in $mi_containers; do
+                    [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]] && status="active" && break
+                done
+            fi
+        fi
         echo -e "状态: $(format_status "$status")"
 
-        if command -v mihomo &>/dev/null || command -v clash &>/dev/null; then
-            # 提取版本号
-            ver=$(mihomo -v 2>/dev/null | head -n1 || clash -v 2>/dev/null | head -n1)
-        else
-            # 从进程名中提取版本信息
-            ver=$(ps -ef | grep -E 'mihomo|clash' | grep -v grep | grep -oE 'v[0-9.]+' | head -n1)
+        # 2. 版本获取优化 (核心修正点)
+        # 获取第一行版本号，并检查是否含有 gvisor 关键字
+        local raw_ver=""
+        if command -v mihomo &>/dev/null; then
+            raw_ver=$(mihomo -v 2>/dev/null)
+        elif [[ -n "$mi_containers" ]]; then
+            first_c=$(echo "$mi_containers" | head -n1)
+            raw_ver=$(docker exec "$first_c" mihomo -v 2>/dev/null)
         fi
-        echo -e "版本: ${ver:-运行中(内置)}"
 
-        ports=$( (get_ports mihomo; get_ports clash) | sort -u )
-        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+        if [[ -n "$raw_ver" ]]; then
+            # 提取版本号 (v1.x.x)
+            ver_num=$(echo "$raw_ver" | grep -iE "Mihomo|Clash" | awk '{print $3}' | head -n1)
+            # 检查是否包含 gvisor 并做个简洁标记
+            [[ "$raw_ver" == *"gvisor"* ]] && ver_num="${ver_num} (gVisor)"
+            echo -e "版本: ${ver_num:-未知}"
+        else
+            echo -e "版本: 运行中(内置)"
+        fi
+
+        # 3. 端口获取
+        mi_ports=$(get_ports mihomo; get_ports clash)
+        if [[ -n "$mi_containers" ]]; then
+            d_ports=$(docker container inspect $(echo "$mi_containers") --format '{{range $p, $conf := .NetworkSettings.Ports}}{{range $conf}}{{.HostPort}} {{end}}{{end}}' | tr -s ' ' '\n' | grep -v '^$')
+            mi_ports="$mi_ports $d_ports"
+        fi
+        final_mi_ports=$(echo $mi_ports | tr ' ' '\n' | sort -un | tr '\n' ',' | sed 's/,$//')
+        [[ -n "$final_mi_ports" ]] && echo -e "端口: ${GREEN}${final_mi_ports}${RESET}" || echo -e "端口: ${YELLOW}无${RESET}"
+
+        # 4. 列出 Docker 容器
+        if [[ -n "$mi_containers" ]]; then
+            for name in $mi_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
-
     # =============================
     # Realm
     # =============================
@@ -719,56 +760,82 @@ check_panel() {
     fi
     echo ""
 
+
     # =============================
-    # Gost
+    # Gost 模块 (完整优化版)
     # =============================
     echo -e "${YELLOW}▶ Gost${RESET}"
     
-    # 查找 Docker 容器名包含 gost 的容器 ID (不区分大小写)
+    # 颜色变量定义 (确保脚本开头已定义，若无请取消下面注释)
+    # YELLOW='\033[0;33m' && CYAN='\033[0;36m' && RED='\033[0;31m' && RESET='\033[0m'
+
     gost_containers=""
     if command -v docker &>/dev/null; then
+        # 排除 grep 自身的干扰，精确获取容器名
         gost_containers=$(docker ps -a --format "{{.Names}}" | grep -i "gost")
     fi
 
-    # 1. 检测原生安装、进程或 Docker 容器
+    # 1. 综合检测：二进制文件、进程、或 Docker 容器
     if command -v gost &>/dev/null || pgrep -f gost &>/dev/null || [[ -n "$gost_containers" ]]; then
 
-        status=$(systemctl is-active gost 2>/dev/null)
-        # 如果 systemctl 没过，但进程在，或者 Docker 在运行，也算 active
-        if [[ "$status" != "active" ]]; then
-            if pgrep -f gost &>/dev/null; then
-                status="active"
-            elif [[ -n "$gost_containers" ]]; then
-                # 检查是否有任一 gost 容器在运行
-                for name in $gost_containers; do
-                    if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
-                        status="active"
-                        break
-                    fi
-                done
-            fi
+        status="inactive"
+        # 优先级：Systemd > 进程 > Docker 运行状态
+        if systemctl is-active gost &>/dev/null; then
+            status="active"
+        elif pgrep -f gost &>/dev/null; then
+            status="active"
+        elif [[ -n "$gost_containers" ]]; then
+            for name in $gost_containers; do
+                if [[ $(docker inspect -f '{{.State.Status}}' "$name") == "running" ]]; then
+                    status="active"
+                    break
+                fi
+            done
         fi
 
         echo -e "状态: $(format_status "$status")"
 
-        # 版本获取
+        # 2. 版本获取 (多重兼容逻辑)
+        ver=""
+        # 方式 A: 宿主机原生命令
         if command -v gost &>/dev/null; then
-            ver=$(gost -V 2>/dev/null | head -n1 | awk '{print $2}')
-        elif [[ -n "$gost_containers" ]]; then
-            # 尝试从第一个容器内提取版本
+            ver=$(gost -V 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+        fi
+        
+        # 方式 B: 如果宿主机没装或没取到，从 Docker 容器取
+        if [[ -z "$ver" && -n "$gost_containers" ]]; then
             first_c=$(echo "$gost_containers" | head -n1)
-            ver=$(docker exec "$first_c" gost -V 2>/dev/null | head -n1 | awk '{print $2}')
+            # 尝试容器内 gost -V
+            ver=$(docker exec "$first_c" gost -V 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+            # 兼容 gostpanel 等特殊镜像路径
+            [[ -z "$ver" ]] && ver=$(docker exec "$first_c" /bin/gost -V 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
         fi
         echo -e "版本: ${ver:-运行中(内置)}"
 
-        # 端口获取
+        # 3. 端口获取 (原生 + Docker 穿透)
         ports=$(get_ports gost)
-        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+        if [[ -n "$gost_containers" ]]; then
+            # 抓取 Docker 映射端口并格式化清洗
+            d_ports=$(docker container inspect $gost_containers --format '{{range $p, $conf := .NetworkSettings.Ports}}{{range $conf}}{{.HostPort}} {{end}}{{end}}' | tr ' ' '\n' | sed '/^$/d' | sort -u | tr '\n' ',' | sed 's/^,//;s/,$//')
+            
+            if [[ -n "$d_ports" ]]; then
+                if [[ -n "$ports" ]]; then
+                    ports="${ports},${d_ports}"
+                else
+                    ports="$d_ports"
+                fi
+            fi
+        fi
 
-        # 如果有 Docker 容器，额外列出容器名 (保持简洁)
+        # 最终端口清洗输出
+        final_ports=$(echo "$ports" | tr ' ' '\n' | tr ',' '\n' | sed '/^$/d' | sort -u | tr '\n' ',' | sed 's/,$//')
+        [[ -n "$final_ports" ]] && echo -e "端口: ${CYAN}${final_ports}${RESET}" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 4. 细分容器详情显示
         if [[ -n "$gost_containers" ]]; then
             for name in $gost_containers; do
                 raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                # 统一显示为 active 或实际状态
                 [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
                 echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
             done
@@ -778,6 +845,8 @@ check_panel() {
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
+
+
 
     # =============================
     # FRP (frpc/frps)
@@ -846,30 +915,56 @@ check_panel() {
     echo -e "${YELLOW}▶ Nginx${RESET}"
 
     nginx_found=0
+    all_ports=""
 
+    # 1. 检测本机 Nginx
     if command -v nginx &>/dev/null; then
         nginx_found=1
         status=$(systemctl is-active nginx 2>/dev/null)
+        [[ "$status" != "active" ]] && pgrep -x nginx &>/dev/null && status="active"
+        
         echo -e "状态: $(format_status "$status")"
-
         ver=$(nginx -v 2>&1 | awk -F/ '{print $2}')
-        echo -e "版本: ${ver:-未知}"
+        echo -e "版本: ${ver:-内置}"
 
-        ports=$(get_ports nginx)
-        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')"
+        all_ports=$(get_ports nginx)
     fi
 
+    # 2. 检测 Docker Nginx (针对 NPM 做了优化)
     if command -v docker &>/dev/null; then
-        docker_nginx=$(docker ps --format "{{.Names}}" | grep -i nginx)
-        if [[ -n "$docker_nginx" ]]; then
+        # 匹配 nginx 或 npm 相关容器
+        nginx_containers=$(docker ps -a --format "{{.Names}}" | grep -iE "nginx|npm")
+        
+        if [[ -n "$nginx_containers" ]]; then
+            [[ $nginx_found -eq 0 ]] && echo -e "状态: ${GREEN}Docker 运行中${RESET}"
             nginx_found=1
-            echo -e "状态: ${GREEN}已安装(Docker)${RESET}"
+
+            for name in $nginx_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+
+                # 修正：更精准地提取宿主机 HostPort，并确保每个端口后有空格以便后续分割
+                d_ports=$(docker container inspect "$name" --format '{{range $p, $conf := .NetworkSettings.Ports}}{{range $conf}}{{.HostPort}} {{end}}{{end}}' | tr -s ' ' '\n' | grep -v '^$')
+                all_ports="$all_ports $d_ports"
+            done
         fi
     fi
 
-    [[ $nginx_found -eq 0 ]] && echo -e "状态: ${RED}未安装${RESET}"
+    # 3. 最终端口汇总显示
+    if [[ $nginx_found -eq 1 ]]; then
+        # 核心修正点：确保用换行符分割，再排序去重，最后用逗号连接
+        final_ports=$(echo $all_ports | tr ' ' '\n' | grep -v '^$' | sort -un | tr '\n' ',' | sed 's/,$//')
+        
+        if [[ -n "$final_ports" ]]; then
+            echo -e "端口: ${GREEN}${final_ports}${RESET}"
+        else
+            echo -e "端口: ${YELLOW}未发现映射端口${RESET}"
+        fi
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
     echo ""
-
     # =============================
     # Caddy
     # =============================
@@ -949,7 +1044,7 @@ check_panel() {
             # 从容器内部提取版本，并过滤出纯数字版本号
             ver=$(docker exec "$container_id" acme.sh --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
         fi
-        echo -e "版本: ${ver:-未知}"
+        echo -e "版本: ${ver:-内置}"
         
     else
         echo -e "状态: ${RED}未安装${RESET}"
@@ -1113,7 +1208,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
