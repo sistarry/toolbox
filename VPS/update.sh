@@ -18,6 +18,45 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+
+# ========================================
+# Alpine 路径
+# ========================================
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+fi
+
+if [ "$ID" = "alpine" ]; then
+    echo -e "${YELLOW}🚀 Alpine更新...${RESET}"
+
+    apk update && apk upgrade
+
+    apk add --no-cache \
+        bash curl wget vim tar sudo git gzip \
+        openssl openssh ca-certificates tzdata
+
+    # -------------------------
+    # 时区设置
+    # -------------------------
+    TZ=${TZ:-Asia/Shanghai}
+
+    echo -e "${YELLOW}🌏 配置时区为: $TZ ...${RESET}"
+
+    # 防止不存在时报错
+    if [ -f "/usr/share/zoneinfo/$TZ" ]; then
+        ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+        echo "$TZ" > /etc/timezone
+        echo -e "${GREEN}✔ 时区设置完成${RESET}"
+    else
+        echo -e "${RED}❌ 时区不存在: $TZ${RESET}"
+    fi
+
+    echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
+    echo -e "${YELLOW}当前时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+
+    exit 0
+fi
+
 # -------------------------
 # 常用依赖
 # -------------------------
