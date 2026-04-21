@@ -311,21 +311,126 @@ add_site_with_cert() {
     reload_caddy
 }
 
+# Emby 反代配置
+add_emby_site_caddy() {
+    echo -ne "${GREEN}请输入您的域名 (例: emby.example.com): ${RESET}"; read DOMAIN
+    echo -ne "${GREEN}请输入 Emby 目标地址 (例: http://127.0.0.1:8096): ${RESET}"; read TARGET
+    
+    # 提取主机名，用于处理 HTTPS 后端 SNI
+    local TARGET_HOST=$(echo $TARGET | awk -F[/:] '{print $4}')
+    
+    # 构造 Caddyfile 配置
+    cat >> $CADDYFILE <<EOF
+
+$DOMAIN {
+    # 开启 Gzip 加速元数据加载
+    encode gzip
+
+    reverse_proxy $TARGET {
+        # 关闭缓冲，流媒体即时传输 (相当于 Nginx proxy_buffering off)
+        flush_interval -1
+
+        # 头部处理
+        header_up Host {upstream_hostport}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+EOF
+
+    # 如果后端目标是 HTTPS，追加 SNI 配置
+    if [[ "$TARGET" == https* ]]; then
+        cat >> $CADDYFILE <<EOF
+        header_up Host $TARGET_HOST
+        transport http {
+            tls_server_name $TARGET_HOST
+        }
+EOF
+    fi
+
+    # 闭合 reverse_proxy 并添加跨域 Header
+    cat >> $CADDYFILE <<EOF
+    }
+
+    # 跨域支持 (Emby 客户端必须)
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, OPTIONS, DELETE, PUT"
+        Access-Control-Allow-Headers "X-Emby-Authorization, Content-Type, Authorization, X-Requested-With"
+    }
+}
+EOF
+
+    echo -e "${GREEN}配置已生成！访问地址: https://${DOMAIN}${RESET}"
+    reload_caddy
+}
+
+# 主站+推流分离版
+add_emby_split_site_caddy() {
+    echo -ne "${GREEN}请输入您的域名(例: emby.example.com): ${RESET}"; read DOMAIN
+    echo -ne "${GREEN}请输入 Emby 主站地址(例: https://emby.example.com): ${RESET}"; read T_MAIN
+    echo -ne "${GREEN}请输入推流后端地址(例: https://emby.xx.com): ${RESET}"; read T_STREAM
+
+    local STREAM_HOST=$(echo $T_STREAM | awk -F[/:] '{print $4}')
+
+    cat >> $CADDYFILE <<EOF
+$DOMAIN {
+    # 推流重定向路径 /s1/
+    handle_path /s1/* {
+        reverse_proxy $T_STREAM {
+            flush_interval -1
+            header_up Host $STREAM_HOST
+            header_up X-Real-IP ""
+            header_up X-Forwarded-For ""
+        }
+    }
+
+    # 主站逻辑
+    handle {
+        reverse_proxy $T_MAIN {
+            flush_interval -1
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP ""
+            header_up X-Forwarded-For ""
+        }
+    }
+}
+EOF
+    echo -e "${GREEN}访问地址:https://${DOMAIN}${RESET}"
+    reload_caddy
+}
+
+emby_proxy_menu() {
+    clear
+    echo -e "${GREEN}==== Emby 反代管理 ====${RESET}"
+    echo -e "${GREEN}1) 普通反代${RESET}"
+    echo -e "${GREEN}2) 主站 + 推流重定向${RESET}"
+    echo -e "${GREEN}0) 返回主菜单${RESET}"
+    echo -ne "${GREEN}请选择 [0-2]: ${RESET}" 
+    read emby_choice
+
+    case $emby_choice in
+        1) add_emby_site_caddy ;;
+        2) add_emby_split_site_caddy ;;
+        0) return ;;
+        *) echo -e "${RED}无效选项${RESET}"; pause ;;
+    esac
+}
+
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}==== Caddy 管理脚本====${RESET}"
-        echo -e "${GREEN}1) 安装Caddy${RESET}"
-        echo -e "${GREEN}2) 添加站点${RESET}"
-        echo -e "${GREEN}3) 删除站点${RESET}"
-        echo -e "${GREEN}4) 查看站点证书信息${RESET}"
-        echo -e "${GREEN}5) 修改站点配置${RESET}"
-        echo -e "${GREEN}6) 添加站点(自定义证书)${RESET}"
-        echo -e "${GREEN}7) 重载Caddy${RESET}"
-        echo -e "${GREEN}8) 卸载Caddy${RESET}"
-        echo -e "${GREEN}9) 查看所有域名证书状态${RESET}"
-        echo -e "${GREEN}0) 退出${RESET}"
-        read -p "$(echo -e ${GREEN}请选择操作[0-9]：${RESET}) " choice
+        echo -e "${GREEN}==== Caddy 管理====${RESET}"
+        echo -e "${GREEN} 1) 安装Caddy${RESET}"
+        echo -e "${GREEN} 2) 添加站点${RESET}"
+        echo -e "${GREEN} 3) 删除站点${RESET}"
+        echo -e "${GREEN} 4) 查看站点证书信息${RESET}"
+        echo -e "${GREEN} 5) 修改站点配置${RESET}"
+        echo -e "${GREEN} 6) 添加站点(自定义证书)${RESET}"
+        echo -e "${GREEN} 7) 卸载Caddy${RESET}"
+        echo -e "${GREEN} 8) 查看所有域名证书状态${RESET}"
+        echo -e "${GREEN} 9) Emby反代${RESET}"
+        echo -e "${GREEN}10) 重载Caddy${RESET}"
+        echo -e "${GREEN} 0) 退出${RESET}"
+        read -p "$(echo -e ${GREEN} 请选择操作[0-10]:${RESET}) " choice
 
         case $choice in
             1) install_caddy ;;
@@ -334,9 +439,10 @@ menu() {
             4) view_sites ;;
             5) modify_site ;;
             6) add_site_with_cert ;;
-            7) reload_caddy ;;
-            8) uninstall_caddy ;;
-            9) check_domains_status ;;
+            7) uninstall_caddy ;;
+            8) check_domains_status ;;
+            9) emby_proxy_menu ;;
+            10) reload_caddy ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选项${RESET}"; pause ;;
         esac
