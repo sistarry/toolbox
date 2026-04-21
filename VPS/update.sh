@@ -27,22 +27,22 @@ if [ -f /etc/os-release ]; then
 fi
 
 if [ "$ID" = "alpine" ]; then
-    echo -e "${YELLOW}🚀 Alpine更新...${RESET}"
+    echo -e "${YELLOW}🚀 Alpine更新与环境配置...${RESET}"
 
+    # 更新索引并安装基础工具 + cron
+    # Alpine 的 cron 包名就叫 dcron (或者使用 busybox 自带的)
     apk update && apk upgrade
-
     apk add --no-cache \
         bash curl wget vim tar sudo git gzip \
-        openssl openssh ca-certificates tzdata
+        openssl openssh ca-certificates tzdata \
+        dcron  # 安装 cron 守护进程
 
     # -------------------------
     # 时区设置
     # -------------------------
     TZ=${TZ:-Asia/Shanghai}
-
     echo -e "${YELLOW}🌏 配置时区为: $TZ ...${RESET}"
 
-    # 防止不存在时报错
     if [ -f "/usr/share/zoneinfo/$TZ" ]; then
         ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
         echo "$TZ" > /etc/timezone
@@ -51,12 +51,31 @@ if [ "$ID" = "alpine" ]; then
         echo -e "${RED}❌ 时区不存在: $TZ${RESET}"
     fi
 
+    # -------------------------
+    # Cron 服务配置
+    # -------------------------
+    echo -e "${YELLOW}⏰ 正在启动 Cron 服务...${RESET}"
+    
+    # 确保 cron 目录存在
+    mkdir -p /var/spool/cron/crontabs
+
+    # 判断运行环境启动 crond
+    # 如果在 Docker 中，通常需要手动启动；如果在物理机/虚拟机，可用 rc-service
+    if [ -f /run/openrc/softlevel ]; then
+        # 针对普通 Alpine 系统 (OpenRC)
+        rc-update add dcron default
+        rc-service dcron start
+    else
+        # 针对 Docker 容器环境
+        # 后台启动 crond
+        crond -b -L /var/log/cron.log
+    fi
+
     echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
     echo -e "${YELLOW}当前时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
 
     exit 0
 fi
-
 # -------------------------
 # 常用依赖
 # -------------------------
