@@ -527,23 +527,214 @@ uninstall_nginx() {
     pause
 }
 
+
+# 普通 Emby 配置
+generate_emby_normal_conf() {
+    local DOMAIN=$1
+    local TARGET=$2
+    local CONFIG_PATH="/etc/nginx/sites-available/$DOMAIN"
+    local TARGET_HOST=$(echo $TARGET | awk -F[/:] '{print $4}')
+
+    cat > "$CONFIG_PATH" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $DOMAIN;
+
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
+
+    client_max_body_size 5000M;
+
+    location / {
+        # 自动允许当前域名跨域
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, DELETE, PUT' always;
+        add_header 'Access-Control-Allow-Headers' 'X-Emby-Authorization, Content-Type, Authorization, X-Requested-With' always;
+        if (\$request_method = 'OPTIONS') { return 204; }
+
+        proxy_pass $TARGET;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $TARGET_HOST;
+        proxy_pass_request_headers on;
+
+        # ❗ 隐私去 IP
+        proxy_set_header X-Real-IP "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header CF-Connecting-IP "";
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_max_temp_file_size 0;
+
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+}
+EOF
+    ln -sf "$CONFIG_PATH" "/etc/nginx/sites-enabled/$DOMAIN"
+}
+
+# 主站+推流分离配置
+generate_emby_stream_conf() {
+    local DOMAIN=$1
+    local T_MAIN=$2
+    local T_STREAM=$3
+    local CONFIG_PATH="/etc/nginx/sites-available/$DOMAIN"
+    local MAIN_HOST=$(echo $T_MAIN | awk -F[/:] '{print $4}')
+    local STREAM_HOST=$(echo $T_STREAM | awk -F[/:] '{print $4}')
+
+    cat > "$CONFIG_PATH" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $DOMAIN;
+
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
+
+    client_max_body_size 5000M;
+
+    location / {
+        proxy_pass $T_MAIN;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $MAIN_HOST;
+        proxy_pass_request_headers on;
+
+        proxy_set_header X-Real-IP "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header CF-Connecting-IP "";
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_max_temp_file_size 0;
+
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+
+        proxy_redirect $T_STREAM/ /s1/;
+        proxy_redirect $T_STREAM /s1/;
+    }
+
+    location /s1/ {
+        rewrite ^/s1(/.*)$ \$1 break;
+        proxy_pass $T_STREAM;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $STREAM_HOST;
+        proxy_pass_request_headers on;
+
+        proxy_set_header X-Real-IP "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header CF-Connecting-IP "";
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_max_temp_file_size 0;
+
+        proxy_set_header Range \$http_range;
+        proxy_set_header If-Range \$http_if_range;
+
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+}
+EOF
+    ln -sf "$CONFIG_PATH" "/etc/nginx/sites-enabled/$DOMAIN"
+}
+
+
+emby_menu() {
+    clear
+    echo -e "${GREEN}===== Emby 反向代理专项配置 =====${RESET}"
+    echo -e "${GREEN}1) 普通反代 ${RESET}"
+    echo -e "${GREEN}2) 主站+推流路径重定向${RESET}"
+    echo -e "${GREEN}0) 返回主菜单${RESET}"
+    echo -ne "${GREEN}请选择 [0-2]: ${RESET}"
+    read emby_choice
+
+    case $emby_choice in
+        1)
+            echo -ne "${GREEN}请输入您的域名: ${RESET}"; read DOMAIN
+            check_domain_resolution "$DOMAIN"
+            echo -ne "${GREEN}请输入 Emby 地址 (例: https://emby.com): ${RESET}"; read TARGET
+            
+            EMAIL=$(generate_random_email)
+            certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
+            
+            generate_emby_normal_conf "$DOMAIN" "$TARGET"
+            nginx -t && systemctl reload nginx
+            
+            echo -e "${GREEN}========================================${RESET}"
+            echo -e "${GREEN}✅ 普通模式配置成功!${RESET}"
+            echo -e "${GREEN}🌐 访问地址: https://$DOMAIN${RESET}"
+            echo -e "${GREEN}========================================${RESET}"
+            pause
+            ;;
+        2)
+            echo -ne "${GREEN}请输入您的域名: ${RESET}"; read DOMAIN
+            check_domain_resolution "$DOMAIN"
+            echo -ne "${GREEN}请输入 Emby 主站地址: ${RESET}"; read T_MAIN
+            echo -ne "${GREEN}请输入推流后端地址: ${RESET}"; read T_STREAM
+            
+            EMAIL=$(generate_random_email)
+            certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
+            
+            generate_emby_stream_conf "$DOMAIN" "$T_MAIN" "$T_STREAM"
+            nginx -t && systemctl reload nginx
+            
+            echo -e "${GREEN}========================================${RESET}"
+            echo -e "${GREEN}✅ 分流重定向模式配置成功!${RESET}"
+            echo -e "${GREEN}🌐 主站访问地址: https://$DOMAIN${RESET}"
+            echo -e "${GREEN}🚀 推流重定向路径: https://$DOMAIN/s1/${RESET}"
+            echo -e "${YELLOW}提示: 所有发往 $T_STREAM 的请求已自动劫持至 /s1/${RESET}"
+            echo -e "${GREEN}========================================${RESET}"
+            pause
+            ;;
+        0) return ;;
+        *) echo -e "${RED}无效输入!${RESET}"; sleep 1; emby_menu ;;
+    esac
+}
 # ------------------------------
 # 主菜单
 # ------------------------------
 while true; do
     clear
     echo -e "${GREEN}===== Nginx 管理脚本 =====${RESET}"
-    echo -e "${GREEN}1) 安装Nginx证书${RESET}"
-    echo -e "${GREEN}2) 添加配置${RESET}"
-    echo -e "${GREEN}3) 修改配置${RESET}"
-    echo -e "${GREEN}4) 删除配置${RESET}"
-    echo -e "${GREEN}5) 测试证书续期${RESET}"
-    echo -e "${GREEN}6) 查看证书信息${RESET}"
-    echo -e "${GREEN}7) 卸载Nginx证书${RESET}"
-    echo -e "${GREEN}8) 查看域名证书状态${RESET}"
-    echo -e "${GREEN}9) 重载Nginx配置${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
-    echo -ne "${GREEN}请选择[0-9]:${RESET}"
+    echo -e "${GREEN} 1) 安装Nginx证书${RESET}"
+    echo -e "${GREEN} 2) 添加配置${RESET}"
+    echo -e "${GREEN} 3) 修改配置${RESET}"
+    echo -e "${GREEN} 4) 删除配置${RESET}"
+    echo -e "${GREEN} 5) 测试证书续期${RESET}"
+    echo -e "${GREEN} 6) 查看证书信息${RESET}"
+    echo -e "${GREEN} 7) 卸载Nginx证书${RESET}"
+    echo -e "${GREEN} 8) 查看域名证书状态${RESET}"
+    echo -e "${GREEN} 9) Emby反代配置${RESET}"
+    echo -e "${GREEN}10) 重载Nginx配置${RESET}"
+    echo -e "${GREEN} 0) 退出${RESET}"
+    echo -ne "${GREEN} 请选择[0-10]:${RESET}"
     read choice
     case $choice in
         1) install_nginx ;;
@@ -554,7 +745,8 @@ while true; do
         6) check_cert ;;
         7) uninstall_nginx ;;
         8) check_domains_status ;;
-        9) nginx -t && systemctl reload nginx && echo -e "${GREEN}Nginx 配置已重载成功${RESET}" || echo -e "${RED}配置检查失败，请修复后重试${RESET}"; pause ;;
+        9) emby_menu ;;
+        10) nginx -t && systemctl reload nginx && echo -e "${GREEN}Nginx 配置已重载成功${RESET}" || echo -e "${RED}配置检查失败，请修复后重试${RESET}"; pause ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ; pause ;;
     esac
