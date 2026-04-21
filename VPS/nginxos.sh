@@ -1,3 +1,7 @@
+# 定义颜色
+GREEN='\033[0;32m'
+RESET='\033[0m'
+
 # 获取系统 ID
 if [ -f /etc/os-release ]; then
     . /etc/os-release
