@@ -132,9 +132,9 @@ view_logs() {
 
 while true; do
     clear
-    echo -e "${GREEN}=========================================${RESET}"
-    echo -e "${GREEN}        网站管理菜单                      ${RESET}"
-    echo -e "${GREEN}=========================================${RESET}"
+    echo -e "${GREEN}===============================${RESET}"
+    echo -e "${GREEN}        网站管理菜单                 ${RESET}"
+    echo -e "${GREEN}===============================${RESET}"
     echo -e "${GREEN}1) 部署网站${RESET}" 
     echo -e "${GREEN}2) 卸载网站${RESET}"
     echo -e "${GREEN}3) 编辑页面${RESET}"
