@@ -7,22 +7,20 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-# 安装并启动 crontab 服务
+# 安装并启动 crontab 服务 
 install_crontab_if_missing() {
     if ! command -v crontab &>/dev/null; then
         echo -e "${YELLOW}未检测到 crontab，正在尝试安装...${RESET}"
-        if [[ -f /etc/debian_version ]]; then
+        if [[ -f /etc/alpine-release ]]; then
+            apk add --no-cache dcron
+            rc-update add crond default
+            rc-service crond start
+        elif [[ -f /etc/debian_version ]]; then
             apt update && apt install -y cron
-            systemctl enable cron
-            systemctl start cron
+            systemctl enable --now cron
         elif [[ -f /etc/redhat-release ]]; then
             yum install -y cronie
-            systemctl enable crond
-            systemctl start crond
-        elif [[ -f /etc/alpine-release ]]; then
-            apk add --no-cache dcron
-            rc-update add crond
-            rc-service crond start
+            systemctl enable --now crond
         else
             echo -e "${RED}无法自动识别系统类型，请手动安装 crontab${RESET}"
             exit 1
@@ -30,26 +28,15 @@ install_crontab_if_missing() {
         echo -e "${GREEN}crontab 安装完成并已启动服务！${RESET}"
     else
         # 已安装，确保服务启动
-        if [[ -f /etc/debian_version ]]; then
-            systemctl enable cron
-            systemctl start cron
-        elif [[ -f /etc/redhat-release ]]; then
-            systemctl enable crond
-            systemctl start crond
-        elif [[ -f /etc/alpine-release ]]; then
-            rc-update add crond
-            rc-service crond start
+        if [[ -f /etc/alpine-release ]]; then
+            rc-service crond start >/dev/null 2>&1
+        elif command -v systemctl &>/dev/null; then
+            systemctl start cron >/dev/null 2>&1 || systemctl start crond >/dev/null 2>&1
         fi
     fi
 }
 
-# 发送统计（示例）
-send_stats() {
-    local action="$1"
-    echo -e "${YELLOW}[统计] $action${RESET}"
-}
-
-# 校验数字范围
+# 校验数字范围 
 validate_number() {
     local value="$1"
     local min="$2"
@@ -63,9 +50,10 @@ validate_number() {
     return 0
 }
 
-# 添加任务
+# 添加任务 
 add_cron_task() {
     read -e -p "请输入新任务的执行命令: " newquest
+    [ -z "$newquest" ] && return
     echo -e "${GREEN}------------------------${RESET}"
     echo -e "${GREEN}1. 每月任务${RESET}"                
     echo -e "${GREEN}2. 每周任务${RESET}"
@@ -75,8 +63,8 @@ add_cron_task() {
     read -e -p "请选择任务类型: " dingshi
     case $dingshi in
         1)
-            read -e -p "每月的几号执行任务？ (1-30): " day
-            validate_number "$day" 1 30 "日期" || return
+            read -e -p "每月的几号执行任务？ (1-31): " day
+            validate_number "$day" 1 31 "日期" || return
             (crontab -l 2>/dev/null; echo "0 0 $day * * $newquest") | crontab -
             ;;
         2)
@@ -99,67 +87,56 @@ add_cron_task() {
             return
             ;;
     esac
-    send_stats "添加定时任务"
     echo -e "${GREEN}任务添加成功！${RESET}"
 }
 
-# 删除任务（显示序号选择）
+# 删除任务
 delete_cron_task() {
-    mapfile -t tasks < <(crontab -l 2>/dev/null)
-    if [ ${#tasks[@]} -eq 0 ]; then
+    local tmp_cron="/tmp/cron_list_tmp"
+    crontab -l 2>/dev/null > "$tmp_cron"
+    
+    if [ ! -s "$tmp_cron" ]; then
         echo -e "${GREEN}当前没有定时任务${RESET}"
         return
     fi
 
     echo -e "${GREEN}当前定时任务列表:${RESET}"
-    for i in "${!tasks[@]}"; do
-        printf "${GREEN}%d) %s${RESET}\n" "$((i+1))" "${tasks[$i]}"
-    done
+    # 使用 awk 打印行号，不依赖 mapfile
+    awk '{print NR") " $0}' "$tmp_cron"
 
     read -e -p "请输入要删除的任务序号（多个用空格分隔）: " indices
-    for idx in $indices; do
-        validate_number "$idx" 1 "${#tasks[@]}" "序号" || continue
-        tasks[$((idx-1))]=''
+    [ -z "$indices" ] && return
+
+    # 倒序排列序号，从后往前删，避免行号错位
+    local sorted_indices=$(echo "$indices" | tr ' ' '\n' | sort -rn)
+    
+    for idx in $sorted_indices; do
+        if [[ "$idx" =~ ^[0-9]+$ ]]; then
+            sed -i "${idx}d" "$tmp_cron"
+        fi
     done
 
-    # 更新 crontab
-    printf "%s\n" "${tasks[@]}" | sed '/^$/d' | crontab -
-    send_stats "删除定时任务"
+    crontab "$tmp_cron"
+    rm -f "$tmp_cron"
     echo -e "${GREEN}删除完成！${RESET}"
 }
 
-# 编辑任务
+# 编辑任务 (保持原样)
 edit_cron_task() {
-    # 自动选择编辑器
-    if command -v nano &>/dev/null; then
-        export EDITOR=nano
-    elif command -v vim &>/dev/null; then
-        export EDITOR=vim
-    elif command -v vi &>/dev/null; then
-        export EDITOR=vi
-    else
-        echo -e "${RED}未安装 nano/vim/vi，正在安装 nano...${RESET}"
-        if [[ -f /etc/debian_version ]]; then
-            apt update && apt install -y nano
-        elif [[ -f /etc/redhat-release ]]; then
-            yum install -y nano
-        elif [[ -f /etc/alpine-release ]]; then
+    if ! command -v nano &>/dev/null && ! command -v vim &>/dev/null; then
+        echo -e "${RED}未检测到编辑器，正在尝试安装 nano...${RESET}"
+        if [[ -f /etc/alpine-release ]]; then
             apk add --no-cache nano
         else
-            echo -e "${RED}无法识别系统类型，请手动安装编辑器${RESET}"
-            return
+            apt update && apt install -y nano || yum install -y nano
         fi
-        export EDITOR=nano
-        echo -e "${GREEN}nano 安装完成，已设置为默认编辑器${RESET}"
     fi
-
+    export EDITOR=$(command -v nano || command -v vim || command -v vi)
     crontab -e
-    send_stats "编辑定时任务"
 }
 
-# 定时任务管理菜单
+# 菜单入口
 cron_menu() {
-    send_stats "进入定时任务管理"
     install_crontab_if_missing
     while true; do
         clear
@@ -189,5 +166,4 @@ cron_menu() {
     done
 }
 
-# 启动脚本直接进入定时任务管理
 cron_menu
