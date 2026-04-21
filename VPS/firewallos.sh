@@ -1,3 +1,6 @@
+# 定义颜色
+GREEN='\033[0;32m'
+RESET='\033[0m'
 # 检测系统环境
 if [ -f /etc/os-release ]; then
     . /etc/os-release
