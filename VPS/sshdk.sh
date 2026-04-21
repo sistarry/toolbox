@@ -1,181 +1,143 @@
 #!/bin/bash
-set -e
 
-# =========================
-# 通用 Linux 安全 SSH 端口修改脚本（改进版）
-# =========================
+# ========================================
+# SSH 端口修改与检测全能脚本
+# 适配: Ubuntu, Debian, Alpine, RHEL/CentOS
+# ========================================
 
-# 检查 root
+# 颜色定义
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+# 1. 权限与系统检查
 if [ "$(id -u)" -ne 0 ]; then
-    echo "请使用 root 用户运行该脚本"
+    echo -e "${RED}错误: 请使用 root 权限运行${RESET}"
     exit 1
 fi
 
-# -------------------------
-# 当前 SSH 端口
-# -------------------------
-current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
+if [ -f /etc/alpine-release ]; then
+    OS="Alpine"
+elif grep -qi "ubuntu" /etc/os-release; then
+    OS="Ubuntu"
+elif [ -f /etc/debian_version ]; then
+    OS="Debian"
+else
+    OS="Linux"
+fi
+
+echo -e "${GREEN}检测到系统: $OS${RESET}"
+
+# 2. 安装必要工具 (nc)
+echo -e "${YELLOW}检查必要工具...${RESET}"
+if ! command -v nc >/dev/null 2>&1; then
+    if [ "$OS" = "Alpine" ]; then
+        apk add --no-cache netcat-openbsd >/dev/null 2>&1
+    else
+        apt-get update -y >/dev/null 2>&1
+        apt-get install -y netcat-openbsd >/dev/null 2>&1
+    fi
+fi
+
+# 3. 获取端口信息
+current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}' | head -n1)
 current_port=${current_port:-22}
-echo -e "\033[1;36m当前 SSH 端口: $current_port\033[0m"
-echo "------------------------"
+echo -e "${YELLOW}当前 SSH 端口: $current_port${RESET}"
 
-# -------------------------
-# 输入新端口
-# -------------------------
-read -p $'\033[1;35m请输入新的 SSH 端口号: \033[0m' new_port
-
-# 检查合法性
+read -p "请输入新的 SSH 端口号: " new_port
 if ! [[ "$new_port" =~ ^[0-9]+$ ]] || [ "$new_port" -le 0 ] || [ "$new_port" -gt 65535 ]; then
-    echo -e "\033[1;31m错误: 请输入 1-65535 的端口号\033[0m"
+    echo -e "${RED}错误: 端口无效！${RESET}"
     exit 1
 fi
 
-# -------------------------
-# 备份 SSH 配置
-# -------------------------
-cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak.$(date +%F_%T)
-
-# -------------------------
-# 修改 SSH 配置（暂不重启）
-# -------------------------
+# 4. 备份与修改配置
+cp /etc/ssh/sshd_config "/etc/ssh/sshd_config.bak.$(date +%Y%m%d_%H%M%S)"
 if grep -q "^Port " /etc/ssh/sshd_config; then
     sed -i "s/^Port .*/Port $new_port/" /etc/ssh/sshd_config
 else
     echo "Port $new_port" >> /etc/ssh/sshd_config
 fi
 
-# -------------------------
-# 停用 systemd socket
-# -------------------------
-if systemctl list-unit-files | grep -q ssh.socket; then
-    systemctl stop ssh.socket
-    systemctl disable ssh.socket
-fi
-
-# -------------------------
-# 系统类型
-# -------------------------
-if [ -f /etc/debian_version ]; then
-    OS_TYPE="debian"
-elif [ -f /etc/redhat-release ]; then
-    OS_TYPE="rhel"
-else
-    OS_TYPE="other"
-fi
-
-# -------------------------
-# 确保 nc 已安装
-# -------------------------
-if ! command -v nc >/dev/null 2>&1; then
-    echo "安装 nc (netcat)..."
-    if [ "$OS_TYPE" = "debian" ]; then
-        apt update -y
-        # 自动安装 netcat-openbsd，避免交互
-        if ! dpkg -s netcat-openbsd >/dev/null 2>&1; then
-            apt install -y netcat-openbsd
-        fi
-    elif [ "$OS_TYPE" = "rhel" ]; then
-        yum install -y nc
-    fi
-fi
-
-# -------------------------
-# 安全放行新端口
-# -------------------------
-echo "放行新端口 $new_port ..."
+# 5. 放行防火墙
+echo -e "${YELLOW}正在放行防火墙端口 $new_port...${RESET}"
 if command -v ufw >/dev/null 2>&1; then
-    ufw allow $new_port/tcp || true
+    ufw allow "$new_port"/tcp >/dev/null 2>&1 || true
 elif command -v firewall-cmd >/dev/null 2>&1; then
-    firewall-cmd --permanent --add-port=$new_port/tcp || true
-    firewall-cmd --reload || true
-elif command -v nft >/dev/null 2>&1; then
-    nft list table inet filter >/dev/null 2>&1 || nft add table inet filter
-    nft list chain inet filter input >/dev/null 2>&1 || \
-        nft add chain inet filter input { type filter hook input priority 0 \; }
-    if ! nft list ruleset | grep -q "tcp dport $new_port accept"; then
-        nft add rule inet filter input tcp dport $new_port accept || true
-        mkdir -p /etc/nftables
-        nft list ruleset > /etc/nftables/rules.nft
-    fi
+    firewall-cmd --permanent --add-port="$new_port"/tcp >/dev/null 2>&1 || true
+    firewall-cmd --reload >/dev/null 2>&1 || true
 elif command -v iptables >/dev/null 2>&1; then
-    if ! iptables -C INPUT -p tcp --dport $new_port -j ACCEPT &>/dev/null; then
-        iptables -I INPUT -p tcp --dport $new_port -j ACCEPT || true
-        [ -x "$(command -v netfilter-persistent)" ] && netfilter-persistent save || true
-    fi
-else
-    echo "⚠ 未检测到防火墙，请确保端口已放行"
+    iptables -I INPUT -p tcp --dport "$new_port" -j ACCEPT 2>/dev/null || true
 fi
 
-# -------------------------
-# 重启 SSH 服务（使新端口生效）
-# -------------------------
-if systemctl >/dev/null 2>&1; then
-    if systemctl list-units | grep -q sshd.service; then
-        systemctl restart sshd.service
-    else
-        systemctl restart ssh.service
-    fi
-else
-    service ssh restart
+# 6. 重启服务 (解决 Ubuntu 常见冲突)
+echo -e "${YELLOW}正在重启 SSH 服务...${RESET}"
+# 在 Ubuntu 上，必须先停止可能接管 22 端口的 ssh.socket
+if [[ "$OS" == "Ubuntu" ]] || [[ "$OS" == "Debian" ]]; then
+    systemctl stop ssh.socket >/dev/null 2>&1 || true
+    systemctl disable ssh.socket >/dev/null 2>&1 || true
 fi
 
-# -------------------------
-# 本地端口监听检测
-# -------------------------
-for i in {1..15}; do
-    sleep 1
-    if command -v ss >/dev/null 2>&1; then
-        ss -tnlp | grep -q ":$new_port " && break
-    elif command -v netstat >/dev/null 2>&1; then
-        netstat -tnlp | grep -q ":$new_port " && break
+restart_done=false
+for svc in ssh sshd; do
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl restart "$svc" >/dev/null 2>&1 && restart_done=true && break
+    elif command -v rc-service >/dev/null 2>&1; then
+        rc-service "$svc" restart >/dev/null 2>&1 && restart_done=true && break
     fi
-    [ $i -eq 15 ] && echo -e "\033[1;31m⚠ 新端口 $new_port 未监听\033[0m"
 done
-echo -e "\033[1;32m✔ 新 SSH 端口 $new_port 已监听\033[0m"
 
-# -------------------------
-# 远程端口检测（Cloudflare 优先）
-# -------------------------
-echo "检测远程端口 $new_port 是否可达..."
-VPS_IP=$(curl -s https://1.1.1.1/cdn-cgi/trace | grep ip | cut -d= -f2 || curl -s https://ipinfo.io/ip)
-
-if [ -n "$VPS_IP" ] && command -v nc >/dev/null 2>&1; then
-    timeout 3 nc -zv $VPS_IP $new_port &>/dev/null
-    if [ $? -eq 0 ]; then
-        echo -e "\033[1;32m✔ 远程端口 $new_port 可访问\033[0m"
-
-        # 安全删除旧端口防火墙规则（忽略不存在的规则）
-        if [ "$current_port" != "$new_port" ]; then
-            echo "移除旧端口 $current_port 防火墙规则..."
-            # ufw
-            if command -v ufw >/dev/null 2>&1; then
-                ufw delete allow $current_port/tcp || true
-            fi
-            # firewalld
-            if command -v firewall-cmd >/dev/null 2>&1; then
-                firewall-cmd --permanent --remove-port=$current_port/tcp 2>/dev/null || true
-                firewall-cmd --reload 2>/dev/null || true
-            fi
-            # nftables
-            if command -v nft >/dev/null 2>&1; then
-                HANDLE=$(nft -a list chain inet filter input | grep "tcp dport $current_port accept" | awk '{print $NF}')
-                if [ -n "$HANDLE" ]; then
-                    nft delete rule inet filter input handle $HANDLE || true
-                    nft list ruleset > /etc/nftables/rules.nft
-                fi
-            fi
-            # iptables
-            if command -v iptables >/dev/null 2>&1; then
-                iptables -D INPUT -p tcp --dport $current_port -j ACCEPT 2>/dev/null || true
-                [ -x "$(command -v netfilter-persistent)" ] && netfilter-persistent save 2>/dev/null || true
-            fi
-        fi
-    else
-        echo -e "\033[1;31m⚠ 远程端口 $new_port 不可访问，请检查防火墙\033[0m"
-        echo "旧端口 $current_port 仍保持可访问状态"
-    fi
-else
-    echo "⚠ 无法检测远程端口"
+if [ "$restart_done" = false ]; then
+    echo -e "${RED}❌ SSH 服务重启失败！${RESET}"
+    exit 1
 fi
 
-echo -e "\033[1;32mSSH 端口安全切换完成: $current_port -> $new_port\033[0m"
+# 7. 本地监听检测 (增加重试逻辑)
+echo -e "${YELLOW}正在检测本地监听状态...${RESET}"
+SUCCESS=false
+for i in {1..5}; do
+    sleep 2
+    if command -v ss >/dev/null 2>&1; then
+        CHECK=$(ss -tlnp | grep ":$new_port ")
+    else
+        CHECK=$(netstat -tlnp | grep ":$new_port ")
+    fi
+    
+    if [ -n "$CHECK" ]; then
+        SUCCESS=true && break
+    fi
+    echo -e "${YELLOW}等待服务绑定端口... ($i/5)${RESET}"
+done
+
+if [ "$SUCCESS" = true ]; then
+    echo -e "${GREEN}✔ 本地端口 $new_port 监听成功${RESET}"
+else
+    echo -e "${RED}❌ 本地检测失败，SSH 可能未能在新端口启动${RESET}"
+    exit 1
+fi
+
+# 8. 远程连通性检测
+echo -e "${YELLOW}正在执行远程连通性检测...${RESET}"
+# 获取外网 IP (容错处理)
+PUBLIC_IP=$(curl -sL --max-time 8 https://api.ipify.org || curl -sL --max-time 8 https://ifconfig.me || echo "")
+
+if [ -n "$PUBLIC_IP" ]; then
+    echo -e "外网 IP: $PUBLIC_IP"
+    # 使用 nc 检测，支持多系统返回特征
+    if timeout 5 nc -zv "$PUBLIC_IP" "$new_port" 2>&1 | grep -q "succeeded\|open"; then
+        echo -e "${GREEN}✔ 远程检测通过！端口 $new_port 已开放${RESET}"
+    else
+        echo -e "${RED}❌ 远程检测失败！${RESET}"
+        echo -e "${YELLOW}排查建议：${RESET}"
+        echo -e "1. 确认云服务商控制台（安全组）放行了 TCP:$new_port"
+        echo -e "2. 确认系统内防火墙状态：ufw status 或 iptables -L"
+        echo -e "3. 远程检测不支持纯V6VPS"
+    fi
+else
+    echo -e "${RED}⚠ 无法获取外网 IP，跳过远程检测，请手动测试连接。${RESET}"
+fi
+
+echo -e "${GREEN}========================================${RESET}"
+echo -e "${GREEN}  操作完成！当前 SSH 端口为: $new_port ${RESET}"
+echo -e "${YELLOW}  请务必打开新窗口测试连接，确认成功后再退出！${RESET}"
+echo -e "${GREEN}========================================${RESET}"
