@@ -12,11 +12,23 @@ RESET='\033[0m'
 
 SSH_CONF="/etc/ssh/sshd_config"
 
+# 判断是否为 Alpine 系统
+IS_ALPINE=false
+if [ -f /etc/alpine-release ]; then
+    IS_ALPINE=true
+fi
+
 # ===============================
 # 函数：配置密钥登录
 # ===============================
 setup_ssh_key() {
     echo -e "${YELLOW}Step 1: 生成 SSH 密钥并配置公钥登录${RESET}"
+    
+    # Alpine 独立处理：安装 openssh 工具
+    if [ "$IS_ALPINE" = true ]; then
+        apk add --no-cache openssh-client openssh-server >/dev/null 2>&1
+    fi
+
     mkdir -p ~/.ssh
     chmod 700 ~/.ssh
 
@@ -54,14 +66,14 @@ disable_root_password() {
 # 函数：重启 SSH 服务
 # ===============================
 restart_ssh() {
-    echo -e "${YELLOW}Step 3: 重启 SSH 服务${RESET}"
+    echo -e "${YELLOW}Step 3: 重启 SSH 服务...${RESET}"
 
-    if systemctl status sshd &>/dev/null; then
-        systemctl restart sshd
-    elif systemctl status ssh &>/dev/null; then
-        systemctl restart ssh
+    # Alpine 独立判断执行
+    if [ "$IS_ALPINE" = true ]; then
+        rc-service sshd restart
     else
-        service sshd restart
+        # Ubuntu/Debian 逻辑
+        systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || service ssh restart
     fi
 
     echo -e "${GREEN}SSH 服务已重启，操作完成！${RESET}"
