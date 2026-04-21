@@ -121,7 +121,7 @@ delete_cron_task() {
     echo -e "${GREEN}删除完成！${RESET}"
 }
 
-# 编辑任务 (保持原样)
+# 编辑任务 
 edit_cron_task() {
     if ! command -v nano &>/dev/null && ! command -v vim &>/dev/null; then
         echo -e "${RED}未检测到编辑器，正在尝试安装 nano...${RESET}"
