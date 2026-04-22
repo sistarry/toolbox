@@ -440,7 +440,7 @@ execute_choice() {
         84) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh) ;;
         85) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh) ;;
         86) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh) ;;
-		87) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTD.sh) ;;
+		87) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh) ;;
         89) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/GProxy.sh) ;;
         90) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
         91) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD.sh) ;;
