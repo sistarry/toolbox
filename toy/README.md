@@ -54,7 +54,7 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD
 
 ### ssh登录信息显示
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTD.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh)
 ```
 
 ### VPSDD
