@@ -118,12 +118,12 @@ menu(){
     while true; do
         clear
         echo -e "${GREEN}==== MOTD 管理菜单 ====${RESET}"
-        echo -e "1. 安装 MOTD"
-        echo -e "2. 卸载 MOTD"
-        echo -e "3. 恢复默认"
-        echo -e "4. 预览"
-        echo -e "0. 退出"
-        read -p "选择: " CH
+        echo -e "${GREEN}1. 安装 MOTD${RESET}"
+        echo -e "${GREEN}2. 卸载 MOTD${RESET}"
+        echo -e "${GREEN}3. 恢复默认${RESET}"
+        echo -e "${GREEN}4. 预览${RESET}"
+        echo -e "${GREEN}0. 退出${RESET}"
+        read -r -p $'\033[32m请选择: \033[0m' CH
         case $CH in
             1) install_motd ;;
             2) remove_motd ;;
