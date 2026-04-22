@@ -10,6 +10,7 @@ API_UPDATE="https://raw.githubusercontent.com/xkatld/lxdapi-web-server/refs/head
 STORAGE_POOL="https://raw.githubusercontent.com/xkatld/lxdapi-web-server/refs/heads/main-stable/Shell/storage_pool.sh"
 IMAGE_IMPORT="https://raw.githubusercontent.com/xkatld/lxdapi-web-server/refs/heads/main-stable/Shell/image_import.sh"
 IMAGE_ADD="https://raw.githubusercontent.com/xkatld/zjmf-lxd-server/refs/heads/main/install/lxdimages.sh"
+IMAGE_XX="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/LXDAPIX.sh"
 
 run() {
     url=$1
@@ -37,11 +38,12 @@ menu() {
     echo -e "${GREEN}=================================${RESET}"
     echo -e "${GREEN} 1) 安装 LXD${RESET}"
     echo -e "${GREEN} 2) 部署 LXDAPI${RESET}"
-    echo -e "${GREEN} 3) 一键更新 LXDAPI${RESET}"
+    echo -e "${GREEN} 3) 更新 LXDAPI${RESET}"
     echo -e "${GREEN} 4) 管理存储池${RESET}"
     echo -e "${GREEN} 5) 管理镜像${RESET}"
     echo -e "${GREEN} 6) 新增镜像${RESET}"
     echo -e "${GREEN} 7) 查看公网网卡${RESET}"
+    echo -e "${GREEN} 8) LXDAPI面板信息${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
@@ -53,6 +55,7 @@ menu() {
         5) run "$IMAGE_IMPORT" "镜像管理" ;;
         6) run "$IMAGE_ADD" "新增镜像" ;;
         7) show_ip ;;
+        8) run "$IMAGE_XX" "面板信息" ;;
         0) exit 0 ;;
         *)
             echo -e "${RED}输入错误，请重新选择${RESET}"
