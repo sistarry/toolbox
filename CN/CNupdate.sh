@@ -1,284 +1,479 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
 
-#################################
-# 基础路径
-#################################
-ROOT="/root"
-SCRIPT_PATH="$ROOT/toolboxupdate.sh"
-SCRIPT_URL="https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNupdate.sh"
-CONF="/etc/toolbox-update.conf"
-LOG_FILE="/var/log/toolbox-update.log"
-CRON_TAG="# toolbox-auto-update"
+# ==========================================
+# 系统更新 & 常用依赖安装 & 修复 APT 源
+# ==========================================
 
-#################################
-# 颜色
-#################################
-GREEN='\033[32m'
-RED='\033[31m'
-YELLOW='\033[33m'
-RESET='\033[0m'
+# 颜色定义
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+RESET="\033[0m"
 
-#################################
-# 自动下载安装管理器
-#################################
-if [ ! -f "$SCRIPT_PATH" ]; then
-    curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
-        exit 1
-    fi
-    chmod +x "$SCRIPT_PATH"
+# 检查是否 root
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}❌ 请使用 root 用户运行此脚本${RESET}"
+    exit 1
 fi
 
-#################################
-# 读取配置
-#################################
-load_conf() {
-    [ -f "$CONF" ] && source "$CONF"
-    SERVER_NAME="${SERVER_NAME:-$(hostname)}"
-}
 
-#################################
-# Telegram 可选
-#################################
-tg_send() {
-    load_conf
-    [ -z "${TG_BOT_TOKEN:-}" ] && return
-    [ -z "${TG_CHAT_ID:-}" ] && return
+# ========================================
+# Alpine 路径
+# ========================================
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+fi
 
-    curl -s -X POST \
-      "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
-      -d chat_id="$TG_CHAT_ID" \
-      -d text="$1" \
-      -d parse_mode="HTML" >/dev/null 2>&1 || true
-}
+if [ "$ID" = "alpine" ]; then
+    echo -e "${YELLOW}🚀 Alpine更新与环境配置...${RESET}"
 
-#################################
-# 更新逻辑
-#################################
-update_one() {
-    NAME="$1"
-    FILE="$2"
-    URL="$3"
+    # 更新索引并安装基础工具 + cron
+    # Alpine 的 cron 包名就叫 dcron (或者使用 busybox 自带的)
+    apk update && apk upgrade
+    apk add --no-cache \
+        bash curl wget vim tar sudo git gzip \
+        openssl openssh ca-certificates tzdata \
+        dcron  # 安装 cron 守护进程
 
-    if [ ! -f "$ROOT/$FILE" ]; then
-        echo -e "${YELLOW}跳过 $NAME（未安装）${RESET}"
-        return
+    # -------------------------
+    # 时区设置
+    # -------------------------
+    TZ=${TZ:-Asia/Shanghai}
+    echo -e "${YELLOW}🌏 配置时区为: $TZ ...${RESET}"
+
+    if [ -f "/usr/share/zoneinfo/$TZ" ]; then
+        ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+        echo "$TZ" > /etc/timezone
+        echo -e "${GREEN}✔ 时区设置完成${RESET}"
+    else
+        echo -e "${RED}❌ 时区不存在: $TZ${RESET}"
     fi
 
-    echo -e "${GREEN}运行 $NAME ...${RESET}"
-    rm -f "$ROOT/$FILE"
-    TMP=$(mktemp)
+    # -------------------------
+    # Cron 服务配置
+    # -------------------------
+    echo -e "${YELLOW}⏰ 正在启动 Cron 服务...${RESET}"
+    
+    # 确保 cron 目录存在
+    mkdir -p /var/spool/cron/crontabs
 
-    if curl -fsSL "$URL" -o "$TMP"; then
-        chmod +x "$TMP"
-        if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
-            UPDATED_LIST+=("$NAME")
+    # 判断运行环境启动 crond
+    # 如果在 Docker 中，通常需要手动启动；如果在物理机/虚拟机，可用 rc-service
+    if [ -f /run/openrc/softlevel ]; then
+        # 针对普通 Alpine 系统 (OpenRC)
+        rc-update add dcron default
+        rc-service dcron start
+    else
+        # 针对 Docker 容器环境
+        # 后台启动 crond
+        crond -b -L /var/log/cron.log
+    fi
+    # -------------------------
+    # 🧹 清理缓存 (新增)
+    # -------------------------
+    echo -e "${YELLOW}🧹 清理 APK 缓存...${RESET}"
+    rm -rf /var/cache/apk/*
+
+    echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
+    echo -e "${YELLOW}当前时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+
+    exit 0
+fi
+# -------------------------
+# 常用依赖
+# -------------------------
+deps=(curl wget git net-tools lsof tar unzip rsync pv sudo iperf3 mtr jq openssl)
+
+# -------------------------
+# 检查并安装依赖（兼容不同系统）
+# -------------------------
+check_and_install() {
+    local check_cmd="$1"
+    local install_cmd="$2"
+    local missing=()
+    for pkg in "${deps[@]}"; do
+        if ! eval "$check_cmd \"$pkg\"" &>/dev/null; then
+            missing+=("$pkg")
+        else
+            echo -e "${GREEN}✔ 已安装: $pkg${RESET}"
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${YELLOW}👉 安装缺失依赖: ${missing[*]}${RESET}"
+        # Debian 系统处理 netcat
+        if [ "$OS_TYPE" = "debian" ]; then
+            # 让 iperf3 安装时自动选择 No（不启动 daemon）
+            echo "iperf3 iperf3/start_daemon boolean false" | debconf-set-selections
+            for pkg in "${missing[@]}"; do
+                if [ "$pkg" = "nc" ]; then
+                    apt install -y netcat-openbsd
+                else
+                    apt install -y "$pkg"
+                fi
+            done
+        else
+            eval "$install_cmd \"\${missing[@]}\""
         fi
     fi
-
-    rm -f "$TMP"
 }
 
-run_update() {
-    load_conf
-    UPDATED_LIST=()
-
-    # 更新各脚本
-    update_one "vps-toolbox" "vps-toolbox.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/tool/install.sh"
-
-    update_one "proxy" "proxy.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh"
-
-    update_one "oracle" "oracle.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh"
-
-    update_one "store" "store.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
-
-    update_one "Alpine" "Alpine.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh"
-
-    update_one "panel" "panel.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh"
-
-    update_one "nat" "nat.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh"
-
-    if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
-        MSG="🚀 脚本已更新
-服务器: ${SERVER_NAME}
-脚本: ${UPDATED_LIST[*]}"
-        tg_send "$MSG"
-        echo -e "${GREEN}更新完成${RESET}"
+# -------------------------
+# 清理重复 Docker 源
+# -------------------------
+fix_duplicate_docker_sources() {
+    echo -e "${YELLOW}🔍 检查重复 Docker APT 源...${RESET}"
+    local docker_sources
+    docker_sources=$(grep -rl "download.docker.com" /etc/apt/sources.list.d/ 2>/dev/null || true)
+    if [ "$(echo "$docker_sources" | grep -c .)" -gt 1 ]; then
+        echo -e "${RED}⚠️ 检测到重复 Docker 源:${RESET}"
+        echo "$docker_sources"
+        for f in $docker_sources; do
+            if [[ "$f" == *"archive_uri"* ]]; then
+                rm -f "$f"
+                echo -e "${GREEN}✔ 删除多余源: $f${RESET}"
+            fi
+        done
     else
-        echo -e "${YELLOW}没有脚本需要更新${RESET}"
+        echo -e "${GREEN}✔ Docker 源正常${RESET}"
     fi
 }
 
-#################################
-# cron 管理（支持自定义）
-#################################
-enable_cron() {
-    echo -e "${GREEN}选择更新频率：${RESET}"
-    echo -e "${GREEN}1) 每天${RESET}"
-    echo -e "${GREEN}2) 每周${RESET}"
-    echo -e "${GREEN}3) 每月${RESET}"
-    echo -e "${GREEN}4) 每6小时${RESET}"
-    echo -e "${GREEN}5) 自定义 cron 表达式${RESET}"
-
-    read -p "$(echo -e ${GREEN}请选择:${RESET}) " c
-
-    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" > /tmp/cron.tmp || true
-
-    case $c in
-        1) echo "0 0 * * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        2) echo "0 0 * * 1 $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        3) echo "0 0 1 * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        4) echo "0 */6 * * * $SCRIPT_PATH --auto" >>/tmp/cron.tmp ;;
-        5)
-            echo "示例: 每30分钟 */30 * * * *"
-            read -p "请输入完整 cron 表达式: " CRON_EXP
-            echo "$CRON_EXP $SCRIPT_PATH --auto" >>/tmp/cron.tmp
-            ;;
-        *)
-            echo -e "${YELLOW}无效选项，取消操作${RESET}"
-            rm -f /tmp/cron.tmp
-            return
-            ;;
-    esac
-
-    crontab /tmp/cron.tmp
-    rm -f /tmp/cron.tmp
-    echo -e "${GREEN}自动更新已开启${RESET}"
+# -------------------------
+# 修复 sources.list（兼容 Bullseye / Bookworm）
+# -------------------------
+fix_sources_for_version() {
+    echo -e "${YELLOW}🔍 修复 sources.list 兼容性...${RESET}"
+    local version="$1"
+    local files
+    files=$(grep -rl "deb" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null || true)
+    for f in $files; do
+        if [[ "$version" == "bullseye" ]]; then
+            sed -i -r 's/\bnon-free(-firmware){0,3}\b/non-free/g' "$f"
+            sed -i '/deb .*bullseye-backports/s/^/##/' "$f"
+        elif [[ "$version" == "bookworm" ]]; then
+            # Bookworm 保留 non-free-firmware，但去掉重复 non-free
+            sed -i -r 's/\bnon-free non-free\b/non-free/g' "$f"
+        fi
+    done
+    echo -e "${GREEN}✔ sources.list 已优化${RESET}"
 }
 
-disable_cron() {
-    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" | crontab -
-    echo -e "${RED}自动更新已关闭${RESET}"
+# -------------------------
+# 系统更新函数
+# -------------------------
+update_system() {
+    echo -e "${GREEN}🔄 检测系统发行版并更新...${RESET}"
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo -e "${YELLOW}👉 当前系统: $PRETTY_NAME${RESET}"
+
+        # 系统类型
+        if [[ "$ID" =~ debian|ubuntu ]]; then
+            OS_TYPE="debian"
+            fix_duplicate_docker_sources
+            if [[ "$ID" == "debian" ]]; then
+                fix_sources_for_version "$VERSION_CODENAME"
+            fi
+            apt update && apt upgrade -y
+            check_and_install "dpkg -s" "apt install -y"
+        elif [[ "$ID" =~ fedora ]]; then
+            OS_TYPE="rhel"
+            dnf check-update || true
+            dnf upgrade -y
+            check_and_install "rpm -q" "dnf install -y"
+        elif [[ "$ID" =~ centos|rhel ]]; then
+            OS_TYPE="rhel"
+            yum check-update || true
+            yum upgrade -y
+            check_and_install "rpm -q" "yum install -y"
+        elif [[ "$ID" =~ alpine ]]; then
+            OS_TYPE="alpine"
+            apk update && apk upgrade
+            check_and_install "apk info -e" "apk add"
+        else
+            echo -e "${RED}❌ 暂不支持的 Linux 发行版: $ID${RESET}"
+            return 1
+        fi
+    else
+        echo -e "${RED}❌ 无法检测系统发行版 (/etc/os-release 不存在)${RESET}"
+        return 1
+    fi
+
+    echo -e "${GREEN}✅ 系统更新和依赖安装完成！${RESET}"
 }
 
-#################################
-# Telegram 设置
-#################################
-tg_setup() {
-    read -p "Bot Token: " token
-    read -p "Chat ID: " chat
-    read -p "VPS 名称(回车默认 hostname): " name
-    name="${name:-$(hostname)}"
 
-    cat >"$CONF" <<EOF
-TG_BOT_TOKEN="$token"
-TG_CHAT_ID="$chat"
-SERVER_NAME="$name"
-EOF
+install_netcat() {
+    echo -e "${YELLOW}🔍 检查 netcat...${RESET}"
 
-    echo -e "${GREEN}Telegram 与 VPS 名称已保存${RESET}"
-}
-
-#################################
-# 卸载管理器函数
-#################################
-uninstall_manager() {
-    echo -e "${RED}正在卸载管理器...${RESET}"
-    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" | crontab -
-    echo -e "${GREEN}✅ 已删除所有定时任务${RESET}"
-    [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器脚本${RESET}"
-    [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE" && echo -e "${GREEN}✅ 已删除日志 ${LOG_FILE}${RESET}"
-    [ -f "$CONF" ] && rm -f "$CONF" && echo -e "${GREEN}✅ 已删除配置文件 ${CONF}${RESET}"
-    echo -e "${GREEN}卸载完成${RESET}"
-    exit 0
-}
-
-#################################
-# 自动模式（cron调用）
-#################################
-if [ "${1:-}" = "--auto" ]; then
-    run_update
-    exit
-fi
-
-#################################
-# 删除日志
-#################################
-delete_log() {
-    [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE"
-    echo -e "${RED}日志已删除${RESET}"
-}
-
-#################################
-# 自更新管理器
-#################################
-self_update() {
-    load_conf
-    echo -e "${GREEN}正在更新管理器自身...${RESET}"
-
-    TMP=$(mktemp)
-
-    if ! curl -fsSL "$SCRIPT_URL" -o "$TMP"; then
-        echo -e "${RED}下载失败${RESET}"
+    if command -v nc >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ nc 已安装${RESET}"
         return
     fi
 
-    chmod +x "$TMP"
-    mv "$TMP" "$SCRIPT_PATH"
+    echo -e "${YELLOW}👉 安装 netcat-openbsd...${RESET}"
 
-    MSG="🚀 管理器已更新
-服务器: ${SERVER_NAME}
-文件: toolboxupdate.sh"
-
-    tg_send "$MSG"
-
-    echo -e "${GREEN}更新完成，重新启动中...${RESET}"
-    exec "$SCRIPT_PATH"
-}
-#################################
-# 查看定时任务
-#################################
-list_cron() {
-    echo
-    TASKS=$(crontab -l 2>/dev/null | grep "$SCRIPT_PATH --auto" || true)
-
-    if [ -z "$TASKS" ]; then
-        echo -e "${YELLOW}暂无自动更新任务${RESET}"
+    if [ "$OS_TYPE" = "debian" ]; then
+        apt install -y netcat-openbsd
+    elif [ "$OS_TYPE" = "rhel" ]; then
+        yum install -y nc 2>/dev/null || dnf install -y nc
+    elif [ "$OS_TYPE" = "alpine" ]; then
+        apk add netcat-openbsd
     else
-        echo -e "${GREEN}当前自动更新任务：${RESET}"
-        echo "$TASKS"
+        echo -e "${RED}❌ 未知系统，无法安装 nc${RESET}"
+        return 1
     fi
 
-    echo
+    if command -v nc >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ nc 安装成功${RESET}"
+    else
+        echo -e "${RED}❌ nc 安装失败${RESET}"
+    fi
 }
 
+install_dnsutils() {
+    echo -e "${YELLOW}🔍 检查 DNS 工具(dnsutils)...${RESET}"
 
-#################################
-# 菜单循环
-#################################
-while true; do
-    clear
-    echo -e "${GREEN}=== Toolbox 自动更新管理器 ===${RESET}"
-    echo -e "${GREEN}1) 立即更新${RESET}"
-    echo -e "${GREEN}2) 开启自动更新${RESET}"
-    echo -e "${GREEN}3) 关闭自动更新${RESET}"
-    echo -e "${GREEN}4) 查看定时任务${RESET}"
-    echo -e "${GREEN}5) 设置 Telegram & 服务器名称(可选)${RESET}"
-    echo -e "${GREEN}6) 删除日志${RESET}"
-    echo -e "${GREEN}7) 更新管理器${RESET}"
-    echo -e "${GREEN}8) 卸载管理器${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
+    if command -v dig >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ DNS 工具已安装${RESET}"
+        return
+    fi
 
-    read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
+    echo -e "${YELLOW}👉 安装 DNS 工具...${RESET}"
 
-    case $choice in
-        1) run_update; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        2) enable_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        3) disable_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        4) list_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        5) tg_setup; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        6) delete_log; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        7) self_update ;;
-        8) uninstall_manager ;;
-        0) exit ;;
+    if [ "$OS_TYPE" = "debian" ]; then
+        apt install -y bind9-dnsutils
+    elif [ "$OS_TYPE" = "rhel" ]; then
+        yum install -y bind-utils 2>/dev/null || dnf install -y bind-utils
+    elif [ "$OS_TYPE" = "alpine" ]; then
+        apk add bind-tools
+    else
+        echo -e "${RED}❌ 未知系统，无法安装 DNS 工具${RESET}"
+        return 1
+    fi
+
+    if command -v dig >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ DNS 工具安装成功${RESET}"
+    else
+        echo -e "${RED}❌ DNS 工具安装失败${RESET}"
+    fi
+}
+# -------------------------
+# 安装并启动 cron
+# -------------------------
+install_cron() {
+    echo -e "${YELLOW}⏰ 检查并安装 cron 定时任务服务...${RESET}"
+
+    case "$OS_TYPE" in
+        debian)
+            if ! dpkg -s cron >/dev/null 2>&1; then
+                echo -e "${YELLOW}📦 安装 cron...${RESET}"
+                apt update
+                apt install -y cron
+            else
+                echo -e "${GREEN}✔ cron 已安装${RESET}"
+            fi
+            systemctl enable --now cron
+            ;;
+        rhel)
+            if ! rpm -q cronie >/dev/null 2>&1; then
+                echo -e "${YELLOW}📦 安装 cronie...${RESET}"
+                yum install -y cronie 2>/dev/null || dnf install -y cronie
+            else
+                echo -e "${GREEN}✔ cronie 已安装${RESET}"
+            fi
+            systemctl enable --now crond
+            ;;
+        alpine)
+            if ! apk info -e cronie >/dev/null 2>&1; then
+                echo -e "${YELLOW}📦 安装 cronie...${RESET}"
+                apk add cronie
+            else
+                echo -e "${GREEN}✔ cronie 已安装${RESET}"
+            fi
+            rc-update add crond
+            service crond start
+            ;;
+        *)
+            echo -e "${RED}❌ 未知系统类型，无法安装 cron${RESET}"
+            return 1
+            ;;
     esac
-done
+
+    # 状态检测
+    if systemctl is-active --quiet cron 2>/dev/null || systemctl is-active --quiet crond 2>/dev/null; then
+        echo -e "${GREEN}✔ cron 服务已运行${RESET}"
+    else
+        echo -e "${RED}❌ cron 服务未启动，请手动检查${RESET}"
+    fi
+}
+
+# -------------------------
+# 安装 NextTrace（网络路由追踪工具）
+# -------------------------
+install_nexttrace() {
+    echo -e "${YELLOW}🌐 检查并安装 NextTrace...${RESET}"
+
+    # 确保 curl 存在
+    if ! command -v curl >/dev/null 2>&1; then
+        echo -e "${RED}❌ curl 未安装，无法安装 NextTrace${RESET}"
+        return 1
+    fi
+
+    # 检测是否已安装
+    if command -v nexttrace >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ NextTrace 已安装${RESET}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}👉 开始安装 NextTrace...${RESET}"
+
+    curl -sL https://nxtrace.org/nt | bash
+
+    # 验证
+    if command -v nexttrace >/dev/null 2>&1; then
+        echo -e "${GREEN}✔ NextTrace 安装成功${RESET}"
+    else
+        echo -e "${RED}❌ NextTrace 安装失败${RESET}"
+    fi
+}
+
+# -------------------------
+# 开启 BBR（安全版）
+# -------------------------
+enable_bbr() {
+    echo -e "${YELLOW}🚀 检查并配置 TCP BBR...${RESET}"
+
+    # 1️⃣ 尝试加载 BBR 模块
+    if ! modprobe tcp_bbr 2>/dev/null; then
+        echo -e "${RED}❌ 当前内核未编译 BBR 或不支持(OpenVZ/LXC 虚拟化不支持)${RESET}"
+        return 0
+    fi
+
+    # 2️⃣ 写入模块自动加载（避免重复）
+    mkdir -p /etc/modules-load.d
+    if ! grep -qxF "tcp_bbr" /etc/modules-load.d/bbr.conf 2>/dev/null; then
+        echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
+    fi
+
+    # 3️⃣ 检查是否已经启用
+    if [ "$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)" = "bbr" ]; then
+        echo -e "${GREEN}✔ BBR 已经开启，无需修改${RESET}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}👉 BBR 未开启，开始配置...${RESET}"
+
+    # 4️⃣ 写入独立 sysctl 配置文件（更规范）
+    cat >/etc/sysctl.d/99-bbr.conf <<EOF
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+EOF
+
+    # 5️⃣ 应用配置
+    sysctl --system >/dev/null
+
+    # 6️⃣ 再次验证
+    if [ "$(sysctl -n net.ipv4.tcp_congestion_control)" = "bbr" ]; then
+        echo -e "${GREEN}✔ BBR 已成功开启${RESET}"
+    else
+        echo -e "${RED}❌ BBR 开启失败，请检查内核配置${RESET}"
+    fi
+
+    return 0
+}
+
+# -------------------------
+# 时间同步 & 设置上海时区（Debian / Ubuntu 专用）
+# -------------------------
+enable_time_sync() {
+    echo -e "${YELLOW}⏰ 配置 systemd-timesyncd 时间同步& 设置上海时区...${RESET}"
+
+    if [ ! -f /etc/os-release ]; then
+        echo -e "${RED}❌ 无法识别系统类型${RESET}"
+        return 1
+    fi
+
+    . /etc/os-release
+
+    if [[ "$ID" != "ubuntu" && "$ID" != "debian" ]]; then
+        echo -e "${RED}❌ 当前系统不是 Debian/Ubuntu，跳过时间同步配置${RESET}"
+        return 0
+    fi
+
+    echo -e "${GREEN}✔ 系统检测通过：$PRETTY_NAME${RESET}"
+
+    # 安装 systemd-timesyncd（极简系统可能没装）
+    if ! dpkg -s systemd-timesyncd >/dev/null 2>&1; then
+        echo -e "${YELLOW}📦 安装 systemd-timesyncd...${RESET}"
+        apt update
+        apt install -y systemd-timesyncd
+    else
+        echo -e "${GREEN}✔ systemd-timesyncd 已安装${RESET}"
+    fi
+
+    # 启用服务
+    systemctl unmask systemd-timesyncd || true
+    systemctl enable --now systemd-timesyncd
+
+    # 启用 NTP
+    timedatectl set-ntp true
+    systemctl restart systemd-timesyncd
+
+     # 设置上海时区
+    timedatectl set-timezone Asia/Shanghai
+    echo -e "${GREEN}✔ 时区已设置为上海 (Asia/Shanghai)${RESET}"
+
+    # 状态检查
+    if systemctl is-active --quiet systemd-timesyncd; then
+        echo -e "${GREEN}✔ 时间同步服务已成功启动${RESET}"
+    else
+        echo -e "${RED}❌ 时间同步服务启动失败(OpenVZ/LXC 虚拟化不支持)${RESET}"
+    fi
+}
+
+# -------------------------
+# 清理函数
+# -------------------------
+cleanup() {
+    echo -e "${YELLOW}🧹 正在清理系统冗余缓存...${RESET}"
+    case "$OS_TYPE" in
+        debian)
+            apt-get autoremove -y >/dev/null 2>&1
+            apt-get clean >/dev/null 2>&1
+            ;;
+        rhel)
+            dnf autoremove -y >/dev/null 2>&1
+            dnf clean all >/dev/null 2>&1
+            ;;
+        alpine)
+            rm -rf /var/cache/apk/*
+            ;;
+    esac
+    echo -e "${GREEN}✔ 清理完成${RESET}"
+}
+
+# ==========================================
+# 脚本执行入口
+# ==========================================
+
+clear
+update_system
+install_netcat
+install_dnsutils
+install_cron
+install_nexttrace
+enable_bbr
+enable_time_sync
+
+# 最后执行清理
+cleanup
+
+# 最终展示
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}🎉 系统更新工作已全部完成！${RESET}"
+echo -e "${YELLOW}📅 完成时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
