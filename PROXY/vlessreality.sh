@@ -269,8 +269,8 @@ install_xray() {
     done
 
     while true; do
-        read -p "$(echo -e "请输入SNI域名 (默认: ${cyan}learn.microsoft.com${none}): ")" domain
-        [ -z "$domain" ] && domain="learn.microsoft.com"
+        read -p "$(echo -e "请输入SNI域名 (默认: ${cyan}www.amazon.com${none}): ")" domain
+        [ -z "$domain" ] && domain="www.amazon.com"
         if is_valid_domain "$domain"; then break; else error "域名格式无效，请重新输入。"; fi
     done
 
