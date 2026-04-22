@@ -833,6 +833,18 @@ show_vps_info() {
 main() {
     clear
     root_check
+
+    # --- 核心：环境拦截逻辑 ---
+    # 判定条件：存在 alpine-release 文件 且 (存在 docker 标识 或 PID1 包含 container 变量)
+    if [ -f /etc/alpine-release ]; then
+        if [ -f /.dockerenv ] || grep -qa container /proc/1/environ 2>/dev/null; then
+            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "${RED}❌ 错误: 检测到当前环境为 Alpine 容器/轻量级虚拟化 (LXC/Docker/OpenVZ)${NC}"
+            echo -e "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${NC}"
+            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            exit 1
+        fi
+    fi
     
     update_system
     configure_hostname
