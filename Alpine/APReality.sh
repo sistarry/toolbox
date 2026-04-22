@@ -73,8 +73,8 @@ if [ -z "$PORT" ]; then
     echo "使用随机端口: $PORT"
 fi
 
-read -p "请输入伪装域名 (默认: itunes.apple.com): " DEST_DOMAIN
-[ -z "$DEST_DOMAIN" ] && DEST_DOMAIN="itunes.apple.com"
+read -p "请输入伪装域名 (默认: www.amazon.com): " DEST_DOMAIN
+[ -z "$DEST_DOMAIN" ] && DEST_DOMAIN="www.amazon.com"
 
 echo ""
 echo -e "${GREEN}端口: ${PORT}${NC}"
