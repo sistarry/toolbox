@@ -273,7 +273,7 @@ menu() {
         echo -e "${GREEN} 8) 允许 PING${RESET}"
         echo -e "${GREEN} 9) 清空防火墙规则${RESET}"
         echo -e "${GREEN}10) 显示当前规则${RESET}"
-        echo -e "${GREEN}11) 设置开机自动恢复防火墙规则${RESET}"
+        echo -e "${GREEN}11) 保存规则并设置开机自启${RESET}"
         echo -e "${GREEN} 0) 退出${RESET}"
         read -r -p "$(echo -e ${GREEN}请选择操作 : ${RESET})" choice
 
