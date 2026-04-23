@@ -249,7 +249,7 @@ ip6tables-restore < /etc/iptables/rules.v6 2>/dev/null || true
 EOF
     chmod +x /etc/local.d/firewall.start
     rc-update add local default
-    info "✅ 已设置开机自动恢复防火墙规则"
+    info "✅ 已设置开机自启服务"
     read -r -p "按回车返回菜单..."
 }
 
