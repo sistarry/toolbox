@@ -183,7 +183,7 @@ menu() {
     while true; do
         clear
         echo -e "${GREEN}============================${RESET}"
-        echo -e "${GREEN} 🔥 防火墙管理脚本 (IPv4/IPv6)${RESET}"
+        echo -e "${GREEN} 🔥 防火墙管理 (IPv4/IPv6)${RESET}"
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN} 1. 开放指定端口${RESET}"
         echo -e "${GREEN} 2. 关闭指定端口${RESET}"
