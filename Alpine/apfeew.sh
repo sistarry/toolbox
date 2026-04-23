@@ -261,7 +261,7 @@ menu() {
     while true; do
         clear
         echo -e "${GREEN}============================${RESET}"
-        echo -e "${GREEN} 🔥 Alpine 防火墙管理脚本 ${RESET}"
+        echo -e "${GREEN} 🔥 Alpine 防火墙管理 ${RESET}"
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN} 1) 初始化默认规则 (放行 SSH/80/443)${RESET}"
         echo -e "${GREEN} 2) 开放指定 IP${RESET}"
