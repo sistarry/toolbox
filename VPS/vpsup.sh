@@ -841,6 +841,7 @@ main() {
     echo -e "${YELLOW}本脚本将执行：系统更新、BBR调优、防火墙放行、DNS设置、${NC}"
     echo -e "${YELLOW}Swap配置、SSH加固、Docker安装、垃圾清理等一系列操作。${NC}"
     echo -e "${RED}注意：运行结束后会自动重启服务器。${NC}"
+    echo -e "${RED}注意: Alpine 容器/轻量级虚拟化 (LXC/Docker/OpenVZ)不支持${NC}"
     echo -e "${CYAN}------------------------------------------------------${NC}"
 
     if [[ "$non_interactive" = false ]]; then
@@ -855,17 +856,34 @@ main() {
     fi
     # ======================================================
 
-    # --- 核心：环境拦截逻辑 ---
-    # 判定条件：存在 alpine-release 文件 且 (存在 docker 标识 或 PID1 包含 container 变量)
+    # --- 核心：环境拦截逻辑---
+    echo -e "${YELLOW}正在检测环境合法性...${NC}"
+    
+    IS_CONTAINER=false
+    # 1. 检测是否为 Alpine 容器
     if [ -f /etc/alpine-release ]; then
-        if [ -f /.dockerenv ] || grep -qa container /proc/1/environ 2>/dev/null; then
-            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "${RED}❌ 错误: 检测到当前环境为 Alpine 容器/轻量级虚拟化 (LXC/Docker/OpenVZ)${NC}"
-            echo -e "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${NC}"
-            echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            exit 1
+        if [ -f /.dockerenv ] || [ -f /run/.containerenv ] || grep -qaE "(container|docker|lxc)" /proc/1/environ /proc/1/cgroup 2>/dev/null; then
+            IS_CONTAINER=true
+            VIRT_TYPE="Alpine Container (Docker/LXC)"
+        fi
+    # 2. 补充检测：非 Alpine 但仍是容器的环境（防止在 Ubuntu Docker 中改内核）
+    elif command -v systemd-detect-virt >/dev/null 2>&1; then
+        VIRT_TEMP=$(systemd-detect-virt)
+        if [[ "$VIRT_TEMP" =~ (docker|lxc|openvz|podman|container) ]]; then
+            IS_CONTAINER=true
+            VIRT_TYPE="$VIRT_TEMP"
         fi
     fi
+
+    if [ "$IS_CONTAINER" = true ]; then
+        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${RED}❌ 错误: 检测到当前环境为虚拟化容器: ${VIRT_TYPE}${NC}"
+        echo -e "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${NC}"
+        echo -e "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${NC}"
+        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        exit 1
+    fi
+    # ----------------------------------
     
     update_system
     configure_hostname
