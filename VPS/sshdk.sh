@@ -17,6 +17,34 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+
+# ========================================
+# 虚拟化环境深度检测 (拦截 LXC/Docker/OpenVZ)
+# ========================================
+VIRT_TYPE=""
+
+# 1. 检测 Docker
+if [ -f /.dockerenv ] || grep -q "docker" /proc/self/cgroup 2>/dev/null; then
+    VIRT_TYPE="Docker"
+# 2. 检测 LXC
+elif [ -f /proc/1/environ ] && grep -qa "container=lxc" /proc/1/environ; then
+    VIRT_TYPE="LXC"
+elif [ -d /dev/lxc ]; then
+    VIRT_TYPE="LXC"
+# 3. 检测 OpenVZ
+elif [ -d /proc/vz ] || [ -f /proc/user_beancounters ]; then
+    VIRT_TYPE="OpenVZ"
+fi
+
+if [ -n "$VIRT_TYPE" ]; then
+    echo -e "${RED}========================================${RESET}"
+    echo -e "${RED}❌ 错误: 检测到当前环境为 $VIRT_TYPE${RESET}"
+    echo -e "${YELLOW}不支持在轻量级虚拟化（容器）环境下运行。${RESET}"
+    echo -e "${YELLOW}原因：容器环境通常无法直接操作内核防火墙或独立管理 SSH 守护进程。${RESET}"
+    echo -e "${RED}========================================${RESET}"
+    exit 1
+fi
+
 if [ -f /etc/alpine-release ]; then
     OS="Alpine"
 elif grep -qi "ubuntu" /etc/os-release; then
