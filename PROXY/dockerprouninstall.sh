@@ -53,6 +53,8 @@ KEYWORDS=(
 "freegfw"
 "sing-box"
 "Mihomo"
+"remnawave"
+"forwardx-panel"
 )
 
 # =============================
