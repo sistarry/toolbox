@@ -236,6 +236,7 @@ while true; do
     echo -e "${YELLOW}[16] Mihomo代理${RESET}"
     echo -e "${YELLOW}[17] Clash代理${RESET}"
     echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
+    echo -e "${YELLOW}[19] Remnawave${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -260,6 +261,7 @@ while true; do
         16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh) ; pause_return ;;
         17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
+        19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -286,6 +288,7 @@ while true; do
     echo -e "${YELLOW}[09] NodePass${RESET}"
     echo -e "${YELLOW}[10] nftables端口转发${RESET}"
     echo -e "${YELLOW}[11] 哆啦A梦面板重制版${RESET}"
+    echo -e "${YELLOW}[12] ForwardX端口转发${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -303,6 +306,7 @@ while true; do
         09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/NodePass.sh) ; pause_return ;;
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftables.sh) ; pause_return ;;
         11) curl -fsSL https://raw.githubusercontent.com/0xNetuser/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh ;;
+        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ForwardX.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -1208,7 +1212,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|Mihomo')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|Mihomo|remnawave|forwardx-panel')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
