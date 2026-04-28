@@ -91,7 +91,7 @@ services:
     container_name: siyuan
     command: ['--workspace=/siyuan/workspace/', '--accessAuthCode=\${AuthCode}']
     ports:
-      - "127.0.0.1:\${PORT}:6806"
+      - "127.0.0.1:${PORT}:6806"
     volumes:
       - ./workspace:/siyuan/workspace
     restart: unless-stopped
