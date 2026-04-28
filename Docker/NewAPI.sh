@@ -140,6 +140,7 @@ EOF
     echo
     echo -e "${GREEN}✅ new-api 已启动${RESET}"
     echo -e "${YELLOW}🌐 访问: http://127.0.0.1:${PORT}${RESET}"
+    echo -e "${GREEN}📂 数据目录: $APP_DIR${RESET}"
 
     read -p "按回车返回菜单..."
 }
