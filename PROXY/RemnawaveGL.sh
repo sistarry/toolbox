@@ -91,6 +91,9 @@ uninstall_remnawave() {
     rm -f /etc/nginx/sites-available/remnawave.conf
 
     systemctl restart nginx 2>/dev/null
+    rm -rf /root/.acme.sh
+    # 删除 cron
+    crontab -l 2>/dev/null | grep -v acme.sh | crontab -
 
     info "已彻底卸载"
 }
