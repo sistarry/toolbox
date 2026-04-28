@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# new-api 一键管理脚本 (Docker Compose) - 可选MySQL版 (含检测)
+# new-api 一键管理脚本
 # ========================================
 
 GREEN="\033[32m"
@@ -11,98 +11,79 @@ RESET="\033[0m"
 APP_NAME="new-api"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
-CONFIG_FILE="$APP_DIR/config.env"
 
-function menu() {
-    clear
-    echo -e "${GREEN}=== NEW-API 管理菜单 ===${RESET}"
-    echo -e "${GREEN}1) 安装启动${RESET}"
-    echo -e "${GREEN}2) 更新${RESET}"
-    echo -e "${GREEN}3) 重启${RESET}"
-    echo -e "${GREEN}4) 查看日志${RESET}"
-    echo -e "${GREEN}5) 卸载(含数据)${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
-    read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
-    case $choice in
-        1) install_app ;;
-        2) update_app ;;
-        3) restart_app ;;
-        4) view_logs ;;
-        5) uninstall_app ;;
-        0) exit 0 ;;
-        *) echo -e "${RED}无效选择${RESET}"; sleep 1; menu ;;
-    esac
-}
-
-function check_mysql() {
-    echo -e "${YELLOW}🔍 正在检测 MySQL 连接...${RESET}"
-    if ! command -v mysqladmin >/dev/null 2>&1; then
-        echo -e "${YELLOW}⚠️ 未检测到 mysqladmin，正在尝试安装...${RESET}"
-        if command -v apt >/dev/null 2>&1; then
-            apt update && apt install -y mysql-client
-        elif command -v yum >/dev/null 2>&1; then
-            yum install -y mysql
-        else
-            echo -e "${RED}❌ 无法安装 mysqladmin，请手动安装 mysql-client${RESET}"
-            return 1
-        fi
+check_docker() {
+    if ! command -v docker &>/dev/null; then
+        echo -e "${YELLOW}未检测到 Docker，正在安装...${RESET}"
+        curl -fsSL https://get.docker.com | bash
     fi
 
-    mysqladmin -h"$MYSQL_HOST" -P"$MYSQL_PORT" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" ping --silent >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ MySQL 连接成功${RESET}"
-        return 0
-    else
-        echo -e "${RED}❌ 无法连接到 MySQL，请检查地址/端口/用户名/密码${RESET}"
+    if ! docker compose version &>/dev/null; then
+        echo -e "${RED}未检测到 Docker Compose v2，请升级 Docker${RESET}"
+        exit 1
+    fi
+}
+
+check_port() {
+    if ss -tlnp | grep -q ":$1 "; then
+        echo -e "${RED}端口 $1 已被占用，请更换端口！${RESET}"
         return 1
     fi
 }
 
-function install_app() {
-    mkdir -p "$APP_DIR"/{data,logs}
+menu() {
+    while true; do
+        clear
+        echo -e "${GREEN}=== new-api 管理菜单 ===${RESET}"
+        echo -e "${GREEN}1) 安装启动${RESET}"
+        echo -e "${GREEN}2) 更新${RESET}"
+        echo -e "${GREEN}3) 重启${RESET}"
+        echo -e "${GREEN}4) 查看日志${RESET}"
+        echo -e "${GREEN}5) 查看状态${RESET}"
+        echo -e "${GREEN}6) 卸载(含数据)${RESET}"
+        echo -e "${GREEN}0) 退出${RESET}"
+        read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
-    read -p "请输入 Web 端口 [默认:3000]: " PORT
-    PORT=${PORT:-3000}
+        case $choice in
+            1) install_app ;;
+            2) update_app ;;
+            3) restart_app ;;
+            4) view_logs ;;
+            5) check_status ;;
+            6) uninstall_app ;;
+            0) exit 0 ;;
+            *) echo -e "${RED}无效选择${RESET}"; sleep 1 ;;
+        esac
+    done
+}
 
-    read -p "请输入 SESSION_SECRET (随机字符串, 默认随机生成): " SESSION_SECRET
-    SESSION_SECRET=${SESSION_SECRET:-$(openssl rand -hex 16)}
+install_app() {
 
-    echo -e "${YELLOW}是否使用外部 MySQL？(回车默认使用 SQLite)${RESET}"
-    read -p "输入 y 表示使用外部 MySQL: " use_mysql
+    check_docker
 
-    SQL_DSN=""
-    if [[ "$use_mysql" == "y" || "$use_mysql" == "Y" ]]; then
-        read -p "请输入 MySQL 地址 [默认:127.0.0.1]: " MYSQL_HOST
-        MYSQL_HOST=${MYSQL_HOST:-127.0.0.1}
+    mkdir -p "$APP_DIR/data"
+    mkdir -p "$APP_DIR/logs"
+    mkdir -p "$APP_DIR/pg_data"
 
-        read -p "请输入 MySQL 端口 [默认:3306]: " MYSQL_PORT
-        MYSQL_PORT=${MYSQL_PORT:-3306}
-
-        read -p "请输入 MySQL 用户名 [默认:root]: " MYSQL_USER
-        MYSQL_USER=${MYSQL_USER:-root}
-
-        read -p "请输入 MySQL 密码 [默认:123456]: " MYSQL_PASSWORD
-        MYSQL_PASSWORD=${MYSQL_PASSWORD:-123456}
-
-        read -p "请输入 MySQL 数据库名 [默认:new_api]: " MYSQL_DATABASE
-        MYSQL_DATABASE=${MYSQL_DATABASE:-new_api}
-
-        SQL_DSN="${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?charset=utf8mb4&parseTime=True&loc=Local"
-
-        # 检测 MySQL 是否可连
-        check_mysql || { read -p "按回车返回菜单..."; menu; }
+    if [ -f "$COMPOSE_FILE" ]; then
+        echo -e "${YELLOW}检测到已安装，是否覆盖安装？(y/n)${RESET}"
+        read confirm
+        [[ "$confirm" != "y" ]] && return
     fi
 
-    # 写 config.env
-    cat > "$CONFIG_FILE" <<EOF
-PORT=$PORT
-SESSION_SECRET=$SESSION_SECRET
-SQL_DSN=$SQL_DSN
-EOF
+    read -p "请输入访问端口 [默认:3000]: " input_port
+    PORT=${input_port:-3000}
+    check_port "$PORT" || return
 
-    # 写 docker-compose.yml
+    read -p "Postgres密码 [默认:StrongPass123!]: " input_pg
+    PG_PASS=${input_pg:-StrongPass123!}
+
+    read -p "Redis密码 [默认:StrongRedis123!]: " input_rd
+    REDIS_PASS=${input_rd:-StrongRedis123!}
+
+    NODE_NAME="node-$(openssl rand -hex 3)"
+
     cat > "$COMPOSE_FILE" <<EOF
-
 services:
   new-api:
     image: calciumion/new-api:latest
@@ -110,78 +91,88 @@ services:
     restart: always
     command: --log-dir /app/logs
     ports:
-      - "127.0.0.1:\${PORT}:3000"
+      - "127.0.0.1:${PORT}:3000"
     volumes:
       - ./data:/data
       - ./logs:/app/logs
     environment:
-      - SESSION_SECRET=\${SESSION_SECRET}
-      - REDIS_CONN_STRING=redis://redis
+      - SQL_DSN=postgresql://root:${PG_PASS}@postgres:5432/new-api
+      - REDIS_CONN_STRING=redis://:${REDIS_PASS}@redis:6379
       - TZ=Asia/Shanghai
-EOF
-
-    if [[ -n "$SQL_DSN" ]]; then
-        echo "      - SQL_DSN=\${SQL_DSN}" >> "$COMPOSE_FILE"
-    fi
-
-    cat >> "$COMPOSE_FILE" <<EOF
+      - ERROR_LOG_ENABLED=true
+      - BATCH_UPDATE_ENABLED=true
+      - NODE_NAME=${NODE_NAME}
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - new-api-network
 
   redis:
     image: redis:latest
     container_name: redis
     restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASS}"]
+    networks:
+      - new-api-network
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: new-api
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    networks:
+      - new-api-network
+
+networks:
+  new-api-network:
+    driver: bridge
 EOF
 
-    cd "$APP_DIR"
-    docker compose --env-file "$CONFIG_FILE" up -d
+    cd "$APP_DIR" || exit
+    docker compose up -d
 
+    echo
     echo -e "${GREEN}✅ new-api 已启动${RESET}"
-    echo -e "${YELLOW}🌐 Web UI 地址: http://127.0.0.1:$PORT${RESET}"
-    echo -e "${GREEN}🔑 账号/密码: root/123456${RESET}"
-    echo -e "${GREEN}📂 数据目录: $APP_DIR/data${RESET}"
-    echo -e "${GREEN}📂 日志目录: $APP_DIR/logs${RESET}"
-    echo -e "${GREEN}🔑 SESSION_SECRET: $SESSION_SECRET${RESET}"
-    echo -e "${GREEN}提示: 数据库初始化需要时间，请等待一分钟再访问${RESET}"
-    if [[ -n "$SQL_DSN" ]]; then
-        echo -e "${GREEN}🗄️ 使用外部 MySQL 数据库: $MYSQL_DATABASE (主机: $MYSQL_HOST:$MYSQL_PORT 用户: $MYSQL_USER)${RESET}"
-    else
-        echo -e "${YELLOW}📦 当前使用 SQLite 本地数据库 (文件存储在 ./data 目录)${RESET}"
-    fi
+    echo -e "${YELLOW}🌐 访问: http://127.0.0.1:${PORT}${RESET}"
 
     read -p "按回车返回菜单..."
-    menu
 }
 
-function update_app() {
-    cd "$APP_DIR" || { echo "未检测到安装目录，请先安装"; sleep 1; menu; }
-    docker compose --env-file "$CONFIG_FILE" pull
-    docker compose --env-file "$CONFIG_FILE" up -d
-    echo -e "${GREEN}✅ new-api 已更新并重启完成${RESET}"
+update_app() {
+    cd "$APP_DIR" || return
+    docker compose pull
+    docker compose up -d
+    echo -e "${GREEN}✅ 更新完成${RESET}"
     read -p "按回车返回菜单..."
-    menu
 }
 
-function restart_app() {
-    cd "$APP_DIR" || { echo "未检测到安装目录，请先安装"; sleep 1; menu; }
-    docker compose --env-file "$CONFIG_FILE" restart
-    echo -e "${GREEN}✅ new-api 已重启${RESET}"
+restart_app() {
+    docker restart new-api
+    echo -e "${GREEN}✅ 已重启${RESET}"
     read -p "按回车返回菜单..."
-    menu
 }
 
-function view_logs() {
+view_logs() {
     docker logs -f new-api
-    read -p "按回车返回菜单..."
-    menu
 }
 
-function uninstall_app() {
-    cd "$APP_DIR" || { echo "未检测到安装目录"; sleep 1; menu; }
-    docker compose --env-file "$CONFIG_FILE" down -v
-    rm -rf "$APP_DIR"
-    echo -e "${RED}✅ new-api 已卸载，数据已删除${RESET}"
+check_status() {
+    docker ps | grep new-api
     read -p "按回车返回菜单..."
-    menu
+}
+
+uninstall_app() {
+    cd "$APP_DIR" || return
+    docker compose down -v
+    rm -rf "$APP_DIR"
+    echo -e "${RED}✅ 已彻底卸载${RESET}"
+    read -p "按回车返回菜单..."
 }
 
 menu
