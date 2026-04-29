@@ -309,9 +309,8 @@ declare -A apps=(
     [12,19]="CodexCLI"
     [12,20]="OpenCode"
     [12,21]="DrissionPage网页自动化工具"
-    [13,1]="星露谷物语开服联机"
-    [13,2]="MCSManager"
-    [13,3]="桃花源文字游戏"
+    [13,1]="MCSManager"
+    [13,2]="桃花源文字游戏"
 
 )
 
@@ -580,9 +579,8 @@ declare -A commands=(
     [12,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZCodexCLI.sh)'
     [12,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZOpenCode.sh)'
     [12,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DrissionPage.sh)'
-    [13,1]='curl -sSL https://raw.githubusercontent.com/truman-world/puppy-stardew-server/main/quick-start-zh.sh | bash'
-    [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
-    [13,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
+    [13,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
+    [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
 )
 
 # ================== 菜单显示函数 ==================
