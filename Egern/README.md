@@ -136,3 +136,8 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/ChinaUn
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/lotteryticket.js
 ```
+
+### 老黄历
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/LHL.js
+```
