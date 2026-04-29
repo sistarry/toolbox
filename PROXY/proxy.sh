@@ -237,6 +237,7 @@ while true; do
     echo -e "${YELLOW}[17] Clash代理${RESET}"
     echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
     echo -e "${YELLOW}[19] Remnawave${RESET}"
+    echo -e "${YELLOW}[20] 3X-UICluster(多节点)${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -262,6 +263,7 @@ while true; do
         17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
         19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
+        20) bash <(curl -Ls https://raw.githubusercontent.com/Copperchaleu/3x-ui-cluster/main/install.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -404,6 +406,7 @@ while true; do
     echo -e "${YELLOW}[04] 自定义DNS解锁${RESET}"
     echo -e "${YELLOW}[05] 谷歌分流Warp${RESET}"
     echo -e "${YELLOW}[06] 谷歌定位解锁${RESET}"
+    echo -e "${YELLOW}[07] DNS分流规则管理面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -417,6 +420,7 @@ while true; do
         04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ; pause_return ;;
         05) bash <(curl -sL https://raw.githubusercontent.com/vpsjk/warp-google/main/warp-google.sh) ; pause_return ;;
         06) bash <(curl -fsSL https://vpszdm.com/warp-google.sh) ; pause_return ;;
+        07) wget -O install.sh https://raw.githubusercontent.com/mslxi/Liquid-Glass-Prism-dns/main/install.sh && sudo bash install.sh ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
