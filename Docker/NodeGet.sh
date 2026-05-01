@@ -69,18 +69,9 @@ install_app() {
         [[ "$confirm" != "y" ]] && return
     fi
 
-    read -p "请输入访问端口 [默认:3000]: " input_port
-    PORT=${input_port:-3000}
+    read -p "请输入访问端口 [默认:2211]: " input_port
+    PORT=${input_port:-2211}
     check_port "$PORT" || return
-
-    UUID_FILE="$APP_DIR/uuid"
-
-    if [ -f "$UUID_FILE" ]; then
-        UUID=$(cat "$UUID_FILE")
-    else
-        UUID=$(cat /proc/sys/kernel/random/uuid)
-        echo "$UUID" > "$UUID_FILE"
-    fi
 
 
     cat > "$COMPOSE_FILE" <<EOF
@@ -90,9 +81,7 @@ services:
     container_name: nodeget
     restart: unless-stopped
     environment:
-      NODEGET_CONFIG_FROM_ENV: "true"
       NODEGET_PORT: "${PORT}"
-      NODEGET_SERVER_UUID: "${UUID}"
       NODEGET_LOG_FILTER: "info"
       NODEGET_DATABASE_URL: "sqlite:///var/lib/nodeget/nodeget.db?mode=rwc"
     ports:
@@ -124,7 +113,6 @@ EOF
     echo
     echo -e "${GREEN}✅ nodeget 已启动${RESET}"
     echo -e "${YELLOW}🌐 访问: http://127.0.0.1:${PORT}${RESET}"
-    echo -e "${YELLOW}🆔 UUID: ${UUID}${RESET}"
     echo -e "${YELLOW}🌐 主控地址: wss://127.0.0.1:${PORT}${RESET}"
 
     if [[ -n "$SUPERTOKEN" ]]; then
@@ -141,7 +129,6 @@ EOF
 
     cat > "$APP_DIR/token.txt" <<EOF
 访问地址: http://127.0.0.1:${PORT}
-UUID: ${UUID}
 
 SuperToken:
 ${SUPERTOKEN}
