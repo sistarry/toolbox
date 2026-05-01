@@ -7,18 +7,19 @@ RESET="\033[0m"
 menu() {
     clear
     echo -e "${GREEN}=== 监控管理菜单 ===${RESET}"
-    echo -e "${GREEN}1) V0 哪吒监控安装${RESET}"
+    echo -e "${GREEN}1) NodeGet监控安装${RESET}"
     echo -e "${GREEN}2) V1 哪吒监控安装${RESET}"
     echo -e "${GREEN}3) Komari监控安装${RESET}"
     echo -e "${GREEN}4) 哪吒闭SSH${RESET}"
     echo -e "${GREEN}5) 哪吒Agent管理${RESET}"
     echo -e "${GREEN}6) KomariAgent管理${RESET}"
+    echo -e "${GREEN}7) NodeGetAgent管理${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            echo -e "${GREEN}正在安装 V0 哪吒监控...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhav0Argo.sh)
+            echo -e "${GREEN}正在安装 NodeGet 监控...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeGetgl.sh)
             pause
             ;;
         2)
@@ -44,6 +45,11 @@ menu() {
         6)
             echo -e "${GREEN}正在安装 Komari Agent管理...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KomariAgent.sh)
+            pause
+            ;;
+        7)
+            echo -e "${GREEN}正在安装 NodeGet Agent管理...${RESET}"
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeGetAgent.sh)
             pause
             ;;
         0)
