@@ -9,7 +9,8 @@ menu() {
     echo -e "${GREEN}=== NodeGet 监控管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装 NodeGet${RESET}"
     echo -e "${GREEN}2) 安装 NodeGet(PostgreSQL)${RESET}"
-    echo -e "${GREEN}3) 管理 NodeGet Agent${RESET}"
+    echo -e "${GREEN}3) 安装 NodeGet(官方)${RESET}"
+    echo -e "${GREEN}4) 管理 NodeGet Agent${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
@@ -24,6 +25,11 @@ menu() {
             pause
             ;;
         3)
+            echo -e "${GREEN}正在安装 NodeGet(官方) ...${RESET}"
+            bash <(curl -sL https://install.nodeget.com)
+            pause
+            ;;
+        4)
             echo -e "${GREEN}管理 NodeGet Agent...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeGetAgent.sh)
             pause
