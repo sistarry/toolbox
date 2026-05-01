@@ -121,20 +121,15 @@ EOF
         echo -e "${RED}❌ 未获取到Token（可查看日志）${RESET}"
     fi
 
-    if [[ -n "$ROOTPASS" ]]; then
-        echo -e "${YELLOW}🔐 Root密码:${RESET} ${ROOTPASS}"
-    else
-        echo -e "${RED}❌ 未获取到 Root密码${RESET}"
-    fi
 
     cat > "$APP_DIR/token.txt" <<EOF
 访问地址: http://127.0.0.1:${PORT}
 
+主控地址: wss://127.0.0.1:${PORT}
+
 SuperToken:
 ${SUPERTOKEN}
 
-RootPassword:
-${ROOTPASS}
 EOF
 
     echo -e "${YELLOW}📄 已保存到: $APP_DIR/token.txt${RESET}"
