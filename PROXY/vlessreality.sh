@@ -424,6 +424,150 @@ view_subscription_info() {
     fi
 }
 
+configure_custom_socks5_outbound() {
+    if [[ ! -f "$xray_config_path" ]]; then error "错误: Xray 未安装，无法配置出口模式。" && return; fi
+
+    local mode current_protocol tmp_file
+    current_protocol=$(jq -r '.outbounds[0].protocol // "freedom"' "$xray_config_path" 2>/dev/null || echo "freedom")
+
+    echo "---------------------------------------------"
+    echo "请选择出口模式："
+    if [[ "$current_protocol" == "socks" ]]; then
+        echo "当前模式: Socks5"
+    else
+        echo "当前模式: 直连"
+    fi
+    echo "1) 直连"
+    echo "2) Socks5"
+    echo "0) 取消"
+    echo "---------------------------------------------"
+
+    read -p "请输入选项 [0-2]: " mode
+    case "$mode" in
+        1)
+            tmp_file=$(mktemp)
+            jq '.outbounds = [{"protocol":"freedom","settings":{"domainStrategy":"UseIPv4v6"}}]' "$xray_config_path" > "$tmp_file"
+            if ! jq empty "$tmp_file" >/dev/null 2>&1; then
+                rm -f "$tmp_file"
+                error "生成的直连配置无效。"
+                return 1
+            fi
+            cp "$xray_config_path" "${xray_config_path}.bak.$(date +%s)"
+            mv "$tmp_file" "$xray_config_path"
+            chmod 644 "$xray_config_path" 2>/dev/null || true
+            if ! restart_xray; then
+                error "切换到直连失败。"
+                return 1
+            fi
+            success "已切换为直连出口！"
+            return
+            ;;
+        2)
+            ;;
+        0|"")
+            info "已取消配置。"
+            return
+            ;;
+        *)
+            error "无效选项，请输入 0-2 之间的数字。"
+            return 1
+            ;;
+    esac
+
+    info "配置自定义 Socks5 出口。"
+
+    local socks_host socks_port socks_user socks_pass
+
+    read -p "请输入 Socks5 服务器地址/IP: " socks_host
+    [[ -z "$socks_host" ]] && info "已取消配置。" && return
+
+    while true; do
+        read -p "请输入 Socks5 端口 (默认: 1080): " socks_port
+        [[ -z "$socks_port" ]] && socks_port=1080
+        if is_valid_port "$socks_port"; then
+            break
+        else
+            error "端口无效，请输入一个1-65535之间的数字。"
+        fi
+    done
+
+    read -p "请输入 Socks5 用户名 (可留空): " socks_user
+    if [[ -n "$socks_user" ]]; then
+        read -s -p "请输入 Socks5 密码: " socks_pass
+        echo
+    else
+        socks_pass=""
+    fi
+
+    tmp_file=$(mktemp)
+
+    if [[ -n "$socks_user" ]]; then
+        jq \
+            --arg host "$socks_host" \
+            --argjson port "$socks_port" \
+            --arg user "$socks_user" \
+            --arg pass "$socks_pass" \
+            '
+            .outbounds = [
+              {
+                "protocol": "socks",
+                "tag": "custom-socks5-out",
+                "settings": {
+                  "servers": [
+                    {
+                      "address": $host,
+                      "port": $port,
+                      "users": [
+                        {
+                          "user": $user,
+                          "pass": $pass
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+            ' "$xray_config_path" > "$tmp_file"
+    else
+        jq \
+            --arg host "$socks_host" \
+            --argjson port "$socks_port" \
+            '
+            .outbounds = [
+              {
+                "protocol": "socks",
+                "tag": "custom-socks5-out",
+                "settings": {
+                  "servers": [
+                    {
+                      "address": $host,
+                      "port": $port
+                    }
+                  ]
+                }
+              }
+            ]
+            ' "$xray_config_path" > "$tmp_file"
+    fi
+
+    if ! jq empty "$tmp_file" >/dev/null 2>&1; then
+        rm -f "$tmp_file"
+        error "生成的 Socks5 配置无效，请检查输入后重试。"
+        return 1
+    fi
+
+    cp "$xray_config_path" "${xray_config_path}.bak.$(date +%s)"
+    mv "$tmp_file" "$xray_config_path"
+    chmod 644 "$xray_config_path" 2>/dev/null || true
+
+    if ! restart_xray; then
+        error "Xray 重启失败，当前配置可能与系统环境不兼容。"
+        return 1
+    fi
+    success "已切换为 Socks5 出口！"
+}
+
 # --- 核心逻辑函数 ---
 write_config() {
     local port=$1 uuid=$2 domain=$3 private_key=$4 public_key=$5 shortid=${6:-}
@@ -537,10 +681,11 @@ main_menu() {
         printf "  ${magenta}%-2s${none} %-35s\n" "5." "查看 Xray 日志"
         printf "  ${cyan}%-2s${none} %-35s\n" "6." "修改节点配置"
         printf "  ${green}%-2s${none} %-35s\n" "7." "查看订阅信息"
+        printf "  ${yellow}%-2s${none} %-35s\n" "8." "自定义 Socks5 出口"
         echo "---------------------------------------------"
         printf "  ${yellow}%-2s${none} %-35s\n" "0." "退出脚本"
         echo "---------------------------------------------"
-        read -p "请输入选项 [0-7]: " choice
+        read -p "请输入选项 [0-8]: " choice
 
         local needs_pause=true
         case $choice in
@@ -551,8 +696,9 @@ main_menu() {
             5) view_xray_log; needs_pause=false ;;
             6) modify_config ;;
             7) view_subscription_info ;;
+            8) configure_custom_socks5_outbound ;;
             0) success "感谢使用！"; exit 0 ;;
-            *) error "无效选项，请输入 0-7 之间的数字。" ;;
+            *) error "无效选项，请输入 0-8 之间的数字。" ;;
         esac
 
         if [ "$needs_pause" = true ]; then
