@@ -188,8 +188,9 @@ while true; do
     echo -e "${YELLOW}[04] F佬-Sing-box${RESET}"
     echo -e "${YELLOW}[05] 233boy-Sing-box${RESET}"
     echo -e "${YELLOW}[06] SS+SNELL+Reality${RESET}"
-    echo -e "${YELLOW}[07] SS-Xray-2go${RESET}"
-    echo -e "${YELLOW}[08] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[07] Sing-box多用户与管理${RESET}"
+    echo -e "${YELLOW}[08] SS-Xray-2go${RESET}"
+    echo -e "${YELLOW}[09] vless-all-in-one${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -202,8 +203,9 @@ while true; do
         04) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
         05) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ;;
         06) bash <(curl -L -s menu.jinqians.com) ;;
-        07) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ;;
-        08) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
+        07) wget -O sb.sh https://raw.githubusercontent.com/Tangfffyx/sing-box/main/sb.sh && bash sb.sh ;;
+        08) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ;;
+        09) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
@@ -238,6 +240,7 @@ while true; do
     echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
     echo -e "${YELLOW}[19] Remnawave${RESET}"
     echo -e "${YELLOW}[20] 3X-UICluster(多节点)${RESET}"
+    echo -e "${YELLOW}[21] J-Board${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -264,6 +267,7 @@ while true; do
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
         19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
         20) bash <(curl -Ls https://raw.githubusercontent.com/Copperchaleu/3x-ui-cluster/main/install.sh) ; pause_return ;;
+        21) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/J-Board.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
