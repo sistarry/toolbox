@@ -365,7 +365,7 @@ execute_choice() {
         8) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/systemdtimesyncd.sh) ;;
         9) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/qhwl.sh) ;;
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/open_all_ports.sh) ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/linuxos.sh) ;;
+        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/linuxos.sh) ;;
         12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Debian12.sh) ;;
         13) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/window.sh) ;;
         14) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/DDnat.sh) ;;
