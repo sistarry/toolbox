@@ -104,10 +104,11 @@ EOF
 
     echo
     echo -e "${GREEN}✅ Zephyr SSH 已启动${RESET}"
-    echo -e "${YELLOW}访问地址: http://127.0.0.1:${PORT}${RESET}"
-    echo -e "${YELLOW}访问地址: $DOMAIN${RESET}"
-    echo -e "${YELLOW}密钥: $ENCRYPTION_KEY${RESET}"
-    echo -e "${YELLOW}账号/密码: admin/admin${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:${PORT}${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: $DOMAIN${RESET}"
+    echo -e "${YELLOW}🔑 密钥: $ENCRYPTION_KEY${RESET}"
+    echo -e "${YELLOW}🔑 账号/密码: admin/admin${RESET}"
+    echo -e "${YELLOW}📂 数据目录: $APP_DIR${RESET}"
 
     read -p "按回车返回菜单..."
     menu
