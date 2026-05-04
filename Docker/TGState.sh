@@ -114,8 +114,9 @@ EOF
 
     echo
     echo -e "${GREEN}✅ TGState 已启动${RESET}"
-    echo -e "${YELLOW}访问地址: http://${SERVER_IP}:${PORT}${RESET}"
-    echo -e "${YELLOW}访问地址: $BASE_URL${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://${SERVER_IP}:${PORT}${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: $BASE_URL${RESET}"
+    echo -e "${YELLOW}📂 数据目录: $APP_DIR${RESET}"
 
     read -p "按回车返回菜单..."
     menu
