@@ -102,9 +102,10 @@ EOF
 
     echo
     echo -e "${GREEN}✅ GPT-Image 已启动${RESET}"
-    echo -e "${YELLOW}访问: http://${SERVER_IP}:9090${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://${SERVER_IP}:9090${RESET}"
 
-    [ -n "$ACCESS_KEY" ] && echo -e "${YELLOW}访问密码: $ACCESS_KEY${RESET}"
+    [ -n "$ACCESS_KEY" ] && echo -e "${YELLOW}🔑 访问密码: $ACCESS_KEY${RESET}"
+    echo -e "${YELLOW}📂 数据目录: $APP_DIR${RESET}"
 
     read -p "按回车返回菜单..."
     menu
