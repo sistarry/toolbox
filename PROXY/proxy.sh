@@ -547,6 +547,7 @@ while true; do
     echo -e "${YELLOW}[06] 阿里云CDT流量监控${RESET}"
     echo -e "${YELLOW}[07] 3XUI面板流量监控${RESET}"
     echo -e "${YELLOW}[08] VPS端口流量监控${RESET}"
+    echo -e "${YELLOW}[09] 流量日报管理工具${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -562,6 +563,7 @@ while true; do
         06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ECSController.sh) ;;
         07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xtrafficdash.sh) ;;
         08) bash <(curl -fsSL https://raw.githubusercontent.com/156933/PortTrafficStatistics/main/install.sh) ;;
+        09) bash -c "$(curl -L https://raw.githubusercontent.com/SumMoonYou/vps_traffic/refs/heads/main/vps_vnstat_telegram.sh)" @ install ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
