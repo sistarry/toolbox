@@ -108,6 +108,9 @@ EOF
     cd "$APP_DIR" || exit
     docker compose up -d
 
+    chmod -R 777 "$CONFIG_DIR"
+    chmod -R 777 "$ICON_DIR"
+
     echo
     echo -e "${GREEN}✅ Remio Home 已启动${RESET}"
     echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:${PORT}${RESET}"
