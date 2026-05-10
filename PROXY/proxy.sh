@@ -295,6 +295,7 @@ while true; do
     echo -e "${YELLOW}[10] nftables端口转发${RESET}"
     echo -e "${YELLOW}[11] 哆啦A梦面板重制版${RESET}"
     echo -e "${YELLOW}[12] ForwardX端口转发${RESET}"
+    echo -e "${YELLOW}[13] iptables转发ddns域名${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -313,6 +314,7 @@ while true; do
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftables.sh) ; pause_return ;;
         11) curl -fsSL https://raw.githubusercontent.com/0xNetuser/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh ;;
         12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ForwardX.sh) ; pause_return ;;
+        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/iptablesUtils.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -548,6 +550,7 @@ while true; do
     echo -e "${YELLOW}[07] 3XUI面板流量监控${RESET}"
     echo -e "${YELLOW}[08] VPS端口流量监控${RESET}"
     echo -e "${YELLOW}[09] 流量日报管理工具${RESET}"
+    echo -e "${YELLOW}[10] S-UI流量管理工具${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -564,6 +567,7 @@ while true; do
         07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xtrafficdash.sh) ;;
         08) bash <(curl -fsSL https://raw.githubusercontent.com/156933/PortTrafficStatistics/main/install.sh) ;;
         09) bash -c "$(curl -L https://raw.githubusercontent.com/SumMoonYou/vps_traffic/refs/heads/main/vps_vnstat_telegram.sh)" @ install ;;
+        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SUITraffic.sh) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
