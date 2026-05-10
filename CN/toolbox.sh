@@ -210,7 +210,7 @@ MAIN_MENU=(
 
 # 二级菜单（编号去掉前导零，显示时格式化为两位数）
 SUB_MENU[1]="1 更新系统|2 系统信息|3 修改root密码|4 root密码登录管理|5 root公钥登录管理|6 修改SSH端口|7 修改时区|8 时间同步|9 切换v4V6|10 开放所有端口|11 更换系统源|12 DDdebian12|13 DDwindows10|14 DD飞牛|15 修改语言|16 修改主机名|17 美化命令|18 VPS重启"
-SUB_MENU[2]="19 BBR+TCP智能调参|20 Realm-xwPF|21 EZRealm|22 EZGost|23 流量狗|24 FRP工具|25 nftables端口转发|26 easytier组网|27 Lucky内网穿透|28 LuckyDocker|29 专线优化"
+SUB_MENU[2]="19 BBR+TCP智能调参|20 Realm-xwPF|21 EZRealm|22 EZGost|23 流量狗|24 FRP工具|25 nftables端口转发|26 easytier组网|27 Lucky内网穿透|28 iptables转发ddns域名|29 专线优化"
 SUB_MENU[3]="30 网络测速 speedtest|31 路由追踪 nexttrace|32 网络性能测试 iperf3|33 网络诊断工具 MTR|34 NodeQuality"
 SUB_MENU[4]="35 Docker管理"
 SUB_MENU[5]="36 宝塔面板|37 1Panel面板|38 哪吒面板"
@@ -368,7 +368,7 @@ execute_choice() {
         25) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftables.sh) ;;
         26) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ;; 
         27) wget -O  /tmp/install.sh "http://release.66666.host/install.sh" && sh /tmp/install.sh ;;
-        28) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/Lucky.sh) ;;
+        28) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNiptablesUtils.sh) ;;
         29) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbry.sh) ;;
         30) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Speedtest.sh) ;;
         31) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NextTrace.sh) ;;
