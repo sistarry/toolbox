@@ -55,6 +55,7 @@ KEYWORDS=(
 "Mihomo"
 "remnawave"
 "forwardx-panel"
+"sui-traffic-reset"
 )
 
 # =============================
