@@ -105,7 +105,7 @@ services:
       NODEGET_LOG_FILTER: "info"
       NODEGET_DATABASE_URL: "postgres://nodeget:nodeget@postgres:5432/nodeget"
     ports:
-      - "${PORT}:${PORT}"
+      - "127.0.0.1:${PORT}:${PORT}"
     volumes:
       - ./data/config:/etc/nodeget
 EOF
