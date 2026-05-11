@@ -619,32 +619,40 @@ check_panel() {
     echo ""
 
     # =============================
-    # Sing-box
+    # Sing-box 
     # =============================
     echo -e "${YELLOW}▶ Sing-box${RESET}"
-    if command -v sing-box &>/dev/null || pgrep -f sing-box &>/dev/null; then
+    
+    # 同时检查 sing-box 和 s-ui 的命令或进程
+    if command -v sing-box &>/dev/null || command -v s-ui &>/dev/null || pgrep -f sing-box &>/dev/null || pgrep -f s-ui &>/dev/null; then
 
+        # 状态判定：支持两个服务名
         status=$(systemctl is-active sing-box 2>/dev/null)
-        [[ "$status" != "active" && $(pgrep -f sing-box) ]] && status="active"
+        [[ "$status" != "active" ]] && status=$(systemctl is-active s-ui 2>/dev/null)
+        [[ "$status" != "active" && ($(pgrep -f sing-box) || $(pgrep -f s-ui)) ]] && status="active"
 
         echo -e "状态: $(format_status "$status")"
 
+        # 版本获取
+        ver=""
         if command -v sing-box &>/dev/null; then
-            # Sing-box 的版本号获取通常在第 3 列
-            ver=$(sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
-        else
-            ver=$(ps -ef | grep sing-box | grep -v grep | grep -oE 'v[0-9.]+' | head -n1)
+            ver=$(sing-box version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')
+        elif [[ -f "/usr/local/s-ui/bin/sing-box" ]]; then
+            # 针对手动安装的 S-UI 常规路径进行探测
+            ver=$(/usr/local/s-ui/bin/sing-box version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')
         fi
         echo -e "版本: ${ver:-运行中(内置)}"
 
+        # 端口获取：尝试获取 sing-box 端口，若无则尝试 s-ui
         ports=$(get_ports sing-box)
+        [[ -z "$ports" ]] && ports=$(get_ports s-ui)
+        
         [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
 
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
-
     # =============================
     # Mihomo (Clash Meta)
     # =============================
