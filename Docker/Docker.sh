@@ -725,6 +725,7 @@ main_menu() {
         echo -e "${GREEN}13. 卷管理 ${RESET}"
         echo -e "${GREEN}14.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
         echo -e "${GREEN}15. 重启 Docker${RESET}"
+        echo -e "${GREEN}16. Docker监控${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case $choice in
@@ -743,6 +744,7 @@ main_menu() {
             13|13) check_docker_running && docker_volume ;;
             14|14) check_docker_running && docker_cleanup ;;
             15|15) check_docker_running && restart_docker ;;
+            16|16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockermo.sh) ;;
              00|0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
