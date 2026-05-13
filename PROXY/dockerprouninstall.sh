@@ -56,6 +56,7 @@ KEYWORDS=(
 "remnawave"
 "forwardx-panel"
 "sui-traffic-reset"
+"miaomiaowux"
 )
 
 # =============================
