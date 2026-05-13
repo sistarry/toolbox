@@ -36,14 +36,16 @@ menu() {
     echo -e "${GREEN}=================================${RESET}"
     echo -e "${GREEN} 1) 安装 Agent${RESET}"
     echo -e "${GREEN} 2) 更新 Agent${RESET}"
-    echo -e "${GREEN} 3) 卸载 Agent${RESET}"
+    echo -e "${GREEN} 3) 查看日志${RESET}"
+    echo -e "${GREEN} 4) 卸载 Agent${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
         1) install_agent ;;
         2) update_agent ;;
-        3) uninstall_agent ;;
+        3) cat /var/log/nodeget-agent/app.log ;;
+        4) uninstall_agent ;;
         0) exit 0 ;;
         *)
             echo -e "${RED}输入错误，请重新选择${RESET}"
