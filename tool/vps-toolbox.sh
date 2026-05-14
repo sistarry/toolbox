@@ -176,6 +176,7 @@ cpu_model=$(echo "$cpu_model" | sed -E \
     -e 's/CPU//g' \
     -e 's/Processor//g' \
     -e 's/[0-9]+-Core//g' \
+	-e 's/\bv[1-9]\b//g' \
     -e 's/\s+/ /g' \
     | xargs)
 
