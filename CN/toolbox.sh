@@ -365,7 +365,7 @@ execute_choice() {
         19) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/nuro-hia/nuro-frp/main/install.sh) ;;
         20) wget -O  /tmp/install.sh "http://release.66666.host/install.sh" && sh /tmp/install.sh ;;
         21) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ;;
-        22) bash -c "$(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh)" ;;
+        22) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNShellCrash.sh);;
         23) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNBBRTCP.sh) ;;
         24) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbry.sh) ;;
         25) wget -qO- https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
