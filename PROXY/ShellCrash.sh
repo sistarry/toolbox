@@ -38,10 +38,5 @@ fi
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh)"
 
 
-
-echo -e "${GREEN}========================================${RESET}"
-echo -e "${GREEN}       ShellCrash 安装完成${RESET}"
-echo -e "${GREEN}========================================${RESET}"
-
-echo -e "${YELLOW}如果命令未立即生效，请执行：${RESET}"
+echo -e "${YELLOW}如果ShellCrash安装完成 命令未立即生效，请执行：${RESET}"
 echo -e "${YELLOW}source /etc/profile${RESET}"
