@@ -7,14 +7,12 @@
 set -e
 
 # ========= 基础配置 =========
-BASE_DIR="/opt/gproxy-manager"
 GPROXY_DIR="/opt/gproxy-tool"
 SCRIPT_PATH="$BASE_DIR/gproxy.sh"
 
-SSH_SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ssh.sh"
-GPROXY_REPO="https://github.com/xtianowner/gproxy-tool.git"
+SSH_SCRIPT_URL="https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ssh.sh"
+GPROXY_REPO="https://v6.gh-proxy.org/https://github.com/xtianowner/gproxy-tool.git"
 
-mkdir -p "$BASE_DIR"
 
 # ========= 颜色 =========
 GREEN="\033[32m"
@@ -93,7 +91,6 @@ uninstall_gproxy(){
     fi
 
     rm -rf "$GPROXY_DIR"
-    rm -rf "$BASE_DIR"
 
     echo -e "${RED}已卸载完成${RESET}"
     echo -e "${YELLOW}提示：请手动检查 ~/.ssh/authorized_keys 移除不需要的公钥。${RESET}"
