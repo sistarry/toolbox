@@ -223,14 +223,14 @@ MAIN_MENU=(
 
 # 二级菜单（编号去掉前导零，显示时格式化为两位数）
 SUB_MENU[1]="1 更新系统|2 系统信息|3 修改root密码|4 root密码登录管理|5 root公钥登录管理|6 修改SSH端口|7 修改时区|8 时间同步|9 切换v4V6|10 开放所有端口|11 更换系统源|12 DDdebian12|13 DDwindows10|14 DDNAT|15 DD飞牛|16 修改语言|17 修改主机名|18 一键优化✨|19 VPS重启"
-SUB_MENU[2]="20 代理工具箱|21 FRP管理|22 BBRv3|23 WARP|24 BBR+TCP智能调参|25 Reality|26 SurgeSnell|27 Shadowsocks|28 自定义DNS解锁|29 DDNS动态域名|30 Hysteria2|31 3X-UI|32 Realm|33 SS-Xray-2go|34 vless-all-in-one✨|35 哆啦A梦转发面板|36 easytier组网"
-SUB_MENU[3]="37 NodeQuality|38 融合怪测试|39 YABS测试|40 网络质量体检|41 IP质量体检|42 硬盘质量体检|43 三网延迟检测|44 简单回程测试|45 完整路由检测|46 流媒体解锁|47 三网测速|48 网络PING/DNS检测|49 检查25端口开放|50 网络工具箱"
-SUB_MENU[4]="51 Docker管理|52 DockerCompose管理|53 DockerCompose备份恢复|54 DockerCompose自动更新"
-SUB_MENU[5]="55 应用管理|56 面板管理|57 监控管理|58 yt-dlp视频下载|59 镜像加速|60 独角数卡|61 小雅全家桶|62 qbittorrent"
-SUB_MENU[6]="63 NGINXV4反代✨|64 NGINXV6反代|65 Caddy反代|66 NginxProxyManager面板|67 acme申请证书|68 Cloudflare证书管理|69 证书备份与恢复"
-SUB_MENU[7]="70 系统清理|71 重装系统|72 系统组件|73 开发环境|74 添加SWAP|75 DNS管理|76 工作区管理|78 系统监控|79 防火墙管理|80 Fail2ban|81 定时任务"
-SUB_MENU[8]="82 科技lion工具箱|83 老王工具箱|84 酷雪云工具箱|85 甲骨文工具箱|86 开小鸡工具箱|87 国内VPS工具箱"
-SUB_MENU[9]="89 网站部署|90 ssh登录信息|91 GProxy加速|92 Akile优选DNS|93 自动机场签到|94 1panelapps管理|95 关闭哪吒监控SSH|96 卸载探针"
+SUB_MENU[2]="20 代理工具箱|21 FRP管理|22 BBRv3|23 WARP|24 BBR+TCP智能调参|25 Reality|26 SurgeSnell|27 Shadowsocks|28 自定义DNS解锁|29 DDNS动态域名|30 Hysteria2|31 3X-UI|32 Realm|33 SS-Xray-2go|34 vless-all-in-one✨|35 哆啦A梦转发面板|36 ShellCrash|37 easytier组网"
+SUB_MENU[3]="38 NodeQuality|39 融合怪测试|40 YABS测试|41 网络质量体检|42 IP质量体检|43 硬盘质量体检|44 三网延迟检测|45 简单回程测试|46 完整路由检测|47 流媒体解锁|48 三网测速|49 网络PING/DNS检测|50 检查25端口开放|51 网络工具箱"
+SUB_MENU[4]="52 Docker管理|53 DockerCompose管理|54 DockerCompose备份恢复|55 DockerCompose自动更新"
+SUB_MENU[5]="56 应用管理|57 面板管理|58 监控管理|59 yt-dlp视频下载|60 镜像加速|61 独角数卡|62 小雅全家桶|63 qbittorrent"
+SUB_MENU[6]="64 NGINXV4反代✨|65 NGINXV6反代|66 Caddy反代|67 NginxProxyManager面板|68 acme申请证书|69 Cloudflare证书管理|70 证书备份与恢复"
+SUB_MENU[7]="71 系统清理|72 重装系统|73 系统组件|74 开发环境|75 添加SWAP|76 DNS管理|78 工作区管理|79 系统监控|80 防火墙管理|81 Fail2ban|82 定时任务"
+SUB_MENU[8]="83 科技lion工具箱|84 老王工具箱|85 酷雪云工具箱|86 甲骨文工具箱|87 开小鸡工具箱|89 国内VPS工具箱"
+SUB_MENU[9]="90 网站部署|91 ssh登录信息|92 GProxy加速|93 Akile优选DNS|94 自动机场签到|95 1panelapps管理|96 关闭哪吒监控SSH|97 卸载探针"
 SUB_MENU[10]="100 VPS信息通知|101 流量狗|102 VPS遥控器|103 TrafficCop流量监控"
 SUB_MENU[11]="104 系统快照恢复|105 本地备份|106 Rsync同步|107 远程文件目录备份|108 Rclone备份|109 Croc文件传输|110 压缩文件|111 解压文件|112 删除文件"
 SUB_MENU[12]="77 自动更新|88 更新脚本|99 卸载脚本"
@@ -391,65 +391,66 @@ execute_choice() {
         33) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ;;
         34) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
         35) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dlam.sh);;
-        36) bash <(curl -sL https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ;;
-        37) bash <(curl -sL https://run.NodeQuality.com) ;;
-        38) curl -L https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh ;;
-        39) curl -sL https://yabs.sh | bash ;;
-        40) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NetQuality.sh) ;;
-        41) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/IPQuality.sh) ;;
-        42) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/HardwareQuality.sh) ;;
-        43) bash <(curl -Ls https://Net.Check.Place) -P ;;
-        44) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ;;
-        45) bash <(curl -Ls https://Net.Check.Place) -R ;;
-        46) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ;;
-        47) bash <(wget -qO- bash.spiritlhl.net/ecs-net) ;;
-        48) bash <(wget -qO- https://ba.sh/gZnH) ;;
-        49) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Telnet.sh) ;;
-        50) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Networktool.sh) ;; 
-        51) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dockeros.sh) ;;
-        52) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockercompose.sh) ;;
-        53) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh) ;;
-        54) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh) ;;
-        55) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
-        56) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh) ;;
-        57) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/jkgl.sh) ;;
-        58) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ytdlp.sh) ;;
-        59) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/hubproxy.sh) ;;
-        60) bash <(curl -fsSL https://raw.githubusercontent.com/dujiao-next/community-projects/main/scripts/langge-dujiao-next-install/dujiao-next-install.sh) ;;
-        61)bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)" ;;
-        62) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qbittorrent.sh) ;;
-        63) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/nginxos.sh) ;;
-        64) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv6.sh) ;;
-        65) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Caddy.sh) ;;
-        66) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NginxProxy.sh) ;;
-        67) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/ACMESSL.sh) ;;
-        68) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/CFSSL.sh) ;;
-        69) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/SSLbackup.sh) ;;
-        70) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clearos.sh) ;;
-        71) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/reinstall.sh) ;;
-        72) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/package.sh) ;;
-        73) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/exploitation.sh) ;;
-        74) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/WARP.sh) ;;
-        75) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dnsos.sh) ;;
-        76) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tmux.sh) ;;
-        78) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/System.sh) ;;
-        79) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/firewallos.sh) ;;
-        80) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Fail2Banos.sh) ;;
-        81) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
-        82) bash <(curl -sL kejilion.sh) ;;
-        83) bash <(curl -fsSL ssh_tool.eooce.com) ;;
-        84) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
-        85) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh) ;;
-        86) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh) ;;
-        87) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh) ;;
-        89) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh) ;;
-		90) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh) ;;
-        91) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/GProxy.sh) ;;
-        92) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
-        93) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD.sh) ;;
-        94) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/1panelapps.sh) ;;
-        95) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
-        96) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
+        36) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ShellCrash.sh);;
+        37) bash <(curl -sL https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ;;
+        38) bash <(curl -sL https://run.NodeQuality.com) ;;
+        39) curl -L https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh ;;
+        40) curl -sL https://yabs.sh | bash ;;
+        41) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/NetQuality.sh) ;;
+        42) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/IPQuality.sh) ;;
+        43) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/HardwareQuality.sh) ;;
+        44) bash <(curl -Ls https://Net.Check.Place) -P ;;
+        45) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ;;
+        46) bash <(curl -Ls https://Net.Check.Place) -R ;;
+        47) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ;;
+        48) bash <(wget -qO- bash.spiritlhl.net/ecs-net) ;;
+        49) bash <(wget -qO- https://ba.sh/gZnH) ;;
+        50) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Telnet.sh) ;;
+        51) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Networktool.sh) ;; 
+        52) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dockeros.sh) ;;
+        53) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockercompose.sh) ;;
+        54) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh) ;;
+        55) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh) ;;
+        56) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
+        57) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh) ;;
+        58) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/jkgl.sh) ;;
+        59) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ytdlp.sh) ;;
+        60) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/hubproxy.sh) ;;
+        61) bash <(curl -fsSL https://raw.githubusercontent.com/dujiao-next/community-projects/main/scripts/langge-dujiao-next-install/dujiao-next-install.sh) ;;
+        62) bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)" ;;
+        63) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qbittorrent.sh) ;;
+        64) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/nginxos.sh) ;;
+        65) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv6.sh) ;;
+        66) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Caddy.sh) ;;
+        67) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NginxProxy.sh) ;;
+        68) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/ACMESSL.sh) ;;
+        69) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/CFSSL.sh) ;;
+        70) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/SSLbackup.sh) ;;
+        71) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clearos.sh) ;;
+        72) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/reinstall.sh) ;;
+        73) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/package.sh) ;;
+        74) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/exploitation.sh) ;;
+        75) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/WARP.sh) ;;
+        76) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dnsos.sh) ;;
+        78) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tmux.sh) ;;
+        79) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/System.sh) ;;
+        80) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/firewallos.sh) ;;
+        81) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Fail2Banos.sh) ;;
+        82) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
+        83) bash <(curl -sL kejilion.sh) ;;
+        84) bash <(curl -fsSL ssh_tool.eooce.com) ;;
+        85) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
+        86) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh) ;;
+        87) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh) ;;
+        89) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh) ;;
+        90) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh) ;;
+		91) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh) ;;
+        92) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/GProxy.sh) ;;
+        93) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
+        94) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD.sh) ;;
+        95) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/1panelapps.sh) ;;
+        96) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
+        97) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
         100) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpstg.sh) ;;
         101) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
         102) curl -fsSL https://raw.githubusercontent.com/MEILOI/VPS_BOT_X/main/vps_bot-x/install.sh -o install.sh && chmod +x install.sh && bash install.sh ;;
