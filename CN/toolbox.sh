@@ -202,6 +202,7 @@ MAIN_MENU=(
     "网络工具"
     "Docker管理"
     "运维管理"
+    "证书管理"
     "系统管理"
     "工具箱合集"
     "玩具熊ʕ•ᴥ•ʔ"
@@ -212,16 +213,17 @@ MAIN_MENU=(
 
 # 二级菜单（编号去掉前导零，显示时格式化为两位数）
 SUB_MENU[1]="1 更新系统|2 系统信息|3 修改root密码|4 root密码登录管理|5 root公钥登录管理|6 修改SSH端口|7 修改时区|8 时间同步|9 切换v4V6|10 开放所有端口|11 更换系统源|12 DDdebian12|13 DDwindows10|14 DD飞牛|15 修改语言|16 修改主机名|17 美化命令|18 VPS重启"
-SUB_MENU[2]="19 FRP工具|20 Lucky内网穿透|21 easytier组网|22 ShellCrash|23 BBR+TCP智能调参|24 专线优化|25 Realm|26 Gost|27 nftables端口转发|28 iptables转发ddns域名|29 Socks5"
+SUB_MENU[2]="19 FRP工具|21 easytier组网|22 ShellCrash|23 BBR+TCP智能调参|24 专线优化|25 Realm|26 Gost|27 nftables端口转发|28 iptables转发ddns域名|29 Socks5"
 SUB_MENU[3]="30 NodeQuality|31 网络测速 speedtest|32 路由追踪 nexttrace|33 网络性能测试 iperf3|34 网络诊断工具 MTR"
 SUB_MENU[4]="35 Docker管理|36 DockerCompose管理|37 DockerCompose备份恢复|38 DockerCompose自动更新"
 SUB_MENU[5]="39 宝塔面板|40 1Panel面板"
-SUB_MENU[6]="41 系统清理|42 系统组件|43 开发环境|44 添加SWAP|45 DNS管理|46 工作区管理|47 系统监控|48 防火墙管理|49 Fail2ban|50 定时任务"
-SUB_MENU[7]="51 酷雪云工具箱|52 科技lion工具箱"
-SUB_MENU[8]="53 GProxy加速|54 安装哪吒Agent|55 关闭哪吒监控SSH|56 卸载探针"
-SUB_MENU[9]="57 流量狗|58 TrafficCop流量监控"
-SUB_MENU[10]="59 系统快照恢复|60 本地备份|61 Rsync同步|62 压缩文件|63 解压文件|64 删除文件"
-SUB_MENU[11]="77 自动更新|88 更新脚本|99 卸载脚本"
+SUB_MENU[6]="41 Lucky反代"
+SUB_MENU[7]="42 系统清理|43 系统组件|44 开发环境|45 添加SWAP|46 DNS管理|47 工作区管理|48 系统监控|49 防火墙管理|50 Fail2ban|51 定时任务"
+SUB_MENU[8]="52 酷雪云工具箱|53 科技lion工具箱"
+SUB_MENU[9]="54 GProxy加速|55 安装哪吒Agent|56 关闭哪吒监控SSH|57 卸载探针"
+SUB_MENU[10]="58 流量狗|59 TrafficCop流量监控"
+SUB_MENU[11]="60 系统快照恢复|61 本地备份|62 Rsync同步|63 压缩文件|64 解压文件|65 删除文件"
+SUB_MENU[12]="77 自动更新|88 更新脚本|99 卸载脚本"
 
 # 显示一级菜单
 show_main_menu() {
@@ -257,7 +259,7 @@ show_main_menu() {
 
     # 显示菜单
     for i in "${!MAIN_MENU[@]}"; do
-        if [[ $i -eq 7 ]]; then  # 第7项（索引从0开始）
+        if [[ $i -eq 8 ]]; then  # 第7项（索引从0开始）
             # 符号红色，数字和点绿色，文字黄色
             printf "${red}▶${reset} ${green}%02d.${reset} ${yellow}%s${reset}\n" "$((i+1))" "${MAIN_MENU[i]}"
         else
@@ -363,7 +365,6 @@ execute_choice() {
         17) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/cnmhml.sh) ;;
         18) sudo reboot ;;
         19) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/nuro-hia/nuro-frp/main/install.sh) ;;
-        20) wget -O  /tmp/install.sh "http://release.66666.host/install.sh" && sh /tmp/install.sh ;;
         21) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ;;
         22) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNShellCrash.sh);;
         23) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNBBRTCP.sh) ;;
@@ -384,30 +385,31 @@ execute_choice() {
         38) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh) ;;
         39) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNBaota.sh) ;;
         40) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CN1Panel.sh) ;;
-        41) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNclear.sh) ;;
-        42) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/package.sh) ;;
-        43) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/exploitation.sh) ;;
-        44) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/WARP.sh) ;;
-        45) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dns.sh) ;;
-        46) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tmux.sh) ;;
-        47) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/xtjk.sh) ;;
-        48) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/firewall.sh) ;;
-        49) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/fail2ban.sh) ;;
-        50) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
-        51) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
-        52) bash <(curl -sL kejilion.sh) ;;
-        53) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNGProxy.sh) ;;
-        54) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNnezha.sh) ;;
-        55) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
-        56) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
-        57) wget -O port-traffic-dog.sh https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
-        58) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/traffic.sh) ;;
-        59) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/cnrestore.sh) ;;
-        60) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh) ;;
-        61) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh) ;;
-        62) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
-        63) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
-        64) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rmdocument.sh) ;;
+        41) wget -O  /tmp/install.sh "http://release.66666.host/install.sh" && sh /tmp/install.sh ;;
+        42) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNclear.sh) ;;
+        43) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/package.sh) ;;
+        44) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/exploitation.sh) ;;
+        45) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/WARP.sh) ;;
+        46) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dns.sh) ;;
+        47) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tmux.sh) ;;
+        48) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/xtjk.sh) ;;
+        49) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/firewall.sh) ;;
+        50) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/fail2ban.sh) ;;
+        51) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
+        52) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
+        53) bash <(curl -sL kejilion.sh) ;;
+        54) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNGProxy.sh) ;;
+        55) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNnezha.sh) ;;
+        56) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
+        57) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
+        58) wget -O port-traffic-dog.sh https://v6.gh-proxy.org/https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
+        59) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/traffic.sh) ;;
+        60) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/cnrestore.sh) ;;
+        61) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/beifen.sh) ;;
+        62) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh) ;;
+        63) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
+        64) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
+        65) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/rmdocument.sh) ;;
 
         #   自动更新
         77) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolupdate.sh) ;;
