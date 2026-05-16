@@ -1,20 +1,22 @@
 #!/bin/bash
 
 GREEN="\033[32m"
+ORANGE='\033[38;5;208m'
+YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
 menu() {
     clear
-    echo -e "${GREEN}=== 监控管理菜单 ===${RESET}"
-    echo -e "${GREEN}1) NodeGet监控安装${RESET}"
-    echo -e "${GREEN}2) V1 哪吒监控安装${RESET}"
-    echo -e "${GREEN}3) Komari监控安装${RESET}"
-    echo -e "${GREEN}4) 哪吒闭SSH${RESET}"
-    echo -e "${GREEN}5) 哪吒Agent管理${RESET}"
-    echo -e "${GREEN}6) KomariAgent管理${RESET}"
-    echo -e "${GREEN}7) NodeGetAgent管理${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${ORANGE}=== 监控管理菜单 ===${RESET}"
+    echo -e "${YELLOW}1) NodeGet监控安装${RESET}"
+    echo -e "${YELLOW}2) 哪吒监控安装${RESET}"
+    echo -e "${YELLOW}3) Komari监控安装${RESET}"
+    echo -e "${YELLOW}4) 哪吒关闭SSH${RESET}"
+    echo -e "${YELLOW}5) 哪吒Agent管理${RESET}"
+    echo -e "${YELLOW}6) KomariAgent管理${RESET}"
+    echo -e "${YELLOW}7) NodeGetAgent管理${RESET}"
+    echo -e "${YELLOW}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
@@ -23,7 +25,7 @@ menu() {
             pause
             ;;
         2)
-            echo -e "${GREEN}正在安装 V1 哪吒监控...${RESET}"
+            echo -e "${GREEN}正在安装哪吒监控...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/aznezha.sh)
             pause
             ;;
@@ -33,8 +35,8 @@ menu() {
             pause
             ;;
         4)
-            echo -e "${GREEN} 哪吒闭SSH ...${RESET}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhassh.sh)
+            echo -e "${GREEN} 哪吒关闭SSH ...${RESET}"
+            sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
             pause
             ;;
         5)
