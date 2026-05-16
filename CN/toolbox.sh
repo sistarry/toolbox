@@ -257,7 +257,7 @@ show_main_menu() {
 
     # 显示菜单
     for i in "${!MAIN_MENU[@]}"; do
-        if [[ $i -eq 6 ]]; then  # 第7项（索引从0开始）
+        if [[ $i -eq 7 ]]; then  # 第7项（索引从0开始）
             # 符号红色，数字和点绿色，文字黄色
             printf "${red}▶${reset} ${green}%02d.${reset} ${yellow}%s${reset}\n" "$((i+1))" "${MAIN_MENU[i]}"
         else
@@ -396,7 +396,7 @@ execute_choice() {
         50) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
         51) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
         52) bash <(curl -sL kejilion.sh) ;;
-        53) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/GProxy.sh) ;;
+        53) bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNGProxy.sh) ;;
         54) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNnezha.sh) ;;
         55) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
         56) bash <(curl -sL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
