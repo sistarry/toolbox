@@ -36,7 +36,7 @@ menu() {
             ;;
         4)
             echo -e "${GREEN} 哪吒关闭SSH ...${RESET}"
-            sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
+            bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhassh.sh)
             pause
             ;;
         5)
