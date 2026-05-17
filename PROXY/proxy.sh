@@ -402,7 +402,7 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      DNS 解锁类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] DDNS${RESET}"
+    echo -e "${YELLOW}[01] DDNS动态域名${RESET}"
     echo -e "${YELLOW}[02] 自建DNS解锁${RESET}"
     echo -e "${YELLOW}[03] DnsmasqSNIproxy-One-click${RESET}"
     echo -e "${YELLOW}[04] 自定义DNS解锁${RESET}"
