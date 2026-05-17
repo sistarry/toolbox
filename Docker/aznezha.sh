@@ -8,8 +8,7 @@ menu() {
     clear
     echo -e "${GREEN}===哪吒监控 V1管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装 哪吒v1${RESET}"
-    echo -e "${GREEN}2) 安装 哪吒v1(Argo)${RESET}"
-    echo -e "${GREEN}3) 管理 Agent${RESET}"
+    echo -e "${GREEN}2) 管理 Agent${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
@@ -19,11 +18,6 @@ menu() {
             pause
             ;;
         2)
-            echo -e "${GREEN}正在安装 哪吒 v1(Argo)...${RESET}"
-            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nezhav1Argo.sh)
-            pause
-            ;;
-        3)
             echo -e "${GREEN}管理 Agent...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NezhaAgent.sh)
             pause
