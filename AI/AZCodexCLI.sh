@@ -401,6 +401,95 @@ install_bwrap() {
   fi
 }
 
+# ==================================
+#卸载 bubblewrap 
+# ==================================
+uninstall_bwrap_debian() {
+  require_sudo || return 1
+  info "使用 apt 卸载 bubblewrap"
+  run_root apt remove -y bubblewrap
+}
+
+uninstall_bwrap_rhel() {
+  require_sudo || return 1
+  info "使用 dnf/yum 卸载 bubblewrap"
+  if command -v dnf >/dev/null 2>&1; then
+    run_root dnf remove -y bubblewrap
+  elif command -v yum >/dev/null 2>&1; then
+    run_root yum remove -y bubblewrap
+  else
+    err "未找到 dnf 或 yum"
+    return 1
+  fi
+}
+
+uninstall_bwrap_alpine() {
+  require_sudo || return 1
+  info "使用 apk 卸载 bubblewrap"
+  run_root apk del bubblewrap
+}
+
+uninstall_bwrap_macos() {
+  if ! command -v brew >/dev/null 2>&1; then
+    err "未检测到 Homebrew"
+    return 1
+  fi
+  info "使用 brew 卸载 bubblewrap"
+  brew uninstall bubblewrap
+}
+
+uninstall_bwrap() {
+  if ! command -v bwrap >/dev/null 2>&1; then
+    ok "bubblewrap 未安装，无需卸载"
+    return 0
+  fi
+
+  detect_os
+
+  case "$OS_ID" in
+    ubuntu|debian)
+      uninstall_bwrap_debian
+      ;;
+    centos|rhel|rocky|almalinux|ol|fedora)
+      uninstall_bwrap_rhel
+      ;;
+    alpine)
+      uninstall_bwrap_alpine
+      ;;
+    macos|darwin)
+      uninstall_bwrap_macos
+      ;;
+    *)
+      case "$OS_LIKE" in
+        *debian*)
+          uninstall_bwrap_debian
+          ;;
+        *rhel*|*fedora*)
+          uninstall_bwrap_rhel
+          ;;
+        *)
+          if [ "$(uname -s)" = "Darwin" ]; then
+            uninstall_bwrap_macos
+          else
+            err "暂不支持自动卸载 bubblewrap，系统类型: ${OS_ID:-unknown}"
+            return 1
+          fi
+          ;;
+      esac
+      ;;
+  esac
+
+  hash -r 2>/dev/null || true
+
+  if ! command -v bwrap >/dev/null 2>&1; then
+    ok "bubblewrap 卸载完成"
+  else
+    err "bubblewrap 卸载失败"
+    return 1
+  fi
+}
+
+
 install_all() {
   install_node
   install_codex
@@ -426,6 +515,7 @@ menu() {
   green "12. PATH 修复提示"
   green "13. 安装 bubblewrap (bwrap)"
   green "14. 检查 bubblewrap"
+  green "15. 卸载 bubblewrap"
   green " 0. 退出"
   green "=================================="
 }
@@ -490,6 +580,10 @@ main() {
         ;;
       14)
         check_bwrap || true
+        pause
+        ;;
+	  15)
+        uninstall_bwrap  
         pause
         ;;
       0)
