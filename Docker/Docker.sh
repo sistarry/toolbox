@@ -685,6 +685,52 @@ docker_backup_menu() {
     done
 }
 
+monitor_docker_containers() {
+    clear
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}         🐳 Docker 容器监控${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+
+    # 获取并处理数据 (按内存排序)
+    docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" | sort -k3 -hr | while IFS=$'\t' read -r name cpu mem net; do
+        
+        # 1. 获取运行时间并深度汉化
+        local raw_status
+        raw_status=$(docker ps -a --filter "name=^/${name}$" --format "{{.Status}}")
+        
+        # 汉化引擎：包含时间、单位、状态
+        local uptime
+        uptime=$(echo "$raw_status" | \
+            sed 's/Up /运行 /' | \
+            sed 's/Exited/已停止/' | \
+            sed 's/(healthy)/(健康)/' | \
+            sed 's/(unhealthy)/(非健康)/' | \
+            sed 's/(starting)/(启动中)/' | \
+            sed 's/seconds/秒/' | \
+            sed 's/second/秒/' | \
+            sed 's/minutes/分钟/' | \
+            sed 's/minute/分钟/' | \
+            sed 's/hours/小时/' | \
+            sed 's/hour/小时/' | \
+            sed 's/days/天/' | \
+            sed 's/day/天/' | \
+            sed 's/weeks/周/' | \
+            sed 's/week/周/' | \
+            sed 's/months/月/' | \
+            sed 's/month/月/' | \
+            sed 's/about //' | \
+            sed 's/ago/前/')
+        
+
+        # 2. 手机端纵向块状输出
+        echo -e "${YELLOW}◈ 容器: ${RESET}${YELLOW}${name}${RESET}"
+        echo -e "  ├─ ${YELLOW}CPU 占用: ${RESET}${CPU_COLOR}${cpu}${RESET}"
+        echo -e "  ├─ ${YELLOW}内存使用: ${RESET}${mem}"
+        echo -e "  ├─ ${YELLOW}网络 I/O: ${RESET}${net}"
+        echo -e "  └─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
+        echo -e "${YELLOW}----------------------------------------${RESET}"
+    done
+}
 
 # -----------------------------
 # 主菜单显示状态
@@ -744,7 +790,7 @@ main_menu() {
             13|13) check_docker_running && docker_volume ;;
             14|14) check_docker_running && docker_cleanup ;;
             15|15) check_docker_running && restart_docker ;;
-            16|16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockermo.sh) ;;
+            16|16) monitor_docker_containers ;;
              00|0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
