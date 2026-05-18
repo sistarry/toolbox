@@ -373,7 +373,8 @@ menu() {
 main() {
   while true; do
     menu
-    read -rp "请输入选项: " choice
+    printf "\033[32m请输入选项: \033[0m"
+    read -r choice
     case "$choice" in
       1)
         install_all
