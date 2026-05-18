@@ -159,7 +159,8 @@ menu() {
     echo -e "${GREEN}8. 环境信息${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
 
-    read -rp "请输入选项: " choice
+    printf "${GREEN}请输入选项: ${RESET}"
+    read -r choice
 
     case $choice in
         1) install_opencode ;;
