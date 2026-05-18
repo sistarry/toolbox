@@ -115,9 +115,6 @@ run_update() {
     update_one "store" "store.sh" \
     "https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
 
-    update_one "Alpine" "Alpine.sh" \
-    "https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/Alpine.sh"
-
     update_one "panel" "panel.sh" \
     "https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh"
 
