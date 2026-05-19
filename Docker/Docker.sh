@@ -756,7 +756,7 @@ main_menu() {
             echo -e "${YELLOW}🐳 iptables: $(current_iptables)${RESET}"
         fi
 
-        echo -e "${GREEN}01. 安装/更新 Docker（自动检测国内/国外源）${RESET}"
+        echo -e "${GREEN}01. 安装/更新 Docker${RESET}"
         echo -e "${GREEN}02. 安装/更新 Docker Compose${RESET}"
         echo -e "${GREEN}03. 卸载 Docker & Compose${RESET}"
         echo -e "${GREEN}04. 容器管理${RESET}"
