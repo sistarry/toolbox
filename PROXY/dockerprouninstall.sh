@@ -57,6 +57,8 @@ KEYWORDS=(
 "forwardx-panel"
 "sui-traffic-reset"
 "miaomiaowux"
+"ecs-controller"
+"alicdt-manager"
 )
 
 # =============================
