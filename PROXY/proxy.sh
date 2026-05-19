@@ -409,6 +409,7 @@ while true; do
     echo -e "${YELLOW}[05] 谷歌分流Warp${RESET}"
     echo -e "${YELLOW}[06] 谷歌定位解锁${RESET}"
     echo -e "${YELLOW}[07] DNS分流规则管理面板${RESET}"
+    echo -e "${YELLOW}[08] Akile优选DNS${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -423,6 +424,7 @@ while true; do
         05) bash <(curl -sL https://raw.githubusercontent.com/vpsjk/warp-google/main/warp-google.sh) ; pause_return ;;
         06) bash <(curl -fsSL https://vpszdm.com/warp-google.sh) ; pause_return ;;
         07) wget -O install.sh https://raw.githubusercontent.com/mslxi/Liquid-Glass-Prism-dns/main/install.sh && sudo bash install.sh ;;
+        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -547,6 +549,7 @@ while true; do
     echo -e "${YELLOW}[08] VPS端口流量监控${RESET}"
     echo -e "${YELLOW}[09] 流量日报管理工具${RESET}"
     echo -e "${YELLOW}[10] S-UI流量管理工具${RESET}"
+    echo -e "${YELLOW}[11] 阿里CDT抢占型实例${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -564,6 +567,7 @@ while true; do
         08) bash <(curl -fsSL https://raw.githubusercontent.com/156933/PortTrafficStatistics/main/install.sh) ;;
         09) bash -c "$(curl -L https://raw.githubusercontent.com/SumMoonYou/vps_traffic/refs/heads/main/vps_vnstat_telegram.sh)" @ install ;;
         10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SUITraffic.sh) ;;
+        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/AliCDTManager.sh) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -1230,7 +1234,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|miaomiaowux|Mihomo|remnawave|sui-traffic-reset|forwardx-panel')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|miaomiaowux|Mihomo|remnawave|alicdt-manager|ecs-controller|sui-traffic-reset|forwardx-panel')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
