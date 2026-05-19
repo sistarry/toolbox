@@ -318,6 +318,8 @@ declare -A apps=(
     [12,22]="GeminiBusiness2API"
     [13,1]="MCSManager"
     [13,2]="桃花源文字游戏"
+    [13,3]="幻兽帕鲁开服"
+    [13,4]="我的世界开服"
 
 )
 
@@ -595,6 +597,8 @@ declare -A commands=(
     [12,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GeminiBusiness2API.sh)'
     [13,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
     [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
+    [13,3]='curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh'
+    [13,4]='curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/mc.sh ; chmod +x mc.sh ; ./mc.sh'
 )
 
 # ================== 菜单显示函数 ==================
