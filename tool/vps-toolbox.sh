@@ -404,7 +404,7 @@ execute_choice() {
         46) bash <(curl -Ls https://Net.Check.Place) -R ;;
         47) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ;;
         48) bash <(wget -qO- bash.spiritlhl.net/ecs-net) ;;
-        49) bash <(wget -qO- https://ba.sh/gZnH) ;;
+        49) bash <(wget -qO- https://raw.githubusercontent.com/Cd1s/network-latency-tester/main/latency.sh) ;;
         50) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Telnet.sh) ;;
         51) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Networktool.sh) ;; 
         52) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/dockeros.sh) ;;
