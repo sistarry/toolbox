@@ -245,7 +245,7 @@ while true; do
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -Ls https://raw.githubusercontent.com/admin8800/s-ui/main/install.sh) ; pause_return ;;
+        01) bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) ; pause_return ;;
         02) bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) ; pause_return ;;
         03) bash <(curl -Ls https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh) ; pause_return ;;
         04) bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh) ; pause_return ;;
