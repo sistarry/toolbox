@@ -290,7 +290,7 @@ declare -A apps=(
     [11,14]="TeleRelayTelegram私聊中转机器人"
     [11,15]="NodeSeek关键词监控Bot"
     [11,16]="LuckyLilliaBot"
-    [11,17]="LowEndTalk监控"
+    [11,17]="LowEndTalk监控Bot"
     [11,18]="Telegram倒计时目标推送机器人"
     [11,19]="Emby用户管理"
     [11,20]="TGuardTelegram群组智能验证机器人"
@@ -316,10 +316,8 @@ declare -A apps=(
     [12,20]="OpenCode"
     [12,21]="DrissionPage网页自动化工具"
     [12,22]="GeminiBusiness2API"
-    [13,1]="MCSManager"
+    [13,1]="MCSManager游戏开服"
     [13,2]="桃花源文字游戏"
-    [13,3]="幻兽帕鲁开服"
-    [13,4]="我的世界开服"
 
 )
 
@@ -597,8 +595,6 @@ declare -A commands=(
     [12,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GeminiBusiness2API.sh)'
     [13,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
     [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
-    [13,3]='curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh'
-    [13,4]='curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/mc.sh ; chmod +x mc.sh ; ./mc.sh'
 )
 
 # ================== 菜单显示函数 ==================
