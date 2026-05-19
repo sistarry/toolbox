@@ -8,8 +8,8 @@ NC='\033[0m'
 echo -e "${GREEN} ====老王工具箱==== ${NC}"
 echo -e "${GREEN} 1. 安装 老王工具箱${NC}"
 echo -e "${GREEN} 2. 卸载 老王工具箱${NC}"
-echo -e "${GREEN} 3. 退出${NC}"
-read -p "$(echo -e "${GREEN} 请输入数字 [1-3]: ${NC}")" num
+echo -e "${GREEN} 0. 退出${NC}"
+read -p "$(echo -e "${GREEN} 请输入数字: ${NC}")" num
 
 case "$num" in
     1)
@@ -22,10 +22,10 @@ case "$num" in
         rm -f /root/ssh_tool.sh
         echo -e "${GREEN}卸载完成！${NC}"
         ;;
-    3)
+    0)
         exit 0
         ;;
     *)
-        echo -e "${RED}输入错误，请输入 1、2 或 3${NC}"
+        echo -e "${RED}输入错误，请重新输入${NC}"
         ;;
 esac
