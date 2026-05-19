@@ -9,7 +9,7 @@ echo -e "${GREEN} ====老王工具箱==== ${NC}"
 echo -e "${GREEN} 1. 安装 老王工具箱${NC}"
 echo -e "${GREEN} 2. 卸载 老王工具箱${NC}"
 echo -e "${GREEN} 0. 退出${NC}"
-read -p "$(echo -e "${GREEN} 请输入数字: ${NC}")" num
+read -p "$(echo -e "${GREEN} 请输入选项: ${NC}")" num
 
 case "$num" in
     1)
@@ -17,7 +17,7 @@ case "$num" in
         curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && ./ssh_tool.sh
         ;;
     2)
-        echo -e "${RED}正在完全卸载老王工具箱...${NC}"
+        echo -e "${RED}正在卸载老王工具箱...${NC}"
         rm -f /usr/local/bin/ssh_tool.sh
         rm -f /root/ssh_tool.sh
         echo -e "${GREEN}卸载完成！${NC}"
@@ -26,6 +26,6 @@ case "$num" in
         exit 0
         ;;
     *)
-        echo -e "${RED}输入错误，请重新输入${NC}"
+        echo -e "${RED}无效选项，请重新输入${NC}"
         ;;
 esac
