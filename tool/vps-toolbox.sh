@@ -438,7 +438,7 @@ execute_choice() {
         81) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Fail2Banos.sh) ;;
         82) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/crontab.sh) ;;
         83) bash <(curl -sL kejilion.sh) ;;
-        84) bash <(curl -fsSL ssh_tool.eooce.com) ;;
+        84) curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && ./ssh_tool.sh ;;
         85) bash <(curl -sL https://cdn.kxy.ovh/kxy.sh) ;;
         86) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh) ;;
         87) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh) ;;
