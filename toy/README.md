@@ -57,6 +57,11 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh)
 ```
 
+### Komari 探针监控小鸡 IP
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/KomariIPWatcher.sh)
+```
+
 ### VPSDD
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/VPSDD.sh)
