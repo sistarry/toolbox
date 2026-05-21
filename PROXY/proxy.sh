@@ -229,7 +229,7 @@ while true; do
     echo -e "${YELLOW}[07] Alpine-3X-UI${RESET}"
     echo -e "${YELLOW}[08] Docker-3X-UI${RESET}"
     echo -e "${YELLOW}[09] Xboard${RESET}"
-    echo -e "${YELLOW}[10] Remnawave${RESET}"
+    echo -e "${YELLOW}[10] Xboard-Node${RESET}"
     echo -e "${YELLOW}[11] heki 节点${RESET}"
     echo -e "${YELLOW}[12] DockerHeki${RESET}"
     echo -e "${YELLOW}[13] PPanel${RESET}"
@@ -239,6 +239,7 @@ while true; do
     echo -e "${YELLOW}[17] Clash代理${RESET}"
     echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
     echo -e "${YELLOW}[19] 妙妙屋X${RESET}"
+    echo -e "${YELLOW}[20] Remnawave${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -254,7 +255,7 @@ while true; do
         07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh) ; pause_return ;;
         08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/3X-UID.sh) ; pause_return ;;
         09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xboard.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
+        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xboard-Node.sh) ; pause_return ;;
         11) bash <(curl -Ls https://raw.githubusercontent.com/hekicore/heki/master/install.sh) ; pause_return ;;
         12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHeki.sh) ; pause_return ;;
         13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanelYC.sh) ; pause_return ;;
@@ -264,6 +265,7 @@ while true; do
         17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
         19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiaomiaowuX.sh) ; pause_return ;;
+        20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
