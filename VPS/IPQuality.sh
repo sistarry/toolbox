@@ -47,6 +47,7 @@ menu() {
     echo -e "${GREEN} 3) 仅 IPv6${RESET}"
     echo -e "${GREEN} 4) SOCKS5${RESET}"
     echo -e "${GREEN} 5) HTTP${RESET}"
+    echo -e "${GREEN} 6) 节点检测${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
 
     read -p $'\033[32m 请选择: \033[0m' choice
@@ -57,6 +58,7 @@ menu() {
         3) run_check -6 "IPv6 检测" ;;
         4) run_check socks5 "SOCKS5 代理检测" ;;
         5) run_check http "HTTP 代理检测" ;;
+        6) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/ipqualitys.sh) ;;
         0) exit 0 ;;
         *)
             echo -e "${RED}输入错误，请重新选择${RESET}"
