@@ -126,6 +126,9 @@ uninstall_app() {
 
     npm uninstall -g deepseek-tui
 
+    rm -rf /root/.deepseek
+
+
     echo -e "${GREEN}卸载完成${RESET}"
 }
 
