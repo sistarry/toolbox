@@ -35,8 +35,8 @@ systems=(
 "13|alma9|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh almalinux 9"
 "14|oracle10|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh oracle"
 "15|oracle9|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh oracle 9"
-"16|fedora42|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora"
-"17|fedora41|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora 41"
+"16|fedora44|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora 44"
+"17|fedora43|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora 43"
 "18|centos10|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 10"
 "19|centos9|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 9"
 "20|alpine|其他Linux|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -alpine"
@@ -48,10 +48,11 @@ systems=(
 "26|windows11|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 11 -lang cn"
 "27|windows10|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 10 -lang cn"
 "28|windows7|Windows|bin456789|Administrator|123@@@|3389|bash reinstall.sh windows --iso=\"https://drive.massgrave.dev/cn_windows_7_professional_with_sp1_x64_dvd_u_677031.iso\" --image-name='Windows 7 PROFESSIONAL'"
-"29|windows2022|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2022 -lang cn"
-"30|windows2019|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2019 -lang cn"
-"31|windows2016|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2016 -lang cn"
-"32|windows11arm|Windows|bin456789|Administrator|123@@@|3389|bash reinstall.sh dd --img https://r2.hotdog.eu.org/win11-arm-with-pagefile-15g.xz"
+"29|windows2025|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2025 -lang cn"
+"30|windows2022|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2022 -lang cn"
+"31|windows2019|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2019 -lang cn"
+"32|windows2016|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2016 -lang cn"
+"33|windows11arm|Windows|bin456789|Administrator|123@@@|3389|bash reinstall.sh dd --img https://r2.hotdog.eu.org/win11-arm-with-pagefile-15g.xz"
 )
 
 while true; do
