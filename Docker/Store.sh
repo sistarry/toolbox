@@ -321,6 +321,7 @@ declare -A apps=(
     [12,22]="GeminiBusiness2API"
     [12,23]="MiMo2API"
     [12,24]="CodexWebUI"
+    [12,25]="DeepSeekTUI"
     [13,1]="MCSManager游戏开服"
     [13,2]="桃花源文字游戏"
 
@@ -603,6 +604,7 @@ declare -A commands=(
     [12,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GeminiBusiness2API.sh)'
     [12,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Mimo2API.sh)'
     [12,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
+    [12,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DeepSeekTUI.sh)'
     [13,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
     [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
 )
