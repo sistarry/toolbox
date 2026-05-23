@@ -47,6 +47,11 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Crypto.
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JQDY.js
 ```
 
+### 多机场订阅
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JQDYS.js
+```
+
 ### 天气
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/weather.js
