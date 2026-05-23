@@ -240,6 +240,7 @@ while true; do
     echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
     echo -e "${YELLOW}[19] 妙妙屋X${RESET}"
     echo -e "${YELLOW}[20] Remnawave${RESET}"
+    echo -e "${YELLOW}[21] XrayR${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -266,6 +267,7 @@ while true; do
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
         19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiaomiaowuX.sh) ; pause_return ;;
         20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
+        21) bash <(curl -Ls https://raw.githubusercontent.com/JackHONGhy/xrayr-automated-install-script/master/install.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
