@@ -294,7 +294,7 @@ while true; do
     echo -e "${YELLOW}[09] NodePass${RESET}"
     echo -e "${YELLOW}[10] nftables端口转发${RESET}"
     echo -e "${YELLOW}[11] 哆啦A梦面板重制版${RESET}"
-    echo -e "${YELLOW}[12] ForwardX端口转发${RESET}"
+    echo -e "${YELLOW}[12] ForwardX端口转发管理面板${RESET}"
     echo -e "${YELLOW}[13] iptables转发ddns域名${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
