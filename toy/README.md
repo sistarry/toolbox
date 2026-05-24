@@ -57,6 +57,11 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/MOTDOS.sh)
 ```
 
+### ssh登录信息通知
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/ssh-login-alert.sh)
+```
+
 ### Komari 探针监控小鸡 IP
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/KomariIPWatcher.sh)
