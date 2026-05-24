@@ -77,22 +77,18 @@ function install_app() {
     echo -e "${GREEN}生成配置文件...${RESET}"
 
     read -p "请输入 JWT_SECRET (留空自动生成): " JWT_SECRET
-    read -p "请输入 ADMIN_PASSWORD (留空默认 admin123): " ADMIN_PASSWORD
 
     [ -z "$JWT_SECRET" ] && JWT_SECRET=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
-    [ -z "$ADMIN_PASSWORD" ] && ADMIN_PASSWORD="admin123"
 
     cat > .env <<EOF
 SQLITE_PATH=/data/forwardx.db
 JWT_SECRET=$JWT_SECRET
 NODE_ENV=production
 PORT=3000
-ADMIN_PASSWORD=$ADMIN_PASSWORD
 EOF
 
     echo -e "${GREEN}配置生成完成${RESET}"
     echo -e "JWT_SECRET=$JWT_SECRET"
-    echo -e "ADMIN_PASSWORD=$ADMIN_PASSWORD"
 
     echo -e "${GREEN}启动服务...${RESET}"
     docker compose up -d
@@ -102,8 +98,6 @@ EOF
     echo
     echo -e "${GREEN}✅ ForwardX 已启动${RESET}"
     echo -e "${YELLOW}访问: http://${SERVER_IP}:3000${RESET}"
-    echo -e "${YELLOW}账号: admin${RESET}"
-    echo -e "${YELLOW}密码: $ADMIN_PASSWORD${RESET}"
 
     read -p "按回车返回菜单..."
     menu
