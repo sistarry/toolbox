@@ -69,9 +69,6 @@ update_one() {
 
     echo -e "${GREEN}运行 $NAME ...${RESET}"
 
-    # 先删除旧脚本，再下载新脚本
-    rm -f "$ROOT/$FILE"
-
     TMP=$(mktemp)
 
     # 第一次下载
@@ -90,12 +87,12 @@ update_one() {
     chmod +x "$TMP"
 
     if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
+        mv "$TMP" "$ROOT/$FILE"
         UPDATED_LIST+=("$NAME")
     else
         echo -e "${RED}$NAME 更新脚本执行失败${RESET}"
+        rm -f "$TMP"
     fi
-
-    rm -f "$TMP"
 }
 
 run_update() {
@@ -104,7 +101,7 @@ run_update() {
 
     # 更新各脚本
     update_one "vps-toolbox" "vps-toolbox.sh" \
-    "https://raw.githubusercontent.com/sistarry/toolbox/main/tool/install.sh"
+    "https://raw.githubusercontent.com/sistarry/toolbox/main/tool/vps-toolbox.sh"
 
     update_one "proxy" "proxy.sh" \
     "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh"
