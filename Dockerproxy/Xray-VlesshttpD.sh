@@ -8,7 +8,7 @@ YELLOW="\033[33m"
 RED="\033[31m"
 RESET="\033[0m"
 
-CONTAINER_NAME="xray-vless"
+CONTAINER_NAME="xray-vlesshttpupgrade"
 APP_NAME="xray-vless-httpupgrade"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
