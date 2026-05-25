@@ -21,11 +21,11 @@ download_script() {
 # 系统信息表：编号|系统名|分类|下载方式|用户名|密码|端口|重装命令
 systems=(
 "1|debian13|Debian|bin456789|root|123@@@|22|bash reinstall.sh debian 13"
-"2|debian12|Debian|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -debian 12"
+"2|debian12|Debian|bin456789|root|123@@@|22|bash reinstall.sh debian 12"
 "3|debian11|Debian|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -debian 11"
 "4|debian10|Debian|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -debian 10"
 "5|ubuntu26.04|Ubuntu|bin456789|root|123@@@|22|bash reinstall.sh ubuntu 26.04"
-"6|ubuntu24.04|Ubuntu|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -ubuntu 24.04"
+"6|ubuntu24.04|Ubuntu|bin456789|root|123@@@|22|bash reinstall.sh ubuntu 24.04"
 "7|ubuntu22.04|Ubuntu|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -ubuntu 22.04"
 "8|ubuntu20.04|Ubuntu|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -ubuntu 20.04"
 "9|ubuntu18.04|Ubuntu|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -ubuntu 18.04"
@@ -39,7 +39,7 @@ systems=(
 "17|fedora43|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora 43"
 "18|centos10|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 10"
 "19|centos9|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 9"
-"20|alpine|其他Linux|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -alpine"
+"20|alpine|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh alpine 3.23"
 "21|arch|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh arch"
 "22|kali|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh kali"
 "23|openeuler|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh openeuler"
