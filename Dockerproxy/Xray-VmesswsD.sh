@@ -34,6 +34,21 @@ check_port() {
     return 0
 }
 
+get_public_ip() {
+    local ip
+    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
+        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
+        for url in "https://api64.ipify.org" "https://ip.sb"; do
+            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+        done
+    done
+    echo "无法获取公网 IP 地址。" && return
+}
+
 menu() {
     while true; do
         clear
@@ -75,12 +90,6 @@ install_app() {
     fi
 
     check_port "$PORT" || return
-
-    read -p "请输入服务器IP或域名: " DOMAIN
-    if [[ -z "$DOMAIN" ]]; then
-        echo -e "${RED}不能为空${RESET}"
-        return
-    fi
     
 
     read -p "请输入 WebSocket Host (可留空): " WS_HOST
@@ -139,11 +148,12 @@ cd "$APP_DIR" || exit
 docker compose up -d
 
 HOSTNAME=$(hostname -s | sed 's/ /_/g')
+IP=$(get_public_ip)
 
 VMESS_JSON=$(jq -n \
     --arg v "2" \
     --arg ps "$HOSTNAME" \
-    --arg add "$DOMAIN" \
+    --arg add "$IP" \
     --arg port "$PORT" \
     --arg id "$UUID" \
     --arg aid "0" \
@@ -169,7 +179,7 @@ VMESS_JSON=$(jq -n \
 echo
 echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
 echo -e "${GREEN}✅ VMess-WS 节点已启动${RESET}"
-echo -e "${YELLOW}🌐 地址: ${DOMAIN}${RESET}"
+echo -e "${YELLOW}🌐 地址: ${IP}${RESET}"
 echo -e "${YELLOW}🔌 端口: ${PORT}${RESET}"
 echo -e "${YELLOW}🆔 UUID: ${UUID}${RESET}"
 echo -e "${YELLOW}🌐 Host: $WS_HOST${RESET}"
@@ -180,14 +190,14 @@ echo -e "${YELLOW}📄 V2rayN链接:${RESET}"
 echo -e "${YELLOW}vmess://${VMESS_JSON}${RESET}"
 
 echo -e "${YELLOW}📄 Surge配置:${RESET}"
-echo -e "${YELLOW}$HOSTNAME = vmess, ${DOMAIN}, ${PORT}, username=${UUID}, ws=true, ws-path=$WS_PATH, ws-headers=Host:\"$WS_HOST\", vmess-aead=true, tls=false${RESET}"
+echo -e "${YELLOW}$HOSTNAME = vmess, ${IP}, ${PORT}, username=${UUID}, ws=true, ws-path=$WS_PATH, ws-headers=Host:\"$WS_HOST\", vmess-aead=true, tls=false${RESET}"
 
 cat > "$NODE_INFO_FILE" <<EOF
 V2rayN链接
 vmess://${VMESS_JSON}
 
 Surge配置
-$HOSTNAME = vmess, ${DOMAIN}, ${PORT}, username=${UUID}, ws=true, ws-path=$WS_PATH, ws-headers=Host:"$WS_HOST", vmess-aead=true, tls=false
+$HOSTNAME = vmess, ${IP}, ${PORT}, username=${UUID}, ws=true, ws-path=$WS_PATH, ws-headers=Host:"$WS_HOST", vmess-aead=true, tls=false
 EOF
 
 read -p "按回车返回菜单..."
