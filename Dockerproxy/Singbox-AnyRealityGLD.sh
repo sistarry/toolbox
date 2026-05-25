@@ -209,8 +209,8 @@ show_node_info(){
     PUBLIC_KEY=$(grep "PublicKey" $NODE_DIR/node.txt | awk '{print $2}')
     SHORT_ID=$(grep "ShortID" $NODE_DIR/node.txt | awk '{print $2}')
 
-    echo -e "${GREEN}QuantumultX:${RESET}"
-    echo "anytls=${SERVER_IP}:${PORT}, password=${PASSWORD}, over-tls=true, tls-host=${SERVER_NAME}, tls-verification=false, reality-base64-pubkey=${PUBLIC_KEY}, reality-hex-shortid=${SHORT_ID}, udp-relay=true, tag=${NODE_NAME}"
+    echo -e "${GREEN}v2rayN配置:${RESET}"
+    echo "anytls://${PASSWORD}@${SERVER_IP}:${PORT}?security=reality&sni=${SERVER_NAME}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp&headerType=none#${NODE_NAME}"
     echo
 
     echo -e "${GREEN}sing-box 客户端:${RESET}"
