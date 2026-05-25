@@ -140,7 +140,7 @@ while true; do
     echo -e "${YELLOW}[06] Tuicv5${RESET}"
     echo -e "${YELLOW}[07] MTProto${RESET}"
     echo -e "${YELLOW}[08] Socks5${RESET}"
-    echo -e "${YELLOW}[09] NaiveProxy${RESET}"
+    echo -e "${YELLOW}[09] NaïveProxy${RESET}"
     echo -e "${YELLOW}[10] Xray-Argo${RESET}"
     echo -e "${YELLOW}[11] Vmess+ws${RESET}"
     echo -e "${YELLOW}[12] Vless+httpupgrade${RESET}"
@@ -161,7 +161,7 @@ while true; do
         06) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tuicv5.sh) ;;
         07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLMTProto.sh) ;;
         08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5.sh) ;;
-        09) bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/naive/main/install.sh) ;;
+        09) bash <(curl -fsSL naiveproxy-sigma.vercel.app) ;;
         10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2gsocks5.sh) ;;
         11) wget -qO /tmp/Vmessws.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vmessws.sh && bash /tmp/Vmessws.sh ;;
         12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vlesshttpupgrade.sh) ;;
@@ -1242,7 +1242,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|miaomiaowux|Mihomo|remnawave|alicdt-manager|ecs-controller|sui-traffic-reset|forwardx-panel')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|miaomiaowux|Mihomo|remnawave|alicdt-manager|ecs-controller|sui-traffic-reset|forwardx-panel')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
