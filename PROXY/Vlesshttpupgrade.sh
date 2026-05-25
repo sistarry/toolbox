@@ -66,25 +66,65 @@ mkdir -p /etc/sing-box
 
 install_core(){
 
-if [ -f "$binary_path" ]; then
-return
-fi
+info "安装/更新 sing-box 最新版..."
 
-info "安装 sing-box..."
+arch=$(uname -m)
+
+case "$arch" in
+x86_64|amd64)
+    sb_arch="amd64"
+    ;;
+aarch64|arm64)
+    sb_arch="arm64"
+    ;;
+armv7l)
+    sb_arch="armv7"
+    ;;
+*)
+    error "不支持架构: $arch"
+    exit 1
+    ;;
+esac
 
 cd /tmp
 
-wget -O singbox.tar.gz https://github.com/SagerNet/sing-box/releases/download/v1.14.0-alpha.7/sing-box-1.14.0-alpha.7-linux-amd64.tar.gz \
-|| wget -O singbox.tar.gz https://mirror.ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v1.14.0-alpha.7/sing-box-1.14.0-alpha.7-linux-amd64.tar.gz
+# 获取最新稳定版版本号
+latest_version=$(curl -fsSL https://api.github.com/repos/SagerNet/sing-box/releases/latest \
+    | jq -r '.tag_name')
+
+[ -z "$latest_version" ] && {
+    error "获取最新版失败"
+    exit 1
+}
+
+info "最新版本: $latest_version"
+
+file_name="sing-box-${latest_version#v}-linux-${sb_arch}.tar.gz"
+download_url="https://github.com/SagerNet/sing-box/releases/download/${latest_version}/${file_name}"
+
+info "下载: $file_name"
+
+wget -O singbox.tar.gz "$download_url" \
+|| wget -O singbox.tar.gz \
+"https://mirror.ghproxy.com/${download_url}"
+
+rm -rf sing-box*
 
 tar -xzf singbox.tar.gz
 
-cp sing-box-1.14.0-alpha.7-linux-amd64/sing-box /usr/local/bin/
+# 自动寻找解压目录
+dir=$(find . -maxdepth 1 -type d -name "sing-box*" | head -n1)
 
-chmod +x /usr/local/bin/sing-box
+[ -z "$dir" ] && {
+    error "解压失败"
+    exit 1
+}
 
-rm -rf singbox.tar.gz sing-box*
+install -m 755 "$dir/sing-box" /usr/local/bin/sing-box
 
+rm -rf singbox.tar.gz "$dir"
+
+# systemd
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 Description=Sing-box Service
@@ -94,30 +134,34 @@ After=network.target
 ExecStart=/usr/local/bin/sing-box run -c /etc/sing-box/config.json
 Restart=always
 RestartSec=5
+LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable sing-box
+systemctl enable sing-box >/dev/null 2>&1
 
-success "sing-box 安装完成"
+success "sing-box ${latest_version} 安装/更新完成"
 
 }
 
 check_status(){
 
 if [ ! -f "$binary_path" ]; then
-status_info="Sing-box: 未安装"
-return
+    status_info="Sing-box: 未安装"
+    return
 fi
+
+# 获取版本
+version=$($binary_path version 2>/dev/null | head -n1 | awk '{print $3}')
 
 if systemctl is-active --quiet sing-box
 then
-status_info="Sing-box: 运行中"
+    status_info="Sing-box: 运行中 | 版本: ${version:-未知}"
 else
-status_info="Sing-box: 未运行"
+    status_info="Sing-box: 未运行 | 版本: ${version:-未知}"
 fi
 
 }
@@ -203,8 +247,12 @@ success "已重启"
 
 update_core(){
 
+rm -f /usr/local/bin/sing-box
+
 install_core
-restart_core
+systemctl restart sing-box
+
+success "已更新到最新版"
 
 }
 
