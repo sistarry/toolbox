@@ -35,6 +35,7 @@ KEYWORDS=(
 "xray-socks5"
 "xray-vmess"
 "xray-vmesstls"
+"xray-vlesshttpupgrade"
 "clash"
 "mihomo"
 "warp"
