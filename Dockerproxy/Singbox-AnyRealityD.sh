@@ -198,8 +198,8 @@ show_node_info() {
   cat "$NODE_INFO_FILE"
   echo
 
-  echo 'QuantumultX 配置：'
-  echo "anytls=${SERVER_IP}:${PORT}, password=${PASSWORD}, over-tls=true, tls-host=${SERVER_NAME}, tls-verification=false, reality-base64-pubkey=${PUBLIC_KEY}, reality-hex-shortid=${SHORT_ID}, udp-relay=true, tag=${REMARK}"
+  echo 'v2rayN配置：'
+  echo "anytls://${PASSWORD}@${SERVER_IP}:${PORT}?security=reality&sni=${SERVER_NAME}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp&headerType=none#${REMARK}"
   echo
 
   echo 'sing-box 客户端示例配置：'
