@@ -72,3 +72,8 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Koma
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/VPSDD.sh)
 ```
 
+### Debian 12 → Debian 13 升级
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/update13.sh)
+```
+
