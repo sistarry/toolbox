@@ -127,9 +127,9 @@ try_persist_iptables() {
 # 参数: $1=目标IP  $2=目标端口  $3=要排除的本机端口(即正在删除的那条)
 dest_still_used() {
     local check_ip="$1" check_dport="$2" exclude_lport="$3"
-    local rule lport dip dport
+    local rule lport dip dport note
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
+        IFS='|' read -r lport dip dport note <<< "$rule"
         # 跳过正在删除的那条
         [[ "$lport" == "$exclude_lport" ]] && continue
         # 如果其他规则也指向同一 dest_ip:dport，返回 true
@@ -309,20 +309,47 @@ NFTCONF
 }
 
 # ============== 写出配置文件（基于当前 RULES 数组） ==============
-# RULES 数组格式: "本机端口|目标IP|目标端口"
+# RULES 数组格式: "本机端口|目标IP|目标端口|备注"
 declare -a RULES=()
+
+sanitize_note() {
+    local note="${1:-}"
+    note="${note//$'\r'/ }"
+    note="${note//$'\n'/ }"
+    note="${note//|/ }"
+    printf "%s" "$note"
+}
+
+get_conf_local_ip() {
+    [[ -f "${CONF_FILE}" ]] || return
+
+    local line
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^[[:space:]]*define[[:space:]]+LOCAL_IP[[:space:]]*=[[:space:]]*([0-9.]+) ]]; then
+            printf "%s" "${BASH_REMATCH[1]}"
+            return
+        fi
+    done < "${CONF_FILE}"
+}
 
 load_rules() {
     RULES=()
     if [[ ! -f "${CONF_FILE}" ]]; then
         return
     fi
+    local pending_note=""
     while IFS= read -r line; do
+        # 读取由本脚本写入的备注；老版本配置没有备注时会自动留空
+        if [[ "$line" =~ ^[[:space:]]*#[[:space:]]*备注:[[:space:]]*(.*)$ ]]; then
+            pending_note=$(sanitize_note "${BASH_REMATCH[1]}")
+            continue
+        fi
         # 跳过注释行
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         # 只解析 tcp 的 dnat 行（每对 tcp/udp 只记录一次）
         if [[ "$line" =~ tcp\ dport\ ([0-9]+)\ dnat\ to\ ([0-9.]+):([0-9]+) ]]; then
-            RULES+=("${BASH_REMATCH[1]}|${BASH_REMATCH[2]}|${BASH_REMATCH[3]}")
+            RULES+=("${BASH_REMATCH[1]}|${BASH_REMATCH[2]}|${BASH_REMATCH[3]}|${pending_note}")
+            pending_note=""
         fi
     done < "${CONF_FILE}"
 }
@@ -330,6 +357,9 @@ load_rules() {
 write_conf_file() {
     local local_ip
     local_ip=$(get_local_ip)
+    if [[ -z "$local_ip" ]]; then
+        local_ip=$(get_conf_local_ip)
+    fi
 
     if [[ -z "$local_ip" ]]; then
         err "无法获取本机 IP 地址，请检查网络配置。"
@@ -351,12 +381,19 @@ table ip ${TABLE_NAME} {
         type nat hook prerouting priority -100; policy accept;
 EOF
 
-    local rule lport dip dport
+    local rule lport dip dport note
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
+        IFS='|' read -r lport dip dport note <<< "$rule"
         cat >> "${tmp_file}" <<EOF
 
         # 转发: 本机:${lport} -> ${dip}:${dport}
+EOF
+        if [[ -n "$note" ]]; then
+            cat >> "${tmp_file}" <<EOF
+        # 备注: ${note}
+EOF
+        fi
+        cat >> "${tmp_file}" <<EOF
         tcp dport ${lport} dnat to ${dip}:${dport}
         udp dport ${lport} dnat to ${dip}:${dport}
 EOF
@@ -371,7 +408,7 @@ EOF
 EOF
 
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
+        IFS='|' read -r lport dip dport note <<< "$rule"
         cat >> "${tmp_file}" <<EOF
 
         # 回源: 发往 ${dip}:${dport} 的已 DNAT 流量, SNAT 为本机 IP
@@ -629,9 +666,9 @@ do_diagnose() {
     if [[ ${#RULES[@]} -gt 0 ]]; then
         read -rp "是否测试目标连通性？[y/N]: " test_conn
         if [[ "$test_conn" =~ ^[Yy]$ ]]; then
-            local rule lport dip dport
+            local rule lport dip dport note
             for rule in "${RULES[@]}"; do
-                IFS='|' read -r lport dip dport <<< "$rule"
+                IFS='|' read -r lport dip dport note <<< "$rule"
                 printf "  测试 %s:%s (TCP) ... " "$dip" "$dport"
                 if timeout 3 bash -c ">/dev/tcp/${dip}/${dport}" 2>/dev/null; then
                     printf "\033[32m通\033[0m\n"
@@ -755,6 +792,51 @@ do_install() {
 # ====================================================
 # 功能 2：查看现有端口转发
 # ====================================================
+edit_rule_note() {
+    local ans
+    read -rp "是否添加/修改备注？[y/N]: " ans
+    if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+        return
+    fi
+
+    local choice
+    read -rp "请输入要添加/修改备注的序号 (0 取消): " choice
+
+    if [[ "$choice" == "0" ]] || [[ -z "$choice" ]]; then
+        info "已取消。"
+        return
+    fi
+
+    if [[ ! "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#RULES[@]} )); then
+        err "无效的序号。"
+        return
+    fi
+
+    local target="${RULES[$((choice-1))]}"
+    local lport dip dport old_note note
+    IFS='|' read -r lport dip dport old_note <<< "$target"
+
+    echo "当前规则: 本机端口 ${lport} (tcp+udp) → ${dip}:${dport}"
+    echo "当前备注: ${old_note:--}"
+    read -rp "请输入新备注（留空表示清空）: " note
+    if [[ "$note" == *"|"* ]]; then
+        warn "备注中的 | 已替换为空格。"
+    fi
+    note=$(sanitize_note "$note")
+
+    backup_conf
+    RULES[$((choice-1))]="${lport}|${dip}|${dport}|${note}"
+
+    if write_conf_file; then
+        if [[ -n "$note" ]]; then
+            info "备注已保存: ${note}"
+        else
+            info "备注已清空。"
+        fi
+        log_action "修改备注: ${lport} -> ${dip}:${dport} 备注:${note:-无}"
+    fi
+}
+
 do_list() {
     echo ""
     load_rules
@@ -764,18 +846,20 @@ do_list() {
         return
     fi
 
-    printf "\n\033[1m%-6s %-10s %-10s    %-22s\033[0m\n" "序号" "协议" "本机端口" "目标地址"
-    echo "──────────────────────────────────────────────────────"
+    printf "\n\033[1m%-6s %-10s %-10s    %-22s %s\033[0m\n" "序号" "协议" "本机端口" "目标地址" "备注"
+    echo "────────────────────────────────────────────────────────────────────────"
 
     local idx=1
-    local rule lport dip dport
+    local rule lport dip dport note shown_note
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
-        printf "%-6s %-10s %-10s -> %-22s\n" \
-            "$idx" "tcp+udp" "$lport" "${dip}:${dport}"
+        IFS='|' read -r lport dip dport note <<< "$rule"
+        shown_note="${note:--}"
+        printf "%-6s %-10s %-10s -> %-22s %s\n" \
+            "$idx" "tcp+udp" "$lport" "${dip}:${dport}" "$shown_note"
         ((idx++))
     done
     echo ""
+    edit_rule_note
 }
 
 # ====================================================
@@ -812,7 +896,7 @@ do_add() {
     # 检查端口是否已有转发规则
     local rule rp
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r rp _ _ <<< "$rule"
+        IFS='|' read -r rp _ _ _ <<< "$rule"
         if [[ "$rp" == "$lport" ]]; then
             err "本机端口 ${lport} 已存在转发规则，请先删除后再添加。"
             return
@@ -846,10 +930,21 @@ do_add() {
         err "端口无效，请输入 1-65535 之间的数字。"
     done
 
+    # 输入备注
+    local note
+    read -rp "请输入备注（可留空）: " note
+    if [[ "$note" == *"|"* ]]; then
+        warn "备注中的 | 已替换为空格。"
+    fi
+    note=$(sanitize_note "$note")
+
     # 确认
     echo ""
     echo "即将添加转发规则:"
     echo "  本机端口 ${lport} (tcp+udp) → ${dip}:${dport}"
+    if [[ -n "$note" ]]; then
+        echo "  备注: ${note}"
+    fi
     read -rp "确认添加？[Y/n]: " confirm
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
         info "已取消。"
@@ -858,7 +953,7 @@ do_add() {
 
     # 备份并写入
     backup_conf
-    RULES+=("${lport}|${dip}|${dport}")
+    RULES+=("${lport}|${dip}|${dport}|${note}")
     if ! write_conf_file; then
         return
     fi
@@ -866,7 +961,7 @@ do_add() {
     if reload_rules; then
         firewall_open_port "$lport" "$dip" "$dport"
         info "转发规则添加成功: ${lport} → ${dip}:${dport}"
-        log_action "新增转发: ${lport} -> ${dip}:${dport}"
+        log_action "新增转发: ${lport} -> ${dip}:${dport} 备注:${note:-无}"
         info "若转发不通，请使用菜单中的【诊断/自检】排查。"
     else
         err "规则加载失败，请检查配置。"
@@ -891,15 +986,16 @@ do_delete() {
     fi
 
     # 展示列表
-    printf "\n\033[1m%-6s %-10s %-10s    %-20s\033[0m\n" "序号" "协议" "本机端口" "目标地址"
-    echo "────────────────────────────────────────────────────"
+    printf "\n\033[1m%-6s %-10s %-10s    %-22s %s\033[0m\n" "序号" "协议" "本机端口" "目标地址" "备注"
+    echo "────────────────────────────────────────────────────────────────────────"
 
     local idx=1
-    local rule lport dip dport
+    local rule lport dip dport note shown_note
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
-        printf "%-6s %-10s %-10s -> %-20s\n" \
-            "$idx" "tcp+udp" "$lport" "${dip}:${dport}"
+        IFS='|' read -r lport dip dport note <<< "$rule"
+        shown_note="${note:--}"
+        printf "%-6s %-10s %-10s -> %-22s %s\n" \
+            "$idx" "tcp+udp" "$lport" "${dip}:${dport}" "$shown_note"
         ((idx++))
     done
     echo ""
@@ -919,10 +1015,13 @@ do_delete() {
     fi
 
     local target="${RULES[$((choice-1))]}"
-    IFS='|' read -r lport dip dport <<< "$target"
+    IFS='|' read -r lport dip dport note <<< "$target"
 
     echo "即将删除转发规则:"
     echo "  本机端口 ${lport} (tcp+udp) → ${dip}:${dport}"
+    if [[ -n "$note" ]]; then
+        echo "  备注: ${note}"
+    fi
     read -rp "确认删除？[Y/n]: " confirm
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
         info "已取消。"
@@ -975,9 +1074,9 @@ do_clear_all() {
     backup_conf
 
     # 先清理所有防火墙规则（清空场景用 force，无需检查共享）
-    local rule lport dip dport
+    local rule lport dip dport note
     for rule in "${RULES[@]}"; do
-        IFS='|' read -r lport dip dport <<< "$rule"
+        IFS='|' read -r lport dip dport note <<< "$rule"
         firewall_close_port "$lport" "$dip" "$dport" "force"
     done
 
@@ -1001,7 +1100,7 @@ main_menu() {
     while true; do
         echo ""
         echo "========================================"
-        echo "   nftables 端口转发管理工具 "
+        echo "   nftables 端口转发管理工具"
         echo "========================================"
         echo "  1) 安装 nftables"
         echo "  2) 查看现有端口转发"
@@ -1009,7 +1108,7 @@ main_menu() {
         echo "  4) 删除端口转发"
         echo "  5) 一键清空所有转发"
         echo "  6) 诊断/自检"
-        echo "  0) 退出"
+        echo "  7) 退出"
         echo "========================================"
         read -rp "请选择操作: " choice
 
@@ -1020,7 +1119,8 @@ main_menu() {
             4) do_delete ;;
             5) do_clear_all ;;
             6) do_diagnose ;;
-            0)
+            7)
+                info "再见！"
                 exit 0
                 ;;
             *)
@@ -1033,3 +1133,4 @@ main_menu() {
 # ============== 入口 ==============
 check_root
 main_menu
+
