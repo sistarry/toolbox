@@ -381,7 +381,7 @@ execute_choice() {
         23) wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh ;;
         24) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbros.sh) ;;
         25) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/realityos.sh) ;;
-        26) wget -O snell.sh --no-check-certificate https://git.io/Snell.sh && chmod +x snell.sh && ./snell.sh ;;
+        26) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Snell.sh) ;;
         27) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ssos.sh) ;;
         28) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ;;
         29) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DDNS.sh) ;;
