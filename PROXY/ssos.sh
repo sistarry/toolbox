@@ -26,11 +26,11 @@ case "$OS" in
     debian|ubuntu|centos|rocky|almalinux|fedora)
         echo -e "${GREEN}检测到系统为 $OS${RESET}"
         # 执行原版脚本
-        wget -O ss-rust.sh --no-check-certificate https://raw.githubusercontent.com/xOS/Shadowsocks-Rust/master/ss-rust.sh && chmod +x ss-rust.sh && ./ss-rust.sh
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SS2022.sh)
         ;;
     *)
         echo -e "${RED}❌ 错误: 未能识别或暂不支持您的系统 ($OS)。${RESET}"
         echo -e "${YELLOW}尝试默认运行原版脚本...${RESET}"
-        wget -O ss-rust.sh --no-check-certificate https://raw.githubusercontent.com/xOS/Shadowsocks-Rust/master/ss-rust.sh && chmod +x ss-rust.sh && ./ss-rust.sh
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SS2022.sh)
         ;;
 esac
