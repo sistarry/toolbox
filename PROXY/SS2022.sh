@@ -33,6 +33,7 @@ KEY_BYTES=32
 
 TMP_DIR=$(mktemp -d -t ss-rust.XXXXXX)
 
+
 # ================== cleanup ==================
 cleanup() {
     [[ -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR"
@@ -93,6 +94,50 @@ get_public_ip() {
     echo "无法获取公网IP"
 }
 
+
+# ================== 检查依赖 ==================
+check_deps() {
+
+    echo -e "${GREEN}[信息] 检查系统依赖...${RESET}"
+
+    install_pkg() {
+        if command -v apt >/dev/null 2>&1; then
+            apt update -y
+            apt install -y "$@"
+        elif command -v dnf >/dev/null 2>&1; then
+            dnf install -y "$@"
+        elif command -v yum >/dev/null 2>&1; then
+            yum install -y "$@"
+        fi
+    }
+
+    command -v curl >/dev/null 2>&1 || install_pkg curl
+    command -v wget >/dev/null 2>&1 || install_pkg wget
+    command -v tar  >/dev/null 2>&1 || install_pkg tar
+
+    # xz 解压支持
+    if ! command -v xz >/dev/null 2>&1; then
+        if command -v apt >/dev/null 2>&1; then
+            install_pkg xz-utils
+        else
+            install_pkg xz
+        fi
+    fi
+
+    # ss 命令 (check_port 用)
+    command -v ss >/dev/null 2>&1 || {
+        if command -v apt >/dev/null 2>&1; then
+            install_pkg iproute2
+        else
+            install_pkg iproute
+        fi
+    }
+
+    # openssl (随机密码)
+    command -v openssl >/dev/null 2>&1 || install_pkg openssl
+
+    echo -e "${GREEN}[完成] 依赖检查完成${RESET}"
+}
 # ================== 检查端口 ==================
 check_port() {
 
@@ -461,6 +506,8 @@ modify_ss() {
 install_ss() {
 
     echo -e "${GREEN}[信息] 开始安装 Shadowsocks-Rust...${RESET}"
+    
+    check_deps
 
     create_user
 
