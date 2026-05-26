@@ -821,19 +821,19 @@ menu() {
 
     clear
     echo -e "${GREEN}=================================${RE}"
-    echo -e "${GREEN}      Xray-Argo 管理菜单     ${RE}"
+    echo -e "${GREEN}      Xray-Argo 管理面板          ${RE}"
     echo -e "${GREEN}=================================${RE}"
     echo -e " Xray 核心引擎 : $xray_status_view"
     echo -e " Argo 穿透链路 : $argo_status_view"
     echo -e " 智能分流出口  : $out_view"
     echo -e "${GREEN}=================================${RE}"
-    echo -e " ${GREEN}1. 一键安装部署${RE}"
-    echo -e " ${GREEN}2. Xray状态管理${RE}"
-    echo -e " ${GREEN}3. Argo隧道管理${RE}"
-    echo -e " ${GREEN}4. 查看节点配置${RE}"
+    echo -e " ${GREEN}1. 安装部署${RE}"
+    echo -e " ${GREEN}2. 卸载服务${RE}"
+    echo -e " ${GREEN}3. Xray状态管理${RE}"
+    echo -e " ${GREEN}4. Argo隧道管理${RE}"
     echo -e " ${GREEN}5. 配置节点出口模式 (直连/Socks5)${RE}"
-    echo -e " ${GREEN}6. 查看与清理服务日志${RE}"
-    echo -e " ${GREEN}7. 卸载服务${RE}"
+    echo -e " ${GREEN}6. 查看日志${RE}"
+    echo -e " ${GREEN}7. 查看节点配置${RE}"
     echo -e " ${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}=================================${RE}"
     
@@ -855,12 +855,12 @@ menu() {
           save_outbound_env; get_info; create_shortcut
         fi
         ;;
-      2) manage_xray_menu ;;
-      3) manage_argo_menu ;;
-      4) check_nodes ;;
+      2) uninstall_xray ;;
+      3) manage_xray_menu ;;
+      4) manage_argo_menu ;;
       5) configure_socks5_outbound ;;
       6) view_logs ;;
-      7) uninstall_xray ;;
+      7) check_nodes ;;
       0) exit 0 ;;
       *) red "输入错误，请重试！" ;;
     esac
