@@ -615,11 +615,11 @@ uninstall_xray() {
 create_shortcut() {
   cat <<EOF > "$WORK_DIR/2go.sh"
 #!/usr/bin/env bash
-bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/2go.sh \$1
+bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/2go.sh) \$1
 EOF
   chmod +x "$WORK_DIR/2go.sh"
   ln -sf "$WORK_DIR/2go.sh" /usr/bin/2go
-  [[ -s /usr/bin/2go ]] && green "快捷特权全局系统指令 '2go' 分配成功！" || red "软连接构建失效。"
+  [[ -s /usr/bin/2go ]] && green "快捷特权全局系统指令 '2go' 创建成功！" || red "软连接构建失效。"
 }
 
 change_hosts() {
