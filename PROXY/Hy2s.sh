@@ -661,7 +661,7 @@ menu() {
     echo -e "${GREEN}6. 停止 Hysteria 2${RESET}"
     echo -e "${GREEN}7. 重启 Hysteria 2${RESET}"
     echo -e "${GREEN}8. 查看日志${RESET}"
-    echo -e "${GREEN}9. 查看当前配置${RESET}"
+    echo -e "${GREEN}9. 查看节点配置${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
 
