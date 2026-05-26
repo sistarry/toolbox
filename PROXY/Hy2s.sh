@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 #
-# Hysteria 2 终极一体化管理面板
+# Hysteria 2 管理面板
 # SPDX-License-Identifier: MIT
 #
-
 # =========================================================
 # 1. 核心控制与全局环境初始化
 # =========================================================
@@ -657,12 +656,12 @@ menu() {
     echo -e "${GREEN}1. 安装 Hysteria 2${RESET}"
     echo -e "${GREEN}2. 更新 Hysteria 2${RESET}"
     echo -e "${GREEN}3. 卸载 Hysteria 2${RESET}"
-    echo -e "${GREEN}4. 启动 Hysteria 2${RESET}"
-    echo -e "${GREEN}5. 停止 Hysteria 2${RESET}"
-    echo -e "${GREEN}6. 重启 Hysteria 2${RESET}"
-    echo -e "${GREEN}7. 查看日志${RESET}"
-    echo -e "${GREEN}8. 修改配置 (端口/证书/密码/伪装)${RESET}"
-    echo -e "${GREEN}9. 查看配置文件与链接${RESET}"
+    echo -e "${GREEN}4. 修改配置${RESET}"
+    echo -e "${GREEN}5. 启动 Hysteria 2${RESET}"
+    echo -e "${GREEN}6. 停止 Hysteria 2${RESET}"
+    echo -e "${GREEN}7. 重启 Hysteria 2${RESET}"
+    echo -e "${GREEN}8. 查看日志${RESET}"
+    echo -e "${GREEN}9. 查看当前配置${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
 
@@ -674,11 +673,11 @@ menu() {
       1) insthysteria; pause ;;
       2) update_hysteria; pause ;;
       3) unsthysteria; pause ;;
-      4) systemctl start hysteria-server && info "服务已成功启动！"; pause ;;
-      5) systemctl stop hysteria-server && info "服务已成功停止！"; pause ;;
-      6) systemctl restart hysteria-server && info "服务已成功重启！"; pause ;;
-      7) journalctl -u hysteria-server.service -n 50 --no-pager; pause ;;
-      8) changeconf; pause ;;
+      4) changeconf; pause ;;
+      5) systemctl start hysteria-server && info "服务已成功启动！"; pause ;;
+      6) systemctl stop hysteria-server && info "服务已成功停止！"; pause ;;
+      7) systemctl restart hysteria-server && info "服务已成功重启！"; pause ;;
+      8) journalctl -u hysteria-server.service -n 50 --no-pager; pause ;;
       9) showconf; pause ;;
       0) exit 0 ;;
       *) error "无效输入，请重新选择。"; sleep 1 ;;
