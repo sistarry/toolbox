@@ -77,3 +77,8 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/VPSD
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/update13.sh)
 ```
 
+### CFWARP
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/CFWARP.sh)
+```
+
