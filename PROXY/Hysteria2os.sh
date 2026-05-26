@@ -26,11 +26,11 @@ case "$OS" in
     debian|ubuntu|centos|rocky|almalinux|fedora)
         echo -e "${GREEN}检测到系统为 $OS${RESET}"
         # 执行原版脚本
-        bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHysteria2.sh)
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Hy2s.sh)
         ;;
     *)
         echo -e "${RED}❌ 错误: 未能识别或暂不支持您的系统 ($OS)。${RESET}"
         echo -e "${YELLOW}尝试默认运行原版脚本...${RESET}"
-        bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHysteria2.sh)
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Hy2s.sh)
         ;;
 esac
