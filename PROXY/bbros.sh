@@ -83,10 +83,10 @@ case "$OS" in
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
         echo -e "${GREEN}检测到系统为 $OS (KVM/独立内核)，调用标准 BBR${RESET}"
-        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRTCP.sh)
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRTU.sh)
         ;;
     *)
         echo -e "${YELLOW}未能精准识别系统，尝试运行通用BBR...${RESET}"
-        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRTCP.sh)
+        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRTU.sh)
         ;;
 esac
