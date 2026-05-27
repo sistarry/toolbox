@@ -313,7 +313,6 @@ check_ddns_status() {
 # 后续操作
 go_ahead(){
     echo -e "${Tip}选择一个选项：
-  ${GREEN}0${NC}：退出
   ${GREEN}1${NC}：重启 DDNS
   ${GREEN}2${NC}：停止 DDNS
   ${GREEN}3${NC}：卸载 DDNS
