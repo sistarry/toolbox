@@ -275,7 +275,7 @@ EOF
 
     # ===== Surge =====
     cat > "${SS_DIR}/surge.txt" <<EOF
-localhost = ss, ${IP}, ${port}, encrypt-method=${METHOD}, password=${password}, tfo=true, udp-relay=true, ecn=true
+${HOSTNAME}-SS2022 = ss, ${IP}, ${port}, encrypt-method=${METHOD}, password=${password}, tfo=true, udp-relay=true, ecn=true
 EOF
 }
 
