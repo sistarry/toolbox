@@ -438,10 +438,10 @@ EOF
 
   cat << EOF > "$HY_DIR/url.txt"
 V2rayN配置:
-hysteria2://$auth_pwd@$last_ip:$port?insecure=1&sni=$hy_domain#$HOSTNAME
+hysteria2://$auth_pwd@$last_ip:$port?insecure=1&sni=$hy_domain#$HOSTNAME-hy2
 
 Surge配置:
-$HOSTNAME = hysteria2, $last_ip, $port, password=$auth_pwd, skip-cert-verify=true, sni=$hy_domain
+$HOSTNAME-hy2 = hysteria2, $last_ip, $port, password=$auth_pwd, skip-cert-verify=true, sni=$hy_domain
 EOF
 
   systemctl daemon-reload
