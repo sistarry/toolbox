@@ -243,6 +243,9 @@ configure_bbr() {
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 
+# --- 开启 TCP Fast Open ---
+net.ipv4.tcp_fastopen = 3
+
 # --- 缓冲区优化 ---
 net.core.rmem_max = ${rmem_wmem}
 net.core.wmem_max = ${rmem_wmem}
