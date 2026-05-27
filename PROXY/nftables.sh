@@ -1108,7 +1108,7 @@ main_menu() {
         echo "  4) 删除端口转发"
         echo "  5) 一键清空所有转发"
         echo "  6) 诊断/自检"
-        echo "  7) 退出"
+        echo "  0) 退出"
         echo "========================================"
         read -rp "请选择操作: " choice
 
@@ -1119,8 +1119,7 @@ main_menu() {
             4) do_delete ;;
             5) do_clear_all ;;
             6) do_diagnose ;;
-            7)
-                info "再见！"
+            0)
                 exit 0
                 ;;
             *)
