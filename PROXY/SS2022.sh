@@ -667,11 +667,11 @@ show_menu() {
 
     echo -e "${GREEN}================================${RESET}"
 
-    echo -e "状态   : $STATUS"
+    echo -e "${GREEN}状态   :${RESET} $STATUS"
 
-    echo -e "版本   : ${YELLOW}${VERSION_SHOW}${RESET}"
+    echo -e "${GREEN}版本   :${RESET} ${YELLOW}${VERSION_SHOW}${RESET}"
 
-    echo -e "端口   : ${YELLOW}${PORT_SHOW}${RESET}"
+    echo -e "${GREEN}端口   :${RESET} ${YELLOW}${PORT_SHOW}${RESET}"
 
     echo -e "${GREEN}================================${RESET}"
 
