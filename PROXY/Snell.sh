@@ -60,6 +60,21 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
+# 动态获取官方最新 Snell v5 版本
+get_latest_snell_version() {
+    local latest_version
+    # 模拟常见浏览器 User-Agent，防止被拦截
+    latest_version=$(curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+        "https://kb.nssurge.com/surge-knowledge-base/zh/release-notes/snell" | \
+        grep -oE 'v5\.[0-9]+\.[0-9]+' | head -n 1 2>/dev/null || echo "")
+        
+    # 兜底：如果抓取失败，使用目前的 v5.0.1 保证脚本可用
+    if [[ -z "$latest_version" ]]; then
+        latest_version="v5.0.1"
+    fi
+    echo "$latest_version"
+}
+
 # ================== 配置 Snell ==================
 configure_snell() {
     echo -e "${GREEN}[信息]开始配置 Snell...${RESET}"
@@ -135,7 +150,6 @@ EOF
     echo -e "${YELLOW} IPv6           : $ipv6${RESET}"
     echo -e "${YELLOW} TFO            : $tfo${RESET}"
     echo -e "${YELLOW} DNS            : $dns${RESET}"
-    echo -e "${YELLOW} 版本           : ${VERSION:-v5}${RESET}"
     echo -e "${YELLOW}---------------------------------${RESET}"
     echo -e "${YELLOW}📄 V6VPS 替换IP地址为V6 ★${RESET}"
     echo -e "${YELLOW}[信息] Surge 配置：${RESET}"
@@ -255,7 +269,6 @@ EOF
     echo -e "${YELLOW} IPv6           : $ipv6${RESET}"
     echo -e "${YELLOW} TFO            : $tfo${RESET}"
     echo -e "${YELLOW} DNS            : $dns${RESET}"
-    echo -e "${YELLOW} 版本           : ${VERSION:-v5}${RESET}"
     echo -e "${YELLOW}---------------------------------${RESET}"
     echo -e "${YELLOW}📄 V6VPS 替换IP地址为V6 ★${RESET}"
     echo -e "${YELLOW}[信息] Surge 配置：${RESET}"
@@ -265,13 +278,17 @@ EOF
 
 # ================== 安装 Snell ==================
 install_snell() {
+    echo -e "${GREEN}[信息] 正在获取官方最新版本号...${RESET}"
+    local VERSION
+    VERSION=$(get_latest_snell_version)
+    echo -e "${GREEN}[信息] 检测到官方最新版本为: ${VERSION}${RESET}"
+
     echo -e "${GREEN}[信息] 开始安装 Snell...${RESET}"
     create_user
     mkdir -p $SNELL_DIR
     cd $SNELL_DIR
 
     ARCH=$(uname -m)
-    VERSION="v5.0.1"
     if [[ "$ARCH" == "aarch64" ]]; then
         SNELL_URL="https://dl.nssurge.com/snell/snell-server-${VERSION}-linux-aarch64.zip"
     else
@@ -307,24 +324,25 @@ EOF
     systemctl enable snell
     systemctl start snell
     echo -e "${GREEN}[完成] Snell 已安装并启动${RESET}"
-    log "Snell 已安装并启动"
+    log "Snell 已安装并启动 (${VERSION})"
 }
 
 # ================== 更新 Snell ==================
 update_snell() {
-    echo -e "${GREEN}[信息] 更新 Snell...${RESET}"
-
     if [ ! -f "$SNELL_CONFIG" ]; then
         echo -e "${RED}未找到配置文件，无法更新${RESET}"
         return
     fi
 
+    echo -e "${GREEN}[信息] 正在获取官方最新版本号...${RESET}"
+    local VERSION
+    VERSION=$(get_latest_snell_version)
+    echo -e "${GREEN}[信息] 检测到官方最新版本为: ${VERSION}${RESET}"
+
     systemctl stop snell || true
     cd $SNELL_DIR
 
     ARCH=$(uname -m)
-    VERSION="v5.0.1"
-
     if [[ "$ARCH" == "aarch64" ]]; then
         SNELL_URL="https://dl.nssurge.com/snell/snell-server-${VERSION}-linux-aarch64.zip"
     else
@@ -338,8 +356,8 @@ update_snell() {
 
     systemctl restart snell
 
-    echo -e "${GREEN}[完成] Snell 已更新${RESET}"
-    log "Snell 已更新 "
+    echo -e "${GREEN}[完成] Snell 已更新至 ${VERSION}${RESET}"
+    log "Snell 已更新 (${VERSION})"
 }
 
 # ================== 卸载 Snell ==================
@@ -389,9 +407,9 @@ show_menu() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}         Snell 管理面板         ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "状态   : $STATUS"
-    echo -e "版本   : ${YELLOW}$VERSION_SHOW${RESET}"
-    echo -e "端口   : ${YELLOW}$PORT_SHOW${RESET}"
+    echo -e "${GREEN}状态   :${RESET} $STATUS"
+    echo -e "${GREEN}版本   :${RESET} ${YELLOW}$VERSION_SHOW${RESET}"
+    echo -e "${GREEN}端口   :${RESET} ${YELLOW}$PORT_SHOW${RESET}"
     echo -e "${GREEN}================================${RESET}"
 
     echo -e "${GREEN}1. 安装 Snell${RESET}"
