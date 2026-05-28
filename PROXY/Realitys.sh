@@ -371,7 +371,7 @@ show_current_config() {
     echo
 
     if [[ -f /root/xray_vless_reality.txt ]]; then
-        echo -e "${GREEN}====== VLESS 链接 ======${RESET}"
+        echo -e "${GREEN}====== 👉 v2rayN 分享链接 ======${RESET}"
         cat /root/xray_vless_reality.txt
     fi
 }
@@ -781,9 +781,9 @@ show_menu() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}  Xray Vless+Reality 管理面板      ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "状态   : $status"
-    echo -e "版本   : ${YELLOW}${version}${RESET}"
-    echo -e "端口   : ${YELLOW}${port_show}${RESET}"
+    echo -e "${GREEN}状态   :${RESET} $status"
+    echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
+    echo -e "${GREEN}端口   :${RESET} ${YELLOW}${port_show}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 1. 安装 Xray Vless+Reality${RESET}"
     echo -e "${GREEN} 2. 更新 Xray${RESET}"
