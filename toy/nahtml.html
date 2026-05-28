@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Global Infrastructure Group</title>
+
+  <meta name="description"
+        content="Global Infrastructure Group edge delivery platform." />
+
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- favicon -->
+  <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%230ea5e9%22/></svg>">
+
+  <!-- preload / preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link rel="dns-prefetch"
+        href="//images.unsplash.com">
+
+  <link rel="dns-prefetch"
+        href="//www.gstatic.com">
+
+  <!-- google fonts -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+
+  <!-- analytics -->
+  <script async
+          src="https://www.google-analytics.com/analytics.js"></script>
+
+  <style>
+    :root {
+      --text-main: #f8fafc;
+      --text-soft: rgba(248,250,252,0.72);
+      --text-muted: rgba(248,250,252,0.56);
+
+      --card-bg: rgba(255,255,255,0.12);
+      --card-border: rgba(255,255,255,0.18);
+
+      --success: #86efac;
+
+      --shadow:
+        0 24px 70px rgba(15,23,42,0.25);
+
+      --max-width: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+
+      font-family:
+        "Inter",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      color: var(--text-main);
+
+      background:
+        linear-gradient(
+          rgba(15,23,42,0.72),
+          rgba(15,23,42,0.72)
+        ),
+
+        url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=80");
+
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+
+      position: fixed;
+      inset: 0;
+
+      pointer-events: none;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,0.045) 1px,
+          transparent 1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,0.045) 1px,
+          transparent 1px
+        );
+
+      background-size: 44px 44px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.75),
+          transparent 78%
+        );
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      position: relative;
+
+      width: min(100%, var(--max-width));
+
+      margin: 0 auto;
+
+      padding: 28px 24px 36px;
+    }
+
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 20px;
+
+      padding: 14px 18px;
+
+      border-radius: 999px;
+
+      border:
+        1px solid var(--card-border);
+
+      background:
+        rgba(15,23,42,0.30);
+
+      backdrop-filter: blur(18px);
+
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      font-weight: 700;
+
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+
+      border-radius: 10px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(103,232,249,0.95),
+          rgba(59,130,246,0.9)
+        );
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+
+      gap: 18px;
+
+      color: var(--text-soft);
+
+      font-size: 14px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+
+      gap: 8px;
+
+      padding: 8px 12px;
+
+      border-radius: 999px;
+
+      background:
+        rgba(134,239,172,0.12);
+
+      border:
+        1px solid rgba(134,239,172,0.24);
+
+      color:
+        rgba(236,253,245,0.95);
+
+      font-size: 13px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: var(--success);
+
+      box-shadow:
+        0 0 0 6px rgba(134,239,172,0.12);
+    }
+
+    .hero {
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1.08fr)
+        minmax(320px, 0.92fr);
+
+      align-items: center;
+
+      gap: 44px;
+
+      padding: 110px 0 72px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+
+      gap: 10px;
+
+      margin-bottom: 22px;
+
+      padding: 8px 12px;
+
+      border-radius: 999px;
+
+      background:
+        rgba(255,255,255,0.10);
+
+      border:
+        1px solid rgba(255,255,255,0.14);
+
+      color:
+        rgba(224,242,254,0.92);
+
+      font-size: 14px;
+    }
+
+    .eyebrow::before {
+      content: "";
+
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: #67e8f9;
+    }
+
+    h1 {
+      margin: 0;
+
+      max-width: 720px;
+
+      font-size:
+        clamp(42px, 7vw, 78px);
+
+      line-height: 0.98;
+
+      letter-spacing: -0.065em;
+    }
+
+    .hero-copy {
+      max-width: 640px;
+
+      margin: 24px 0 0;
+
+      color: var(--text-soft);
+
+      font-size:
+        clamp(18px, 2vw, 23px);
+
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+
+      gap: 14px;
+
+      margin-top: 34px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      min-height: 48px;
+
+      padding: 0 20px;
+
+      border-radius: 999px;
+
+      font-weight: 600;
+
+      font-size: 15px;
+
+      transition:
+        transform 180ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button-primary {
+      background: #f8fafc;
+
+      color: #0f172a;
+    }
+
+    .button-secondary {
+      border:
+        1px solid rgba(255,255,255,0.24);
+
+      background:
+        rgba(255,255,255,0.08);
+    }
+
+    .panel {
+      padding: 24px;
+
+      border-radius: 30px;
+
+      background: var(--card-bg);
+
+      border:
+        1px solid var(--card-border);
+
+      backdrop-filter: blur(22px);
+
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      margin-top: 18px;
+
+      padding: 22px;
+
+      border-radius: 22px;
+
+      background:
+        rgba(255,255,255,0.08);
+
+      border:
+        1px solid rgba(255,255,255,0.08);
+    }
+
+    .metric-label {
+      color: var(--text-soft);
+
+      font-size: 14px;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .features {
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      gap: 18px;
+
+      margin: 12px 0 72px;
+    }
+
+    .item {
+      padding: 26px;
+
+      border-radius: 26px;
+
+      background:
+        rgba(255,255,255,0.12);
+
+      border:
+        1px solid rgba(255,255,255,0.16);
+
+      backdrop-filter: blur(18px);
+
+      box-shadow: var(--shadow);
+    }
+
+    .item h3 {
+      margin: 0;
+
+      font-size: 20px;
+    }
+
+    .item p {
+      margin: 12px 0 0;
+
+      color: var(--text-soft);
+
+      line-height: 1.7;
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 18px;
+
+      padding: 24px 0 8px;
+
+      color: var(--text-muted);
+
+      font-size: 13px;
+    }
+
+    .site-index {
+      display: none;
+      visibility: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .nav-links {
+        display: none;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <header class="nav-bar">
+
+    <a class="brand" href="/">
+      <span class="brand-mark"></span>
+      <span>Global Infrastructure Group</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="#network">Network</a>
+      <a href="#status">Status</a>
+      <a href="#coverage">Coverage</a>
+    </nav>
+
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      Operational
+    </div>
+
+  </header>
+
+  <main>
+
+    <section class="hero" id="network">
+
+      <div>
+
+        <div class="eyebrow">
+          Edge Delivery Node 042
+        </div>
+
+        <h1>
+          分布式边缘网络
+        </h1>
+
+        <p class="hero-copy">
+          为全球用户提供高速、稳定的静态资源调度服务。
+          通过智能路径优化、缓存策略与区域化接入能力，
+          持续提升内容访问体验。
+        </p>
+
+        <div class="hero-actions">
+
+          <a class="button button-primary"
+             href="#status">
+            查看网络状态
+          </a>
+
+          <a class="button button-secondary"
+             href="#coverage">
+            了解覆盖能力
+          </a>
+
+        </div>
+
+      </div>
+
+      <aside class="panel" id="status">
+
+        <h2>Realtime Metrics</h2>
+
+        <p style="color:var(--text-soft)">
+          Last updated automatically
+        </p>
+
+        <div class="metric">
+          <div class="metric-label">
+            Average Response
+          </div>
+
+          <div class="metric-value">
+            28ms
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Cache Hit Ratio
+          </div>
+
+          <div class="metric-value">
+            96.4%
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Regional Capacity
+          </div>
+
+          <div class="metric-value">
+            82%
+          </div>
+        </div>
+
+      </aside>
+
+    </section>
+
+    <section class="features" id="coverage">
+
+      <article class="item">
+        <h3>低延迟响应</h3>
+
+        <p>
+          基于多区域接入与缓存命中策略，
+          减少重复回源并提升静态资源加载速度。
+        </p>
+      </article>
+
+      <article class="item">
+        <h3>高可用架构</h3>
+
+        <p>
+          采用多节点冗余与健康检查机制，
+          在异常情况下自动切换到可用路径。
+        </p>
+      </article>
+
+      <article class="item">
+        <h3>自动化调度</h3>
+
+        <p>
+          持续分析入站请求、区域容量与链路质量，
+          动态选择更合适的资源路径。
+        </p>
+      </article>
+
+    </section>
+
+  </main>
+
+  <footer>
+
+    <span>
+      &copy; 2026 Global Infrastructure Group.
+      All rights reserved.
+    </span>
+
+    <span>
+      Node Status: Operational
+    </span>
+
+  </footer>
+
+</div>
+
+<!-- hidden resource index -->
+<section class="site-index" aria-hidden="true">
+
+  <a href="https://www.google.com/images/phd/user_photos/any_name.png">
+    asset-profile
+  </a>
+
+  <a href="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png">
+    asset-branding
+  </a>
+
+  <a href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2boKoduKmMEVuLyfMZhrib2Bg-4.woff2">
+    asset-font
+  </a>
+
+  <a href="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&amp;fit=crop&amp;w=1600&amp;q=80">
+    asset-cover
+  </a>
+
+  <a href="https://www.google-analytics.com/analytics.js">
+    asset-analytics
+  </a>
+
+</section>
+
+</body>
+</html>
