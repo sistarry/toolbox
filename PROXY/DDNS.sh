@@ -568,7 +568,7 @@ test_tg_notification() {
         return
     fi
     echo -e "${Info} 正在发送测试消息..."
-    test_msg="🔔 DDNS 测试通知VPS$(hostname)状态: 配置正常"
+    test_msg="🔔 DDNS 测试通知VPS状态: 配置正常"
     
     status_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot$Telegram_Bot_Token/sendMessage" \
         -d "chat_id=$Telegram_Chat_ID" \
