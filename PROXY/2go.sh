@@ -850,7 +850,15 @@ menu() {
         else
           manage_packages install jq unzip iptables openssl coreutils lsof
           install_xray
-          if ! is_alpine; then main_systemd_services; else alpine_openrc_services; change_hosts; fi
+          if ! is_alpine; then 
+            main_systemd_services
+          else 
+            alpine_openrc_services
+            change_hosts
+            # ===== 针对 Alpine 显式启动并重启服务 =====
+            rc-service xray restart >/dev/null 2>&1 || rc-service xray start >/dev/null 2>&1
+            rc-service tunnel restart >/dev/null 2>&1 || rc-service tunnel start >/dev/null 2>&1
+          fi
           sleep 2
           save_outbound_env; get_info; create_shortcut
         fi
