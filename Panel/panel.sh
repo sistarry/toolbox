@@ -47,6 +47,8 @@ menu() {
     echo -e "${YELLOW}[17] Typecho${RESET}"
     echo -e "${YELLOW}[18] Typecho(MYSQL)${RESET}"
     echo -e "${YELLOW}[19] Rhex论坛${RESET}"
+    echo -e "${YELLOW}[20] 小皮面板${RESET}"
+    echo -e "${YELLOW}[21] SamWaf${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
@@ -128,6 +130,14 @@ menu() {
             ;;
         19)
             bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Rhex.sh)
+            pause
+            ;;
+        20)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/XPPanel.sh)
+            pause
+            ;;
+        21)
+            bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/SamWaf.sh)
             pause
             ;;
          
