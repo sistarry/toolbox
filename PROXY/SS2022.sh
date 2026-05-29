@@ -347,7 +347,7 @@ configure_ss() {
     echo -e "${YELLOW} DNS           : ${dns}${RESET}"
 
     echo -e "${YELLOW}---------------------------------${RESET}"
-     echo -e "${YELLOW}📄 V6VPS 替换IP地址为V6 ★${RESET}"
+    echo -e "${YELLOW}📄 V6VPS 替换IP地址为V6 ★${RESET}"
 
     echo -e "${YELLOW}[信息] SS链接：${RESET}"
 
