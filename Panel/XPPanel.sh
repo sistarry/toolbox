@@ -62,7 +62,7 @@ set -e
 
 echo
 if [[ $INSTALL_EXIT -eq 0 ]]; then
-    ok "安装脚本执行完成！"
+    ok "安装执行完成！"
 else
-    warn "安装脚本返回异常（退出码: $INSTALL_EXIT）"
+    warn "安装返回异常"
 fi
