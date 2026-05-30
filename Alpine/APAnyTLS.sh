@@ -14,7 +14,6 @@ CYAN="\033[36m"
 RESET="\033[0m"
 
 # ================== 基础变量 ==================
-SCRIPT_VERSION="1.0"
 SERVICE_NAME="anytls"
 BINARY_NAME="anytls-server"
 BINARY_DIR="/usr/local/bin"
