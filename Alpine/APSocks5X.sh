@@ -261,7 +261,6 @@ show_current_config() {
     echo -e "${YELLOW}端口         : ${port}${RESET}"
     echo -e "${YELLOW}用户名       : ${user}${RESET}"
     echo -e "${YELLOW}密码         : ${pass}${RESET}"
-    echo -e "${YELLOW}出口模式     : 直连 (Freedom)${RESET}"
     echo -e "${YELLOW}分享存放路径 : ${X_LINK}${RESET}"
     
     if [[ -f "$X_LINK" ]]; then
