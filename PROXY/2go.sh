@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Xray-Argo 终极一体化管理面板
+# Xray-Argo 一体化管理面板 
 # SPDX-License-Identifier: MIT
 #
 
@@ -10,12 +10,18 @@
 set -Eop pipefail
 export LANG=en_US.UTF-8
 
-# 核心常量定义
-readonly SERVER_NAME="xray"
-readonly WORK_DIR="/etc/xray"
+# ==========================================
+# 隔离定义：重定义所有名称与路径，防止与其他脚本冲突
+# ==========================================
+readonly SERVER_NAME="xray-mix"
+readonly WORK_DIR="/etc/xray_argo_mix"
 readonly CONFIG_DIR="${WORK_DIR}/config.json"
 readonly CLIENT_DIR="${WORK_DIR}/url.txt"
 readonly OUTBOUND_ENV_FILE="${WORK_DIR}/outbound.env"
+
+# 服务命名隔离
+readonly XRAY_SERVICE_NAME="xray-mix"
+readonly ARGO_SERVICE_NAME="tunnel-mix"
 
 # 动态环境变量初始化
 export UUID=${UUID:-$(cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "00000000-0000-0000-0000-000000000000")}
@@ -59,9 +65,9 @@ is_alpine() { [[ -f /etc/alpine-release ]]; }
 check_xray() {
   if [[ -f "${WORK_DIR}/${SERVER_NAME}" ]]; then
     if is_alpine; then
-      rc-service xray status 2>/dev/null | grep -q "started" && return 0 || return 1
+      rc-service ${XRAY_SERVICE_NAME} status 2>/dev/null | grep -q "started" && return 0 || return 1
     else 
-      [[ "$(systemctl is-active xray 2>/dev/null)" = "active" ]] && return 0 || return 1
+      [[ "$(systemctl is-active ${XRAY_SERVICE_NAME} 2>/dev/null)" = "active" ]] && return 0 || return 1
     fi
   else
     return 2
@@ -71,9 +77,9 @@ check_xray() {
 check_argo() {
   if [[ -f "${WORK_DIR}/argo" ]]; then
     if is_alpine; then
-      rc-service tunnel status 2>/dev/null | grep -q "started" && return 0 || return 1
+      rc-service ${ARGO_SERVICE_NAME} status 2>/dev/null | grep -q "started" && return 0 || return 1
     else 
-      [[ "$(systemctl is-active tunnel 2>/dev/null)" = "active" ]] && return 0 || return 1
+      [[ "$(systemctl is-active ${ARGO_SERVICE_NAME} 2>/dev/null)" = "active" ]] && return 0 || return 1
     fi
   else
     return 2
@@ -263,6 +269,7 @@ rebuild_xray_config() {
   local outbounds_json=$(build_outbounds_json)
   local routing_json=$(build_routing_json)
 
+  # 内部回落端口也一并加上偏移（原3001-3003改为13001-13003），死死隔离
   cat <<EOF > "${CONFIG_DIR}"
 {
   "log": { "access": "/dev/null", "error": "/dev/null", "loglevel": "none" },
@@ -274,25 +281,25 @@ rebuild_xray_config() {
         "clients": [{ "id": "$UUID" }],
         "decryption": "none",
         "fallbacks": [
-          { "dest": 3001 }, 
-          { "path": "/vless-argo", "dest": 3002 },
-          { "path": "/vmess-argo", "dest": 3003 }
+          { "dest": 13001 }, 
+          { "path": "/vless-argo", "dest": 13002 },
+          { "path": "/vmess-argo", "dest": 13003 }
         ]
       },
       "streamSettings": { "network": "tcp" },
       "sniffing": { "enabled": true, "destOverride": ["http", "tls"] }
     },
     {
-      "port": 3001, "listen": "127.0.0.1", "protocol": "vless",
+      "port": 13001, "listen": "127.0.0.1", "protocol": "vless",
       "settings": { "clients": [{ "id": "$UUID" }], "decryption": "none" }
     },
     {
-      "port": 3002, "listen": "127.0.0.1", "protocol": "vless",
+      "port": 13002, "listen": "127.0.0.1", "protocol": "vless",
       "settings": { "clients": [{ "id": "$UUID" }], "decryption": "none" },
       "streamSettings": { "network": "ws", "wsSettings": { "path": "/vless-argo" } }
     },
     {
-      "port": 3003, "listen": "127.0.0.1", "protocol": "vmess",
+      "port": 13003, "listen": "127.0.0.1", "protocol": "vmess",
       "settings": { "clients": [{ "id": "$UUID" }] },
       "streamSettings": { "network": "ws", "wsSettings": { "path": "/vmess-argo" } }
     }
@@ -309,7 +316,7 @@ configure_socks5_outbound() {
   green "================================="
   green "         出口模式设置            "
   green "================================="
-  green " 1. 直连节点出口"
+  green " 1. 直连出口"
   green " 2. 自定义SOCKS5"
   purple " 0. 返回主菜单"
   green "================================="
@@ -362,7 +369,7 @@ configure_socks5_outbound() {
 # =========================================================
 install_xray() {
   clear
-  purple "正在部署高端智能化 Xray-Argo 双栈系统，请稍候..."
+  purple "正在部署高端智能化隔离版 Xray-Argo 双栈系统，请稍候..."
   
   local ARCH_RAW=$(uname -m)
   local ARCH ARCH_ARG
@@ -380,6 +387,8 @@ install_xray() {
   curl -sLo "${WORK_DIR}/argo" "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}"
   
   unzip -q -o "${WORK_DIR}/${SERVER_NAME}.zip" -d "${WORK_DIR}/" || true
+  # 将解压出来的原生 xray 改名为我们专属的守护进程名，实现彻底物理分离
+  mv "${WORK_DIR}/xray" "${WORK_DIR}/${SERVER_NAME}" 2>/dev/null || true
   chmod +x "${WORK_DIR}/${SERVER_NAME}" "${WORK_DIR}/argo"
   rm -rf "${WORK_DIR}/${SERVER_NAME}.zip" "${WORK_DIR}/geosite.dat" "${WORK_DIR}/geoip.dat" "${WORK_DIR}/README.md" "${WORK_DIR}/LICENSE" 
 
@@ -393,16 +402,16 @@ install_xray() {
 }
 
 main_systemd_services() {
-  cat <<EOF > /etc/systemd/system/xray.service
+  cat <<EOF > /etc/systemd/system/${XRAY_SERVICE_NAME}.service
 [Unit]
-Description=Xray Engine Daemon Service
+Description=Xray Engine Mix Daemon Service
 After=network.target nss-lookup.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 NoNewPrivileges=yes
-ExecStart=$WORK_DIR/xray run -c $CONFIG_DIR
+ExecStart=$WORK_DIR/$SERVER_NAME run -c $CONFIG_DIR
 Restart=on-failure
 RestartPreventExitStatus=23
 
@@ -410,9 +419,9 @@ RestartPreventExitStatus=23
 WantedBy=multi-user.target
 EOF
 
-  cat <<EOF > /etc/systemd/system/tunnel.service
+  cat <<EOF > /etc/systemd/system/${ARGO_SERVICE_NAME}.service
 [Unit]
-Description=Cloudflare Argo Tunnel Dynamic Backdoor
+Description=Cloudflare Argo Tunnel Mix Dynamic Backdoor
 After=network.target
 
 [Service]
@@ -438,34 +447,34 @@ EOF
 
   echo "0 0" > /proc/sys/net/ipv4/ping_group_range || true
   systemctl daemon-reload
-  systemctl enable xray >/dev/null 2>&1 || true
-  systemctl restart xray >/dev/null 2>&1 || true
-  systemctl enable tunnel >/dev/null 2>&1 || true
-  systemctl restart tunnel >/dev/null 2>&1 || true
+  systemctl enable ${XRAY_SERVICE_NAME} >/dev/null 2>&1 || true
+  systemctl restart ${XRAY_SERVICE_NAME} >/dev/null 2>&1 || true
+  systemctl enable ${ARGO_SERVICE_NAME} >/dev/null 2>&1 || true
+  systemctl restart ${ARGO_SERVICE_NAME} >/dev/null 2>&1 || true
 }
 
 alpine_openrc_services() {
-  cat <<'EOF' > /etc/init.d/xray
+  cat <<EOF > /etc/init.d/${XRAY_SERVICE_NAME}
 #!/sbin/openrc-run
-description="Xray OpenRC Service"
-command="/etc/xray/xray"
-command_args="run -c /etc/xray/config.json"
+description="Xray OpenRC Mix Service"
+command="${WORK_DIR}/${SERVER_NAME}"
+command_args="run -c ${CONFIG_DIR}"
 command_background=true
-pidfile="/var/run/xray.pid"
+pidfile="/var/run/${XRAY_SERVICE_NAME}.pid"
 EOF
 
-  cat <<'EOF' > /etc/init.d/tunnel
+  cat <<EOF > /etc/init.d/${ARGO_SERVICE_NAME}
 #!/sbin/openrc-run
-description="Cloudflare Tunnel OpenRC Service"
+description="Cloudflare Tunnel OpenRC Mix Service"
 command="/bin/sh"
-command_args="-c '/etc/xray/argo tunnel --url http://localhost:8080 --no-autoupdate --edge-ip-version auto --protocol http2 > /etc/xray/argo.log 2>&1'"
+command_args="-c '${WORK_DIR}/argo tunnel --url http://localhost:${ARGO_PORT} --no-autoupdate --edge-ip-version auto --protocol http2 > ${WORK_DIR}/argo.log 2>&1'"
 command_background=true
-pidfile="/var/run/tunnel.pid"
+pidfile="/var/run/${ARGO_SERVICE_NAME}.pid"
 EOF
 
-  chmod +x /etc/init.d/xray /etc/init.d/tunnel
-  rc-update add xray default >/dev/null 2>&1 || true
-  rc-update add tunnel default >/dev/null 2>&1 || true
+  chmod +x /etc/init.d/${XRAY_SERVICE_NAME} /etc/init.d/${ARGO_SERVICE_NAME}
+  rc-update add ${XRAY_SERVICE_NAME} default >/dev/null 2>&1 || true
+  rc-update add ${ARGO_SERVICE_NAME} default >/dev/null 2>&1 || true
 }
 
 # =========================================================
@@ -558,58 +567,58 @@ get_quick_tunnel() {
 # 7. 服务运行控制机制 (Xray & Argo)
 # =========================================================
 start_xray() {
-  yellow "正在启动 Xray 核心服务..."
-  if is_alpine; then rc-service xray start; else systemctl start xray; fi
+  yellow "正在启动 Xray 核心独立服务..."
+  if is_alpine; then rc-service ${XRAY_SERVICE_NAME} start; else systemctl start ${XRAY_SERVICE_NAME}; fi
   green "服务启动命令完成"
 }
 
 stop_xray() {
-  yellow "正在停止 Xray 核心服务..."
-  if is_alpine; then rc-service xray stop; else systemctl stop xray; fi
+  yellow "正在停止 Xray 核心独立服务..."
+  if is_alpine; then rc-service ${XRAY_SERVICE_NAME} stop; else systemctl stop ${XRAY_SERVICE_NAME}; fi
   green "服务关闭命令完成"
 }
 
 restart_xray() {
-  yellow "正在重启 Xray 核心服务..."
-  if is_alpine; then rc-service xray restart; else systemctl daemon-reload && systemctl restart xray; fi
+  yellow "正在重启 Xray 核心独立服务..."
+  if is_alpine; then rc-service ${XRAY_SERVICE_NAME} restart; else systemctl daemon-reload && systemctl restart ${XRAY_SERVICE_NAME}; fi
   green "服务重启命令完成"
 }
 
 start_argo() {
-  yellow "正在启动 Argo 隧道守护进程..."
-  if is_alpine; then rc-service tunnel start; else systemctl start tunnel; fi
+  yellow "正在启动 Argo 隧道独立守护进程..."
+  if is_alpine; then rc-service ${ARGO_SERVICE_NAME} start; else systemctl start ${ARGO_SERVICE_NAME}; fi
 }
 
 stop_argo() {
-  yellow "正在关闭 Argo 隧道守护进程..."
-  if is_alpine; then rc-service tunnel stop; else systemctl stop tunnel; fi
+  yellow "正在关闭 Argo 隧道独立守护进程..."
+  if is_alpine; then rc-service ${ARGO_SERVICE_NAME} stop; else systemctl stop ${ARGO_SERVICE_NAME}; fi
 }
 
 restart_argo() {
-  yellow "正在重启 Argo 隧道组件..."
+  yellow "正在重启 Argo 隧道独立组件..."
   rm -f "${WORK_DIR}/argo.log"
-  if is_alpine; then rc-service tunnel restart; else systemctl daemon-reload && systemctl restart tunnel; fi
+  if is_alpine; then rc-service ${ARGO_SERVICE_NAME} restart; else systemctl daemon-reload && systemctl restart ${ARGO_SERVICE_NAME}; fi
 }
 
 uninstall_xray() {
   yellow "开始彻底卸载 Xray-Argo ..."
 
   if is_alpine; then
-    rc-service xray stop >/dev/null 2>&1 || true
-    rc-service tunnel stop >/dev/null 2>&1 || true
-    rc-update del xray default >/dev/null 2>&1 || true
-    rc-update del tunnel default >/dev/null 2>&1 || true
-    rm -f /etc/init.d/xray /etc/init.d/tunnel
+    rc-service ${XRAY_SERVICE_NAME} stop >/dev/null 2>&1 || true
+    rc-service ${ARGO_SERVICE_NAME} stop >/dev/null 2>&1 || true
+    rc-update del ${XRAY_SERVICE_NAME} default >/dev/null 2>&1 || true
+    rc-update del ${ARGO_SERVICE_NAME} default >/dev/null 2>&1 || true
+    rm -f /etc/init.d/${XRAY_SERVICE_NAME} /etc/init.d/${ARGO_SERVICE_NAME}
   else
-    systemctl stop xray tunnel >/dev/null 2>&1 || true
-    systemctl disable xray tunnel >/dev/null 2>&1 || true
-    rm -f /etc/systemd/system/xray.service /etc/systemd/system/tunnel.service
+    systemctl stop ${XRAY_SERVICE_NAME} ${ARGO_SERVICE_NAME} >/dev/null 2>&1 || true
+    systemctl disable ${XRAY_SERVICE_NAME} ${ARGO_SERVICE_NAME} >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/${XRAY_SERVICE_NAME}.service /etc/systemd/system/${ARGO_SERVICE_NAME}.service
     systemctl daemon-reload
   fi
 
   rm -rf "${WORK_DIR}" /usr/bin/2go
 
-  green "Xray-Argo 已彻底卸载完成"
+  green "Xray-Argo 已彻底卸载完成。"
 }
 
 create_shortcut() {
@@ -621,7 +630,6 @@ EOF
   ln -sf "$WORK_DIR/2go.sh" /usr/bin/2go
   [[ -s /usr/bin/2go ]] && green "快捷特权全局系统指令 '2go' 创建成功！" || red "软连接构建失效。"
 }
-
 change_hosts() {
   echo "0 0" > /proc/sys/net/ipv4/ping_group_range || true
   sed -i '1s/.*/127.0.0.1   localhost/' /etc/hosts || true
@@ -634,9 +642,9 @@ check_nodes() {
   if [[ "$xray_exist" -ne 2 && -f "${WORK_DIR}/url.txt" ]]; then
     while IFS= read -r line; do purple "$line"; done < "${WORK_DIR}/url.txt"
     if [[ "$OUTBOUND_MODE" = "socks5" ]]; then
-      green "\n当前流出媒介：远端 SOCKS5 链条 -> (${SOCKS5_HOST}:${SOCKS5_PORT})\n"
+      green "\n当前出口：远端 SOCKS5 -> (${SOCKS5_HOST}:${SOCKS5_PORT})\n"
     else
-      green "\n当前流出媒介：原宿主主机直连公网\n"
+      green "\n当前出口：直连\n"
     fi
   else
     yellow "检测到核心数据盘缺失，请先安装节点组件"
@@ -651,9 +659,9 @@ view_logs() {
   green "================================="
   green "       Xray-Argo 日志诊断管理    "
   green "================================="
-  green " 1. 实时跟踪查看 Xray 运行内核流 (按 Ctrl+C 退出)"
-  green " 2. 实时跟踪查看 Argo 穿透网关流 (按 Ctrl+C 退出)"
-  green " 3. 清理系统内所有网关日志存储缓存"
+  green " 1. 实时跟踪查看 Xray  (按 Ctrl+C 退出)"
+  green " 2. 实时跟踪查看 Argo  (按 Ctrl+C 退出)"
+  green " 3. 清理系统内日志缓存"
   purple " 0. 返回上层菜单"
   green "================================="
   local log_choice
@@ -664,9 +672,9 @@ view_logs() {
       green "正在呼叫 Xray 内核诊断实时流 (退出请按 Ctrl + C)..."
       sleep 1
       if is_alpine; then
-        tail -f /var/log/messages 2>/dev/null || grep "xray" /var/log/messages || true
+        tail -f /var/log/messages 2>/dev/null || grep "${XRAY_SERVICE_NAME}" /var/log/messages || true
       else
-        journalctl -u xray.service -f || true
+        journalctl -u ${XRAY_SERVICE_NAME}.service -f || true
       fi
       ;;
     2)
@@ -700,11 +708,11 @@ view_logs() {
 manage_xray_menu() {
   clear
   green "================================="
-  green "         Xray 核心管理面板     "
+  green "         Xray 核心管理面板      "
   green "================================="
-  green " 1. 开启 Xray 主服务"
-  green " 2. 停止 Xray 主服务"
-  green " 3. 重启 Xray 主服务"
+  green " 1. 启动 Xray "
+  green " 2. 停止 Xray "
+  green " 3. 重启 Xray "
   purple " 0. 返回主菜单"
   green "================================="
   local cx
@@ -727,7 +735,7 @@ manage_argo_menu() {
 
   clear
   green "================================="
-  green "       Argo 隧道管理面板     "
+  green "       Argo 隧道管理面板         "
   green "================================="
   green " 1. 启动Argo隧道"
   green " 2. 停止Argo隧道"
@@ -743,7 +751,7 @@ manage_argo_menu() {
     2) stop_argo ;; 
     3)
       clear
-      yellow "\n固定隧道可为 Json 文件体或 Token 字符集，端口映射底层固定为 8080端口。\n官方Json隧道获取路径：https://fscarmen.cloudflare.now.cc\n"
+      yellow "\n固定隧道可为 Json 文件体或 Token 字符集，端口映射底层固定为 ${ARGO_PORT} 端口。官方Json隧道获取路径：https://fscarmen.cloudflare.now.cc\n"
       local argo_domain argo_auth
       reading "请输入你的绑定的独立公网域名: " argo_domain
       [[ -z "$argo_domain" ]] && { red "域名无效"; return; }
@@ -757,23 +765,23 @@ credentials-file: ${WORK_DIR}/tunnel.json
 protocol: http2
 ingress:
   - hostname: $argo_domain
-    service: http://localhost:8080
+    service: http://localhost:${ARGO_PORT}
     originRequest:
       noTLSVerify: true
   - service: http_status:404
 EOF
         if is_alpine; then
-          sed -i '/^command_args=/c\command_args="-c '\''/etc/xray/argo tunnel --edge-ip-version auto --config /etc/xray/tunnel.yml run 2>&1'\''"' /etc/init.d/tunnel
+          sed -i "/^command_args=/c\\command_args=\"-c '/etc/xray_argo_mix/argo tunnel --edge-ip-version auto --config /etc/xray_argo_mix/tunnel.yml run 2>&1'\"" /etc/init.d/${ARGO_SERVICE_NAME}
         else
-          sed -i '/^ExecStart=/c ExecStart=/bin/sh -c "/etc/xray/argo tunnel --edge-ip-version auto --config /etc/xray/tunnel.yml run 2>&1"' /etc/systemd/system/tunnel.service
+          sed -i "/^ExecStart=/c ExecStart=/bin/sh -c \"/etc/xray_argo_mix/argo tunnel --edge-ip-version auto --config /etc/xray_argo_mix/tunnel.yml run 2>&1\"" /etc/systemd/system/${ARGO_SERVICE_NAME}.service
         fi
         restart_argo
         change_argo_domain "$argo_domain"
       elif [[ $argo_auth =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
         if is_alpine; then
-          sed -i "/^command_args=/c\command_args=\"-c '/etc/xray/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $argo_auth 2>&1'\"" /etc/init.d/tunnel
+          sed -i "/^command_args=/c\\command_args=\"-c '/etc/xray_argo_mix/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $argo_auth 2>&1'\"" /etc/init.d/${ARGO_SERVICE_NAME}
         else
-          sed -i '/^ExecStart=/c ExecStart=/bin/sh -c "/etc/xray/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token '$argo_auth' 2>&1"' /etc/systemd/system/tunnel.service
+          sed -i "/^ExecStart=/c ExecStart=/bin/sh -c \"/etc/xray_argo_mix/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token '$argo_auth' 2>&1\"" /etc/systemd/system/${ARGO_SERVICE_NAME}.service
         fi
         restart_argo
         change_argo_domain "$argo_domain"
@@ -788,9 +796,9 @@ EOF
     5)  
       local is_dynamic=0
       if is_alpine; then
-        grep -Fq -- '--url http://localhost:8080' /etc/init.d/tunnel && is_dynamic=1
+        grep -Fq -- "--url http://localhost:${ARGO_PORT}" /etc/init.d/${ARGO_SERVICE_NAME} && is_dynamic=1
       else
-        grep -q 'ExecStart=.*--url http://localhost:8080' /etc/systemd/system/tunnel.service && is_dynamic=1
+        grep -q "ExecStart=.*--url http://localhost:${ARGO_PORT}" /etc/systemd/system/${ARGO_SERVICE_NAME}.service && is_dynamic=1
       fi
 
       if [[ "$is_dynamic" -eq 1 ]]; then
@@ -814,24 +822,25 @@ menu() {
     argo_status_view=$(get_argo_status_msg)
     
     if [[ "$OUTBOUND_MODE" = "socks5" ]]; then
-      out_view="${YELLOW}SOCKS5 Proxy Chain (${SOCKS5_HOST}:${SOCKS5_PORT})${RE}"
+      out_view="${YELLOW}SOCKS5(${SOCKS5_HOST}:${SOCKS5_PORT})${RE}"
     else
-      out_view="${GREEN}Native Direct (直连出口)${RE}"
+      out_view="${GREEN}直连出口${RE}"
     fi
 
     clear
     echo -e "${GREEN}=================================${RE}"
-    echo -e "${GREEN}      Xray-Argo 管理面板          ${RE}"
+    echo -e "${GREEN}       Xray-Argo 管理面板         ${RE}"
     echo -e "${GREEN}=================================${RE}"
-    echo -e " Xray 核心引擎 : $xray_status_view"
-    echo -e " Argo 穿透链路 : $argo_status_view"
-    echo -e " 智能分流出口  : $out_view"
+    echo -e "${GREEN} Xray 状态 :${RE} $xray_status_view"
+    echo -e "${GREEN} Argo 隧道 :${RE} $argo_status_view"
+    echo -e "${GREEN} Proxy模式 :${RE} $out_view"
+    echo -e "${GREEN} Argo 端口 :${RE} ${YELLOW}${ARGO_PORT}${RE}"
     echo -e "${GREEN}=================================${RE}"
-    echo -e " ${GREEN}1. 安装部署${RE}"
-    echo -e " ${GREEN}2. 卸载服务${RE}"
+    echo -e " ${GREEN}1. 安装 Xray-Argo${RE}"
+    echo -e " ${GREEN}2. 卸载 Xray-Argo${RE}"
     echo -e " ${GREEN}3. Xray状态管理${RE}"
     echo -e " ${GREEN}4. Argo隧道管理${RE}"
-    echo -e " ${GREEN}5. 配置节点出口模式 (直连/Socks5)${RE}"
+    echo -e " ${GREEN}5. 配置Socks5出口${RE}"
     echo -e " ${GREEN}6. 查看日志${RE}"
     echo -e " ${GREEN}7. 查看节点配置${RE}"
     echo -e " ${GREEN}0. 退出${RESET}"
@@ -846,7 +855,7 @@ menu() {
         local checked
         check_xray && checked=$? || checked=$?
         if [[ "$checked" -eq 0 ]]; then
-          yellow "检测到您的系统上已经部署，请勿重复操作！"
+          yellow "检测到您的隔离实例已经部署，请勿重复操作！"
         else
           manage_packages install jq unzip iptables openssl coreutils lsof
           install_xray
@@ -855,9 +864,8 @@ menu() {
           else 
             alpine_openrc_services
             change_hosts
-            # ===== 针对 Alpine 显式启动并重启服务 =====
-            rc-service xray restart >/dev/null 2>&1 || rc-service xray start >/dev/null 2>&1
-            rc-service tunnel restart >/dev/null 2>&1 || rc-service tunnel start >/dev/null 2>&1
+            rc-service ${XRAY_SERVICE_NAME} restart >/dev/null 2>&1 || rc-service ${XRAY_SERVICE_NAME} start >/dev/null 2>&1
+            rc-service ${ARGO_SERVICE_NAME} restart >/dev/null 2>&1 || rc-service ${ARGO_SERVICE_NAME} start >/dev/null 2>&1
           fi
           sleep 2
           save_outbound_env; get_info; create_shortcut
