@@ -39,7 +39,7 @@ systems=(
 "17|fedora43|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh fedora 43"
 "18|centos10|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 10"
 "19|centos9|RedHat系|bin456789|root|123@@@|22|bash reinstall.sh centos 9"
-"20|alpine|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh alpine 3.23"
+"20|Alpine Linux|其他Linux|MollyLau|root|LeitboGi0ro|22|bash InstallNET.sh -alpine"
 "21|arch|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh arch"
 "22|kali|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh kali"
 "23|openeuler|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh openeuler"
