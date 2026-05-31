@@ -384,7 +384,7 @@ show_menu() {
         port=$(grep 'ANYTLS_PORT=' "$ANYTLS_CONFIG" | cut -d= -f2)
 
     echo -e "${GREEN}==============================${RESET}"
-    echo -e "${GREEN}    AnyTLS 管理面板   ${RESET}"
+    echo -e "${GREEN}       AnyTLS 管理面板         ${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN}状态 :${RESET} $status"
     echo -e "${GREEN}版本 :${RESET} ${YELLOW}${version}${RESET}"
