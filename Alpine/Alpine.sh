@@ -98,7 +98,7 @@ menu() {
         14) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APDocker.sh) ;;
         15) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APFD.sh) ;;
         16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APShadowsocks-Rust.sh) ;;
-        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APRealityX.sh) ;;
+        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessRealityX.sh) ;;
         18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APHy2S.sh) ;;
         19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyTLSS.sh) ;;
         20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyRealityS.sh) ;;
