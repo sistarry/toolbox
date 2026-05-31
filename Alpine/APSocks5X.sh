@@ -88,7 +88,7 @@ write_config() {
         "port": $port,
         "protocol": "socks",
         "settings": {
-            "auth": "$([[ -n "$user" ]] && echo "password" || echo "noauth")",
+            "auth": "$([[ -n "$user" && -n "$pass" ]] && echo "password" || echo "noauth")",
             "accounts": $accounts_json,
             "udp": true
         }
@@ -117,26 +117,40 @@ modify_config() {
         is_valid_port "$n_port" && break || error "端口无效，请输入 1-65535 之间的数字。"
     done
 
-    # 2. 修改账号密码
-    read -p "请输入新用户名 (回车保持当前, 清空认证输 clear, 输 random 随机生成): " n_user
+    # 2. 修改用户名 (独立分离)
+    local n_user
+    read -p "请输入新用户名 (回车保持当前): " n_user
     n_user=${n_user:-$curr_user}
     
-    local n_pass=""
     if [[ "$n_user" == "clear" ]]; then
         n_user=""
-        n_pass=""
     elif [[ "$n_user" == "random" ]]; then
         n_user=$(openssl rand -hex 4)
-        n_pass=$(openssl rand -hex 8)
-        info "👉 已生成随机账号: $n_user"
-        info "👉 已生成随机密码: $n_pass"
-    elif [[ -n "$n_user" ]]; then
-        read -p "请输入新密码 (回车保持旧密码): " n_pass
-        n_pass=${n_pass:-$curr_pass}
+        info "👉 已生成随机用户名: $n_user"
+    fi
+    
+    # 3. 修改密码 (独立分离)
+    local n_pass=""
+    if [[ -n "$n_user" ]]; then
+        read -p "请输入新密码 (回车保持当前): " n_pass
+        if [[ -z "$n_pass" && -n "$curr_pass" ]]; then
+            n_pass="$curr_pass"
+        fi
+
+        if [[ "$n_pass" == "random" || -z "$n_pass" ]]; then
+            if [[ "$n_pass" == "random" || -z "$curr_pass" ]]; then
+                n_pass=$(openssl rand -hex 8)
+                info "👉 已生成随机密码: $n_pass"
+            fi
+        fi
+
         if [[ -z "$n_pass" ]]; then
-            error "启用了认证则密码不能为空！"
+            error "错误：启用了用户名认证，密码绝对不能为空！"
             return
         fi
+    else
+        n_pass=""
+        info "👉 认证已清空，变变成免密匿名模式。"
     fi
 
     write_config "$n_port" "$n_user" "$n_pass"
@@ -159,7 +173,7 @@ modify_config() {
     info "配置已更新并成功重启服务！"
 }
 
-# ================== 安装与管理 ==================
+# ================== 安装与管理 (账号密码彻底解耦独立生产) ==================
 install_xray() {
     info "正在安装依赖与内核..."
     apk update && apk add curl unzip jq uuidgen gcompat libc6-compat bc openssl > /dev/null 2>&1
@@ -182,18 +196,22 @@ install_xray() {
             is_valid_port "$port" && break || error "端口无效，请输入 1-65535 之间的数字。"
         done
         
-        # 自定义 Socks5 验证账号 (默认按回车直接生成随机账号密码)
+        local user pass
+        # 1. 独立询问用户名
         echo -ne "${GREEN}请输入 Socks5 用户名 (直接回车默认随机生成): ${RESET}"; read user
-        local pass=""
         if [[ -z "$user" ]]; then
             user=$(openssl rand -hex 4)   # 8位随机字符
-            pass=$(openssl rand -hex 8)   # 16位随机字符
             info "👉 采用默认随机生成用户名: ${user}"
+        fi
+        
+        # 2. 独立询问密码
+        echo -ne "${GREEN}请输入 Socks5 密码 (直接回车默认随机生成): ${RESET}"; read pass
+        if [[ -z "$pass" ]]; then
+            pass=$(openssl rand -hex 8)   # 16位随机字符
             info "👉 采用默认随机生成密 码: ${pass}"
         else
-            while true; do
-                echo -ne "${GREEN}请输入 Socks5 密码: ${RESET}"; read pass
-                [[ -n "$pass" ]] && break || error "设置了用户名，密码不能为空！"
+            while [[ -z "$pass" ]]; do
+                echo -ne "${GREEN}密码不能为空，请重新输入 Socks5 密码: ${RESET}"; read pass
             done
         fi
         
@@ -255,8 +273,6 @@ show_current_config() {
     [[ "$auth_status" == "password" ]] && auth_mode="用户名密码验证" || auth_mode="匿名免密 (noauth)"
 
     echo -e "\n${GREEN}====== 当前配置详情 ======${RESET}"
-    echo -e "${YELLOW}传输协议     : Socks5 代理${RESET}"
-    echo -e "${YELLOW}认证模式     : ${auth_mode}${RESET}"
     echo -e "${YELLOW}IP地址       : ${ip}${RESET}"
     echo -e "${YELLOW}端口         : ${port}${RESET}"
     echo -e "${YELLOW}用户名       : ${user}${RESET}"
