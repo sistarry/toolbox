@@ -328,14 +328,14 @@ print_node_info() {
     echo -e "${YELLOW} 加密方式        : ${METHOD}${RESET}"
     echo -e "${YELLOW}📄 V6VPS 替换IP地址为V6 ★${RESET}"
     echo -e "${YELLOW}-------------------------------------------------${RESET}"
-    echo -e "${GREEN}[信息] SS 链接：${RESET}"
+    echo -e "${GREEN}[信息] 小火箭 链接：${RESET}"
     if [ -f "${SS_DIR}/ss.txt" ]; then
         echo -e "${YELLOW}$(cat "${SS_DIR}/ss.txt")${RESET}"
     else
         echo "未生成链接"
     fi
     echo -e ""
-    echo -e "${GREEN}[信息] Surge配置:${RESET}"
+    echo -e "${GREEN}[信息] Surge 配置:${RESET}"
     if [ -f "${SS_DIR}/surge.txt" ]; then
         echo -e "${YELLOW}$(cat "${SS_DIR}/surge.txt")${RESET}"
     else
