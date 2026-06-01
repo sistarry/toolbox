@@ -135,7 +135,7 @@ show_node_info() {
 # ================== 功能：安装 ==================
 install_ss() {
     info "正在准备安装环境..."
-    apk add curl wget tar xz openssl iproute2 coreutils >/dev/null 2>&1
+    apk add curl wget tar xz openssl iproute2 coreutils gcompat >/dev/null 2>&1
     
     getent group "$RUN_GROUP" >/dev/null || addgroup -S "$RUN_GROUP"
     getent passwd "$RUN_USER" >/dev/null || adduser -S -D -H -G "$RUN_GROUP" -s /sbin/nologin "$RUN_USER"
