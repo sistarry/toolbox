@@ -48,7 +48,7 @@ is_alpine() {
 install_packages() {
   info "正在刷新 Alpine 仓库并安装核心依赖..."
   apk update
-  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools
+  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools gcompat
 }
 
 create_user() {
