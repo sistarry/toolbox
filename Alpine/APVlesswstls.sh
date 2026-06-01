@@ -810,7 +810,7 @@ menu() {
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
     echo -e "${GREEN}端口   :${RESET} ${YELLOW}${port_show}${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN} 1.安装 Sing-box VLESS+WS+TLS${RESET}"
+    echo -e "${GREEN} 1.安装 Sing-box VLESS-WS-TLS${RESET}"
     echo -e "${GREEN} 2.更新 Sing-box ${RESET}"
     echo -e "${GREEN} 3.卸载 Sing-box ${RESET}"
     echo -e "${GREEN} 4.修改配置${RESET}"
