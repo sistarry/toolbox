@@ -106,52 +106,70 @@ modify_config() {
     if [[ ! -f "$X_CONFIG" ]]; then error "请先安装 Xray"; return; fi
     
     local curr_port=$(jq -r '.inbounds[0].port' "$X_CONFIG")
-    local curr_user=$(jq -r '.inbounds[0].settings.accounts[0].user // ""' "$X_CONFIG")
-    local curr_pass=$(jq -r '.inbounds[0].settings.accounts[0].pass // ""' "$X_CONFIG")
+    local curr_auth=$(jq -r '.inbounds[0].settings.auth // "noauth"' "$X_CONFIG")
+    local curr_user=$(jq -r '.inbounds[0].settings.accounts[0].user // empty' "$X_CONFIG" 2>/dev/null || echo "")
+    local curr_pass=$(jq -r '.inbounds[0].settings.accounts[0].pass // empty' "$X_CONFIG" 2>/dev/null || echo "")
 
     # 1. 修改端口
-    local n_port
+    local n_port=""
     while true; do
-        read -p "请输入新 Socks5 端口 (回车保持 $curr_port): " n_port
+        echo -ne "请输入新 Socks5 端口 (回车保持 $curr_port): "; read n_port
         n_port=${n_port:-$curr_port}
         is_valid_port "$n_port" && break || error "端口无效，请输入 1-65535 之间的数字。"
     done
 
-    # 2. 修改用户名 (独立分离)
-    local n_user
-    read -p "请输入新用户名 (回车保持当前): " n_user
-    n_user=${n_user:-$curr_user}
+    # 2. 修改认证模式
+    local n_user="" n_pass="" auth_choice=""
+    local current_mode="密码认证"
+    [[ "$curr_auth" == "noauth" ]] && current_mode="免密认证"
+
+    echo -e "${GREEN}请选择新的认证方式 [当前: ${current_mode}]:${RESET}"
+    echo -e " 1. 密码认证"
+    echo -e " 2. 免密认证"
     
-    if [[ "$n_user" == "clear" ]]; then
-        n_user=""
-    elif [[ "$n_user" == "random" ]]; then
-        n_user=$(openssl rand -hex 4)
-        info "👉 已生成随机用户名: $n_user"
-    fi
-    
-    # 3. 修改密码 (独立分离)
-    local n_pass=""
-    if [[ -n "$n_user" ]]; then
-        read -p "请输入新密码 (回车保持当前): " n_pass
-        if [[ -z "$n_pass" && -n "$curr_pass" ]]; then
+    while true; do
+        echo -ne "请输入选项 [1-2, 回车保持当前]: "; read auth_choice
+        
+        # 回车保持当前
+        if [[ -z "$auth_choice" ]]; then
+            n_user="$curr_user"
             n_pass="$curr_pass"
-        fi
-
-        if [[ "$n_pass" == "random" || -z "$n_pass" ]]; then
-            if [[ "$n_pass" == "random" || -z "$curr_pass" ]]; then
-                n_pass=$(openssl rand -hex 8)
-                info "👉 已生成随机密码: $n_pass"
+            if [[ "$curr_auth" == "password" ]]; then
+                echo -ne "请输入新用户名 (回车保持当前): "; read temp_user
+                n_user=${temp_user:-$curr_user}
+                
+                echo -ne "请输入新密码 (回车保持当前): "; read temp_pass
+                n_pass=${temp_pass:-$curr_pass}
             fi
+            break
         fi
 
-        if [[ -z "$n_pass" ]]; then
-            error "错误：启用了用户名认证，密码绝对不能为空！"
-            return
+        if [[ "$auth_choice" == "1" ]]; then
+            echo -ne "请输入新用户名 [旧:${curr_user:-无}, 回车自动生成]: "; read temp_user
+            if [[ -z "$temp_user" ]]; then
+                n_user=$(openssl rand -hex 4)
+                info "👉 已自动生成随机账号：${n_user}"
+            else
+                n_user="$temp_user"
+            fi
+
+            echo -ne "请输入新密码 [旧:${curr_pass:-无}, 回车自动生成]: "; read temp_pass
+            if [[ -z "$temp_pass" ]]; then
+                n_pass=$(openssl rand -hex 8)
+                info "👉 已自动生成高强度密码：${n_pass}"
+            else
+                n_pass="$temp_pass"
+            fi
+            break
+        elif [[ "$auth_choice" == "2" ]]; then
+            n_user=""
+            n_pass=""
+            info "👉 已切换为：免密认证 (NoAuth)"
+            break
+        else
+            error "输入无效，请输入 1 或 2"
         fi
-    else
-        n_pass=""
-        info "👉 认证已清空，变变成免密匿名模式。"
-    fi
+    done
 
     write_config "$n_port" "$n_user" "$n_pass"
     rc-service "$SERV_NAME" restart
@@ -172,7 +190,6 @@ modify_config() {
     fi
     info "配置已更新并成功重启服务！"
 }
-
 # ================== 安装与管理 (账号密码彻底解耦独立生产) ==================
 install_xray() {
     info "正在安装依赖与内核..."
@@ -189,31 +206,48 @@ install_xray() {
     rm -rf /tmp/xray*
     
     if [[ ! -f "$X_CONFIG" ]]; then
-        local port
+        local port=""
         while true; do
             echo -ne "${GREEN}请输入入站端口 (回车随机): ${RESET}"; read port
             [[ -z "$port" ]] && port=$((RANDOM % 45535 + 10000))
             is_valid_port "$port" && break || error "端口无效，请输入 1-65535 之间的数字。"
         done
         
-        local user pass
-        # 1. 独立询问用户名
-        echo -ne "${GREEN}请输入 Socks5 用户名 (直接回车默认随机生成): ${RESET}"; read user
-        if [[ -z "$user" ]]; then
-            user=$(openssl rand -hex 4)   # 8位随机字符
-            info "👉 采用默认随机生成用户名: ${user}"
-        fi
+        # 显式初始化变量，安全通过 set -u 检查
+        local user="" pass="" auth_choice=""
         
-        # 2. 独立询问密码
-        echo -ne "${GREEN}请输入 Socks5 密码 (直接回车默认随机生成): ${RESET}"; read pass
-        if [[ -z "$pass" ]]; then
-            pass=$(openssl rand -hex 8)   # 16位随机字符
-            info "👉 采用默认随机生成密 码: ${pass}"
-        else
-            while [[ -z "$pass" ]]; do
-                echo -ne "${GREEN}密码不能为空，请重新输入 Socks5 密码: ${RESET}"; read pass
-            done
-        fi
+        # 提供认证选项菜单
+        echo -e "${GREEN}请选择认证方式:${RESET}"
+        echo -e " 1. 密码认证 (需要用户名和密码)"
+        echo -e " 2. 免密认证 (允许任何人直接连接)"
+        while true; do
+            echo -ne "${GREEN}请输入选项 [1-2, 默认 1]: ${RESET}"; read auth_choice
+            auth_choice="${auth_choice:-1}"
+
+            if [[ "$auth_choice" == "1" ]]; then
+                # 独立询问用户名
+                echo -ne "${GREEN}请输入 Socks5 用户名 (直接回车默认随机生成): ${RESET}"; read user
+                if [[ -z "$user" ]]; then
+                    user=$(openssl rand -hex 4)   # 8位随机字符
+                    info "👉 采用默认随机生成用户名: ${user}"
+                fi
+                
+                # 独立询问密码
+                echo -ne "${GREEN}请输入 Socks5 密码 (直接回车默认随机生成): ${RESET}"; read pass
+                if [[ -z "$pass" ]]; then
+                    pass=$(openssl rand -hex 8)   # 16位随机字符
+                    info "👉 采用默认随机生成密码: ${pass}"
+                fi
+                break
+            elif [[ "$auth_choice" == "2" ]]; then
+                user=""
+                pass=""
+                info "👉 已选择：免密认证 (NoAuth)"
+                break
+            else
+                error "输入无效，请输入 1 或 2"
+            fi
+        done
         
         write_config "$port" "$user" "$pass"
         
@@ -234,28 +268,27 @@ EOF
 
     rc-service "$SERV_NAME" restart
     
-    # 读取配置生成双链接
+    # 读取配置生成双链接 (修复未赋值引起的报错)
     local ip=$(get_public_ip || echo "127.0.0.1")
-    local port=$(jq -r '.inbounds[0].port' "$X_CONFIG")
-    local user=$(jq -r '.inbounds[0].settings.accounts[0].user // ""' "$X_CONFIG")
-    local pass=$(jq -r '.inbounds[0].settings.accounts[0].pass // ""' "$X_CONFIG")
+    local c_port=$(jq -r '.inbounds[0].port' "$X_CONFIG")
+    local c_user=$(jq -r '.inbounds[0].settings.accounts[0].user // empty' "$X_CONFIG" 2>/dev/null || echo "")
+    local c_pass=$(jq -r '.inbounds[0].settings.accounts[0].pass // empty' "$X_CONFIG" 2>/dev/null || echo "")
     
     local enc_ip=$(echo -n "$ip" | jq -sRr @uri)
-    local enc_user=$(echo -n "$user" | jq -sRr @uri)
-    local enc_pass=$(echo -n "$pass" | jq -sRr @uri)
+    local enc_user=$(echo -n "$c_user" | jq -sRr @uri)
+    local enc_pass=$(echo -n "$c_pass" | jq -sRr @uri)
     
     mkdir -p "$X_LINK_DIR"
-    if [[ -n "$user" ]]; then
-        echo "socks://${enc_user}:${enc_pass}@${ip}:${port}#${HOSTNAME}-socks5" > "$X_LINK"
-        echo "https://t.me/socks?server=${enc_ip}&port=${port}&user=${enc_user}&pass=${enc_pass}" >> "$X_LINK"
+    if [[ -n "$c_user" ]]; then
+        echo "socks://${enc_user}:${enc_pass}@${ip}:${c_port}#${HOSTNAME}-socks5" > "$X_LINK"
+        echo "https://t.me/socks?server=${enc_ip}&port=${c_port}&user=${enc_user}&pass=${enc_pass}" >> "$X_LINK"
     else
-        echo "socks://${ip}:${port}#${HOSTNAME}-socks5" > "$X_LINK"
-        echo "https://t.me/socks?server=${enc_ip}&port=${port}" >> "$X_LINK"
+        echo "socks://${ip}:${c_port}#${HOSTNAME}-socks5" > "$X_LINK"
+        echo "https://t.me/socks?server=${enc_ip}&port=${c_port}" >> "$X_LINK"
     fi
 
     show_current_config
 }
-
 # ================== 显示配置 ==================
 show_current_config() {
     if [[ ! -f "$X_CONFIG" ]]; then
