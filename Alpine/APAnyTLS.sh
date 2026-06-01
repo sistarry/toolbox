@@ -89,7 +89,7 @@ get_public_ip() {
 
 # ================== 依赖 ==================
 check_deps() {
-    apk add --no-cache curl wget unzip iproute2 bash
+    apk add --no-cache curl wget unzip iproute2 bash gcompat
 }
 
 # ================== 端口 ==================
