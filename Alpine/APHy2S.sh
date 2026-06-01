@@ -47,7 +47,7 @@ is_alpine() {
 install_packages() {
   info "正在刷新 Alpine 仓库并安装核心依赖..."
   apk update
-  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools iptables ip6tables gcompat
+  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools iptables ip6tables gcompat socat python3
   
   if [[ -f /etc/init.d/iptables ]]; then
     rc-update add iptables default >/dev/null 2>&1 || true
@@ -220,13 +220,13 @@ inst_cert() {
 
   echo "---------------------------------------------"
   echo -e "Hysteria 2 协议证书申请方式如下："
-  echo -e " 1) 必应自签证书 ${YELLOW}（默认）${RESET}"
-  echo -e " 2) Acme 脚本自动申请 (需放行 80 端口)"
+  echo -e " 1) 必应自签证书 "
+  echo -e " 2) Acme 脚本自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
-  read -rp "请输入选项 [1-3] (直接回车默认自签): " certInput
-  certInput=${certInput:-1}
+  read -rp "请输入选项 [1-3] (直接回车默认Acme 脚本自动申请): " certInput
+  certInput=${certInput:-2}
 
   cert_path="$CONFIG_DIR/certs/cert.pem"
   key_path="$CONFIG_DIR/certs/key.pem"
