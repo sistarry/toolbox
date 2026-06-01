@@ -47,7 +47,7 @@ is_alpine() {
 install_packages() {
   info "正在刷新 Alpine 仓库并安装核心依赖..."
   apk update
-  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools iptables ip6tables gcompat
+  apk add --no-cache bash curl wget tar openssl openrc iproute2 jq grep sed coreutils bind-tools iptables ip6tables gcompat socat python3
   
   if [[ -f /etc/init.d/iptables ]]; then
     rc-update add iptables default >/dev/null 2>&1 || true
