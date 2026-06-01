@@ -35,7 +35,7 @@ if [ "$ID" = "alpine" ]; then
     apk add --no-cache \
         bash curl wget vim tar sudo git gzip \
         openssl openssh ca-certificates tzdata \
-        dcron jq # 安装 cron 守护进程
+        dcron jq gcompat # 安装 cron 守护进程
 
     # -------------------------
     # 时区设置
