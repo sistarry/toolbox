@@ -119,7 +119,7 @@ manage_udp_jump() {
 # ================== 安装与配置 ==================
 install_hy2() {
     local mode=$1 # 1:安装, 2:更新, 3:修改配置
-    apk update && apk add curl ca-certificates openssl openrc iptables jq > /dev/null 2>&1
+    apk update && apk add curl ca-certificates openssl openrc iptables jq gcompat > /dev/null 2>&1
     local arch=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
     
     # 获取版本并安装
