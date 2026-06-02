@@ -221,7 +221,7 @@ inst_cert() {
   echo "---------------------------------------------"
   echo -e "Hysteria 2 协议证书申请方式如下："
   echo -e " 1) 必应自签证书 "
-  echo -e " 2) Acme 脚本自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
+  echo -e " 2) Acme自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
