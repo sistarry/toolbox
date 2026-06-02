@@ -1,7 +1,7 @@
 #!/bin/bash
-# ===============================
-# ACME Pro 证书申请（Let's Encrypt ）
-# ===============================
+# ==========================================
+# ACME Pro 证书申请（支持域名与 IP 短周期）
+# ==========================================
 export LANG=en_US.UTF-8
 
 GREEN="\033[32m"
@@ -22,15 +22,14 @@ mkdir -p $SSL_DIR
 # ===============================
 # 依赖检测
 # ===============================
-
 install_dep(){
     if command -v apt >/dev/null 2>&1; then
         apt update -y
-        apt install -y curl socat cron wget python3
+        apt install -y curl socat cron wget python3 openssl
     elif command -v yum >/dev/null 2>&1; then
-        yum install -y curl socat cronie wget python3
+        yum install -y curl socat cronie wget python3 openssl
     elif command -v dnf >/dev/null 2>&1; then
-        dnf install -y curl socat cronie wget python3
+        dnf install -y curl socat cronie wget python3 openssl
     fi
 }
 
@@ -43,6 +42,23 @@ install_acme(){
         [ -z "$email" ] && email="$(date +%s)@gmail.com"
         curl https://get.acme.sh | sh -s email=$email
         green "acme.sh 安装完成"
+    fi
+}
+
+# ===============================
+# 更新 acme.sh
+# ===============================
+update_acme(){
+    if [ -f "$ACME_HOME/acme.sh" ]; then
+        yellow "正在检查并更新 acme.sh..."
+        $ACME_HOME/acme.sh --upgrade
+        if [ $? -eq 0 ]; then
+            green "acme.sh 更新成功！"
+        else
+            red "更新失败，请检查网络连接。"
+        fi
+    else
+        red "未检测到已安装的 acme.sh，请先申请证书或执行安装。"
     fi
 }
 
@@ -64,9 +80,8 @@ start_web(){
     [ ! -z "$WEB_STOP" ] && systemctl start $WEB_STOP
 }
 
-
 # ===============================
-# 安装证书
+# 安装/导出证书
 # ===============================
 install_cert(){
     domain=$1
@@ -76,25 +91,89 @@ install_cert(){
         --fullchain-file $SSL_DIR/$domain/cert.crt
     green "证书安装完成"
     green "路径: $SSL_DIR/$domain/"
-    
 }
 
 # ===============================
-# 80 端口模式申请证书
+# 智能获取公网 IP 函数
+# ===============================
+get_public_ip() {
+    local mode="${1:-"-4"}" 
+    local ip cmd urls
+
+    if [[ "$mode" == "-6" ]]; then
+        cmd_list=("curl -6fsSL --max-time 5" "wget -6qO- --timeout=5")
+        urls=("https://api64.ipify.org" "https://ipv6.ip.sb" "https://v6.ident.me")
+    else
+        cmd_list=("curl -4fsSL --max-time 5" "wget -4qO- --timeout=5")
+        urls=("https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com")
+    fi
+
+    for cmd in "${cmd_list[@]}"; do
+        for url in "${urls[@]}"; do
+            ip=$($cmd "$url" 2>/dev/null || true)
+            ip=$(echo "$ip" | tr -d '[:space:]')
+            if [[ -n "$ip" ]]; then
+                if [[ "$mode" == "-4" && "$ip" =~ \. ]] || [[ "$mode" == "-6" && "$ip" =~ : ]]; then
+                    echo "$ip"
+                    return 0
+                fi
+            fi
+        done
+    done
+    return 1
+}
+
+# ===============================
+# 1. 域名 80 端口模式申请证书
 # ===============================
 standalone_issue(){
     read -p "请输入域名: " domain
+    [ -z "$domain" ] && red "域名不能为空" && return 1
     stop_web
     $ACME_HOME/acme.sh --issue -d $domain --standalone -k ec-256 --server https://acme-v02.api.letsencrypt.org/directory
     [ $? -eq 0 ] && install_cert $domain || red "证书申请失败"
     start_web
 }
 
+# ==========================================
+# 2. IP 短周期证书申请 (仅支持纯 IPv4 模式)
+# ==========================================
+ip_issue(){
+    yellow "正在检索服务器公网 IPv4..."
+    local v4_ip=$(get_public_ip -4 || true)
+    
+    if [ -z "$v4_ip" ]; then
+        red "未检测到有效的公网 IPv4，请检查网络后再试。"
+        return 1
+    fi
+
+    echo "--------------------------------"
+    green "侦测到公网 IPv4: $v4_ip"
+    echo "--------------------------------"
+
+    yellow "即将通过 Let's Encrypt 申请 5天短周期证书 ($v4_ip)..."
+    stop_web
+    
+    $ACME_HOME/acme.sh --issue --standalone \
+        --certificate-profile shortlived \
+        -d "$v4_ip" \
+        --keylength 2048 \
+        --server letsencrypt \
+        --force
+
+    if [ $? -eq 0 ]; then
+        install_cert "$v4_ip"
+    else
+        red "证书申请失败。请检查该 IP 的 80 端口是否在系统防火墙（iptables/ufw）或云服务商安全组中放行。"
+    fi
+    start_web
+}
 # ===============================
-# DNS模式申请证书
+# 3. DNS 模式申请证书
 # ===============================
 dns_issue(){
     read -p "请输入域名: " domain
+    [ -z "$domain" ] && red "域名不能为空" && return 1
     echo "1.Cloudflare"
     echo "2.DNSPod"
     echo "3.Aliyun"
@@ -118,10 +197,13 @@ dns_issue(){
             export Ali_Key Ali_Secret
             $ACME_HOME/acme.sh --issue --dns dns_ali -d $domain -k ec-256 --server https://acme-v02.api.letsencrypt.org/directory
             ;;
+        *)
+            red "无效选择"
+            return 1
+            ;;
     esac
     [ $? -eq 0 ] && install_cert $domain || red "证书申请失败"
 }
-
 
 # ===============================
 # 续期所有证书
@@ -141,7 +223,7 @@ remove_cert(){
         return 0
     fi
     green "可删除的证书列表："
-    echo "编号  域名"
+    echo "编号   域名/IP"
     echo "---------------------------"
     for i in "${!certs[@]}"; do
         printf "%-4s %s\n" "$((i+1))" "${certs[$i]}"
@@ -163,18 +245,13 @@ remove_cert(){
 # 卸载 acme.sh
 # ===============================
 uninstall_acme(){
-    # 卸载 acme.sh 本身
     [ -f "$ACME_HOME/acme.sh" ] && "$ACME_HOME/acme.sh" --uninstall >/dev/null 2>&1
-    
-    # 删除安装目录
     [ -d "$ACME_HOME" ] && rm -rf "$ACME_HOME"
     [ -d "/etc/acme" ] && rm -rf "/etc/acme"
-    [ -d "/root/ssl" ] && rm -rf "/root/ssl"
+    [ -d "$SSL_DIR" ] && rm -rf "$SSL_DIR"
 
-    # 删除 cron
     crontab -l 2>/dev/null | grep -v acme.sh | crontab -
     
-    # 清理 shell 环境变量
     [ -f "$HOME/.bashrc" ] && sed -i '/acme.sh.env/d' "$HOME/.bashrc"
     [ -f "$HOME/.profile" ] && sed -i '/acme.sh.env/d' "$HOME/.profile"
     
@@ -192,7 +269,7 @@ show_cron(){
 # 查看已申请证书
 # ===============================
 list_cert(){
-    printf "%-22s %-8s %-15s %-10s\n" "域名" "状态" "到期时间" "剩余天数"
+    printf "%-22s %-8s %-15s %-10s\n" "域名/IP" "状态" "到期时间" "剩余天数"
     echo "------------------------------------------------------------"
     $ACME_HOME/acme.sh --list | tail -n +2 | awk '{print $1}' | while read domain; do
         CERT_FILE="$SSL_DIR/$domain/cert.crt"
@@ -221,26 +298,30 @@ while true
 do
     clear
     green "==============================="
-    green "     ACME申请证书工具"
+    green "     ACME申请证书工具 "
     green "==============================="
-    green "1. 申请证书 (80端口模式)"
-    green "2. 申请证书 (DNS API模式)"
-    green "3. 续期全部证书"
-    green "4. 查看已申请证书"
-    green "5. 删除指定证书"
-    green "6. 查看自动续期任务"
-    green "7. 卸载"
+    green "1. 申请域名证书 (80端口模式)"
+    green "2. 申请 IP 证书 (IP模式)"
+    green "3. 申请域名证书 (DNSAPI模式)"
+    green "4. 续期全部证书"
+    green "5. 查看已申请证书"
+    green "6. 删除指定证书"
+    green "7. 查看自动续期任务"
+    green "8. 更新acme.sh"
+    green "9. 卸载"
     green "0. 退出"
 
     read -p $'\033[32m请选择: \033[0m' num
     case $num in
         1) install_dep; install_acme; standalone_issue;;
-        2) install_dep; install_acme; dns_issue;;
-        3) renew_all;;
-        4) list_cert;;
-        5) remove_cert;;
-        6) show_cron;;
-        7) uninstall_acme;;
+        2) install_dep; install_acme; ip_issue;;
+        3) install_dep; install_acme; dns_issue;;
+        4) renew_all;;
+        5) list_cert;;
+        6) remove_cert;;
+        7) show_cron;;
+        8) update_acme;;
+        9) uninstall_acme;;
         0) exit;;
         *) echo -e "${RED}无效选项${RESET}";;
     esac
