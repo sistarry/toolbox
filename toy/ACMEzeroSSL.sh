@@ -27,14 +27,14 @@ mkdir -p $SSL_DIR
 # ===============================
 
 install_dep(){
-if command -v apt >/dev/null 2>&1; then
-    apt update -y
-    apt install -y curl socat cron wget
-elif command -v yum >/dev/null 2>&1; then
-    yum install -y curl socat cronie wget
-elif command -v dnf >/dev/null 2>&1; then
-    dnf install -y curl socat cronie wget
-fi
+    if command -v apt >/dev/null 2>&1; then
+        apt update -y
+        apt install -y curl socat cron wget python3
+    elif command -v yum >/dev/null 2>&1; then
+        yum install -y curl socat cronie wget python3
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y curl socat cronie wget python3
+    fi
 }
 
 # ===============================
