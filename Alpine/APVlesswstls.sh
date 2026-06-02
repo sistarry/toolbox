@@ -305,7 +305,7 @@ inst_cert() {
   echo -e " 2) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
-  read -rp "请输入选项 [1-2] (直接回车默认Acme脚本自动申请): " certInput
+  read -rp "请输入选项 [1-2] (直接回车默认Acme自动申请): " certInput
   certInput=${certInput:-1}
 
   cert_path="/etc/singbox-vless-ws/fullchain.pem"
