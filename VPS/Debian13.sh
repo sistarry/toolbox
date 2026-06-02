@@ -22,8 +22,12 @@ if [[ "$CONFIRM" != "y" ]]; then
     exit 1
 fi
 
+# 用户名（默认 root）
+read -p "请输入用户名 (默认 root): " USERNAME
+USERNAME=${USERNAME:-root}
+
 # 可见输入密码（不隐藏）
-read -p "请输入 root 密码 (用于重装系统): " ROOT_PASS
+read -p "请输入 ${USERNAME} 密码: " ROOT_PASS
 if [[ -z "$ROOT_PASS" ]]; then
     echo -e "${RED}❌ 密码不能为空，已取消操作。${RESET}"
     exit 1
@@ -34,18 +38,19 @@ read -p "请输入 SSH 端口 (默认 22): " SSH_PORT
 SSH_PORT=${SSH_PORT:-22}
 
 # 下载脚本
-echo -e "${GREEN}🔄 下载重装脚本...${RESET}"
 if ! wget -q "$REINSTALL_URL" -O "$SCRIPT_NAME"; then
     echo -e "${RED}❌ 下载失败，请检查网络或 URL。${RESET}"
     exit 1
 fi
 
 chmod +x "$SCRIPT_NAME"
-echo -e "${GREEN}✅ 脚本下载完成并赋予执行权限。${RESET}"
 
 # 执行重装脚本
-echo -e "${GREEN}🔧 正在执行重装脚本...${RESET}"
-./"$SCRIPT_NAME" debian 13 --password "$ROOT_PASS" --ssh-port "$SSH_PORT"
+echo -e "${GREEN}🔧 正在执行重装...${RESET}"
+./"$SCRIPT_NAME" debian 13 \
+    --username "$USERNAME" \
+    --password "$ROOT_PASS" \
+    --ssh-port "$SSH_PORT"
 
 # 绿色重启提示
 echo -e "${GREEN}✔ 系统将在完成后重启。${RESET}"
