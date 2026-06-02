@@ -301,7 +301,7 @@ inst_cert() {
   
   echo "---------------------------------------------"
   echo -e "sing-box TLS 证书申请方式如下："
-  echo -e " 1) Acme 脚本自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
+  echo -e " 1) Acme自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
   echo -e " 2) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
