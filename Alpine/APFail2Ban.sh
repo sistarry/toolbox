@@ -1,209 +1,253 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-
-# =========================================================
-# Fail2Ban 一键部署脚本 (Alpine Linux)
-# =========================================================
 
 GREEN="\033[32m"
 RED="\033[31m"
-YELLOW="\033[33m"
 RESET="\033[0m"
+YELLOW="\033[33m"
 
-LOG_PATH="/var/log/auth.log"
-
-info() { echo -e "${GREEN}[INFO] $1${RESET}"; }
-warn() { echo -e "${YELLOW}[WARN] $1${RESET}"; }
-error() { echo -e "${RED}[ERROR] $1${RESET}"; }
-
-# -------------------------
-# 检查系统
-# -------------------------
-if [[ ! -f /etc/alpine-release ]]; then
-    echo -e "${RED}❌ 本脚本仅适用于 Alpine Linux${RESET}"
-    exit 1
-fi
-
-# -------------------------
-# 安装 Fail2Ban
-# -------------------------
-install_fail2ban() {
-    info "更新 apk 索引并安装 fail2ban 和 rsyslog..."
-    apk update
-    apk add --no-cache fail2ban rsyslog openssh
-
-    rc-update add rsyslog
-    service rsyslog start
-
-    rc-update add sshd
-    service sshd start
-
-    rc-update add fail2ban
-    service fail2ban start
-
-    # 确保日志文件存在
-    [[ ! -f "$LOG_PATH" ]] && touch "$LOG_PATH" && chmod 600 "$LOG_PATH"
-
-    # 配置 SSH 输出日志
-    if ! grep -q "^SyslogFacility AUTH" /etc/ssh/sshd_config; then
-        echo "SyslogFacility AUTH" >> /etc/ssh/sshd_config
-        echo "LogLevel INFO" >> /etc/ssh/sshd_config
-        service sshd restart
+# =========================================================
+# 动态获取 Fail2Ban 的状态、版本、监听端口与拦截数据
+# =========================================================
+get_fail2ban_status() {
+    # 1. 检查运行状态 (Alpine OpenRC)
+    if rc-service fail2ban status 2>/dev/null | grep -q "started"; then
+        STATUS="${YELLOW}已运行${RESET}"
+    else
+        STATUS="${RED}未运行${RESET}"
     fi
-
-    # 创建兼容 Alpine 的 filter
-    mkdir -p /etc/fail2ban/filter.d
-    cat >/etc/fail2ban/filter.d/sshd-alpine.conf <<'EOF'
-[Definition]
-failregex = ^.*Failed password for .* from <HOST> port .* ssh2$
-ignoreregex =
-EOF
-
-    info "✅ Fail2Ban 已安装并启动"
+    
+    # 2. 获取版本号
+    if command -v fail2ban-client >/dev/null 2>&1; then
+        VERSION_SHOW=$(fail2ban-client --version | head -n 1 | awk '{print $2}')
+    else
+        VERSION_SHOW="未安装"
+    fi
+    
+    # 3. 动态获取 SSH 监听端口
+    if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
+        local port_check=$(grep -E '^\s*port\s*=' /etc/fail2ban/jail.d/sshd.local | head -n 1 | awk -F'=' '{print $2}' | tr -d ' ')
+        PORT_SHOW=${port_check:-22}
+    else
+        PORT_SHOW="未知"
+    fi
+    
+    # 4. 统计当前拦截的 IP 总数
+    if rc-service fail2ban status 2>/dev/null | grep -q "started" && command -v fail2ban-client >/dev/null 2>&1; then
+        local jails=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://' | tr ',' ' ')
+        local total_banned=0
+        for jail in $jails; do
+            local count=$(fail2ban-client status "$jail" | grep "Currently banned:" | awk '{print $4}')
+            total_banned=$((total_banned + count))
+        done
+        SITE_COUNT=$total_banned
+    else
+        SITE_COUNT=0
+    fi
 }
 
-# -------------------------
-# 配置 SSH 防护
-# -------------------------
+# =========================================================
+# Fail2Ban 功能核心函数 (Alpine 适配)
+# =========================================================
+check_fail2ban() {
+    if ! rc-service fail2ban status 2>/dev/null | grep -q "started"; then
+        echo -e "${GREEN}Fail2Ban 未运行，正在启动...${RESET}"
+        rc-update add fail2ban default
+        rc-service fail2ban start
+        sleep 1
+    fi
+}
+
+install_fail2ban() {
+    echo -e "${GREEN}正在 Alpine 上安装 Fail2Ban...${RESET}"
+    apk update
+    # 确保防火墙和基础组件就绪
+    apk add fail2ban curl wget iptables ip6tables
+    
+    rc-update add fail2ban default
+    rc-service fail2ban start
+    sleep 1
+}
+
+update_fail2ban() {
+    if ! command -v fail2ban-client >/dev/null 2>&1; then
+        echo -e "${RED}Fail2Ban 未安装，无法更新，请先选择选项 1 进行安装${RESET}"
+        return
+    fi
+    
+    echo -e "${GREEN}正在更新 Fail2Ban...${RESET}"
+    apk update
+    apk add --upgrade fail2ban
+    
+    rc-service fail2ban restart
+    echo -e "${GREEN}Fail2Ban 更新并重启完成${RESET}"
+}
+
+# 核心修改：为 Alpine Linux 专门定制生成的防御配置
 configure_ssh() {
-    read -p $'\033[32m请输入 SSH 端口（默认22）: \033[0m' SSH_PORT
+    # Alpine 的标准日志路径
+    LOG_PATH="/var/log/messages"
+
+    echo -ne "${GREEN}请输入 SSH 端口（默认22）: ${RESET}"
+    read -r SSH_PORT
     SSH_PORT=${SSH_PORT:-22}
 
-    read -p $'\033[32m请输入最大失败尝试次数 maxretry（默认5）: \033[0m' MAX_RETRY
+    echo -ne "${GREEN}请输入最大失败尝试次数 maxretry（默认5）: ${RESET}"
+    read -r MAX_RETRY
     MAX_RETRY=${MAX_RETRY:-5}
 
-    read -p $'\033[32m请输入封禁时间 bantime(秒，默认600): \033[0m' BAN_TIME
+    echo -ne "${GREEN}请输入封禁时间 bantime(秒，默认600) : ${RESET}"
+    read -r BAN_TIME
     BAN_TIME=${BAN_TIME:-600}
 
+    # 创建专属配置目录
     mkdir -p /etc/fail2ban/jail.d
-    cat >/etc/fail2ban/jail.d/sshd.local <<EOF
+
+    # 专门为 Alpine 优化的本地配置
+    # 1. 明确使用 iptables 动作（Alpine 经典后端）
+    # 2. 指定 logpath 为 Alpine 的通用消息日志
+    # 3. 针对 Alpine 的 OpenSSH / Dropbear 后端设置基础检测
+    cat > /etc/fail2ban/jail.d/sshd.local <<EOF
 [sshd]
 enabled = true
 port = $SSH_PORT
-filter = sshd-alpine
+filter = sshd
+backend = polling
 logpath = $LOG_PATH
 maxretry = $MAX_RETRY
 bantime  = $BAN_TIME
+banaction = iptables-multiport
+purpleaction = 
 EOF
 
-    service fail2ban restart
-    info "✅ SSH 防暴力破解配置完成"
-    read -p $'\033[32m按回车返回菜单...\033[0m'
+    echo -e "${GREEN}正在应用专属配置并重启服务...${RESET}"
+    rc-service fail2ban restart
+    sleep 1
+    echo -e "${GREEN}Alpine 专属 SSH 防暴力破解配置完成！${RESET}"
 }
 
-# -------------------------
-# 卸载 Fail2Ban
-# -------------------------
 uninstall_fail2ban() {
-    info "正在卸载 Fail2Ban..."
-    service fail2ban stop || true
-    apk del fail2ban rsyslog
-    [[ -f /etc/ssh/sshd_config ]] && sed -i '/SyslogFacility AUTH/d;/LogLevel INFO/d' /etc/ssh/sshd_config
-    info "✅ Fail2Ban 已卸载"
-    read -p $'\033[32m按回车返回菜单...\033[0m'
+    echo -e "${GREEN}正在卸载 Fail2Ban...${RESET}"
+    rc-service fail2ban stop || true
+    rc-update del fail2ban default || true
+    rm -f /etc/fail2ban/jail.d/sshd.local
+    apk del fail2ban
+    echo -e "${GREEN}Fail2Ban 已从系统完全卸载${RESET}"
 }
 
-# -------------------------
-# 查看被封禁 IP
-# -------------------------
-view_banned() {
-    if command -v fail2ban-client &>/dev/null; then
-        BANNED=$(fail2ban-client status sshd 2>/dev/null | grep 'Banned IP list' | cut -d: -f2)
-        echo -e "${GREEN}当前被封禁的 IP:${RESET} ${BANNED:-无}"
-    else
-        echo -e "${RED}Fail2Ban 未安装或未启动${RESET}"
-    fi
-    read -p $'\033[32m按回车返回菜单...\033[0m'
+# =========================================================
+# Fail2Ban 管理面板 (Alpine 专属风格)
+# =========================================================
+fail2ban_menu() {
+    while true; do
+        get_fail2ban_status
+
+        clear
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN} ◈   SSH 防暴力破解管理面板  ◈ ${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN} 状态  : ${STATUS}"
+        echo -e "${GREEN} 版本  : ${YELLOW}${VERSION_SHOW}${RESET}"
+        echo -e "${GREEN} 端口  : ${YELLOW}${PORT_SHOW}${RESET}"
+        echo -e "${GREEN} 封禁  : ${YELLOW}${SITE_COUNT} 个 IP${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN}  1. 安装开启SSH防护${RESET}"
+        echo -e "${GREEN}  2. 关闭SSH防护功能${RESET}"
+        echo -e "${GREEN}  3. 配置SSH防护参数${RESET}"
+        echo -e "${GREEN}  4. 查看SSH拦截记录${RESET}"
+        echo -e "${GREEN}  5. 查看当前防御规则列表${RESET}"
+        echo -e "${GREEN}  6. 查看日志实时监控${RESET}"
+        echo -e "${GREEN}  7. 卸载 Fail2Ban${RESET}"
+        echo -e "${GREEN}  8. 更新 Fail2Ban${RESET}"
+        echo -e "${GREEN}  0. 退出面板${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -ne "${GREEN} 请选择: ${RESET}"
+        
+        read -r choice </dev/tty
+
+        case $choice in
+            1)
+                if ! command -v fail2ban-client >/dev/null 2>&1; then
+                    install_fail2ban
+                else
+                    rc-update add fail2ban default
+                    rc-service fail2ban start
+                fi
+                configure_ssh
+                ;;
+            2)
+                check_fail2ban
+                if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
+                    sed -i '/enabled/s/true/false/' /etc/fail2ban/jail.d/sshd.local
+                    rc-service fail2ban restart
+                    sleep 1
+                    echo -e "${GREEN}SSH 防暴力破解已关闭${RESET}"
+                else
+                    echo -e "${RED}SSH 配置文件不存在，请先安装并开启 SSH 防护${RESET}"
+                fi
+                echo -ne "${GREEN}按回车返回菜单...${RESET}"; read -r
+                ;;
+            3)
+                check_fail2ban
+                if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
+                    configure_ssh
+                else
+                    echo -e "${RED}SSH 配置文件不存在，请先安装并开启 SSH 防护${RESET}"
+                fi
+                echo -ne "${GREEN}按回车返回菜单...${RESET}"; read -r
+                ;;
+            4)
+                check_fail2ban
+                echo -e "${GREEN}当前被封禁的 IP 列表:${RESET}"
+                BANNED=$(fail2ban-client status sshd | grep 'Banned IP list' | cut -d: -f2)
+                if [ -z "$BANNED" ]; then
+                    echo -e "${GREEN}无${RESET}"
+                else
+                    echo -e "${GREEN}$BANNED${RESET}"
+                fi
+                echo -e "${GREEN}✅ 状态显示完成${RESET}"
+                echo -ne "${GREEN}按回车返回菜单...${RESET}"; read -r
+                ;;
+            5)
+                check_fail2ban
+                echo -e "${GREEN}当前防御规则列表:${RESET}"
+                JAILS=$(fail2ban-client status | grep 'Jail list' | cut -d: -f2)
+                if [ -z "$JAILS" ]; then
+                    echo -e "${GREEN}无${RESET}"
+                else
+                    echo -e "${GREEN}$JAILS${RESET}"
+                fi
+                echo -e "${GREEN}✅ 状态显示完成${RESET}"
+                echo -ne "${GREEN}按回车返回菜单...${RESET}"; read -r
+                ;;
+            6)
+                check_fail2ban
+                echo -e "${GREEN}进入日志实时监控，按 Ctrl+C 返回菜单${RESET}"
+                trap 'echo -e "\n${GREEN}已退出日志监控，返回菜单${RESET}"' INT
+                tail -n 20 -f /var/log/fail2ban.log || true
+                trap - INT
+                echo -ne "${GREEN}按回车继续...${RESET}"; read -r
+                ;;
+            7)
+                uninstall_fail2ban
+                break
+                ;;
+            11)
+                update_fail2ban
+                echo -ne "${GREEN}按回车返回菜单...${RESET}"; read -r
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo -e "${RED}无效的选择，请重新输入${RESET}"
+                sleep 1
+                ;;
+        esac
+    done
 }
 
-# -------------------------
-# 查看规则列表
-# -------------------------
-view_jails() {
-    if command -v fail2ban-client &>/dev/null; then
-        JAILS=$(fail2ban-client status 2>/dev/null | grep 'Jail list' | cut -d: -f2)
-        echo -e "${GREEN}当前防御规则列表:${RESET} ${JAILS:-无}"
-    else
-        echo -e "${RED}Fail2Ban 未安装或未启动${RESET}"
-    fi
-    read -p $'\033[32m按回车返回菜单...\033[0m'
-}
-
-# -------------------------
-# 日志实时监控
-# -------------------------
-monitor_log() {
-    if [[ -f "$LOG_PATH" ]]; then
-        echo -e "${GREEN}进入日志实时监控，按 Ctrl+C 返回菜单${RESET}"
-        trap 'echo -e "\n${GREEN}已退出日志监控${RESET}"' SIGINT
-        tail -n 20 -f "$LOG_PATH" || true
-        trap - SIGINT
-    else
-        echo -e "${RED}日志文件不存在${RESET}"
-        read -p $'\033[32m按回车返回菜单...\033[0m'
-    fi
-}
-
-# -------------------------
-# 关闭 Fail2Ban 防护
-# -------------------------
-disable_fail2ban() {
-    if ! command -v fail2ban-client >/dev/null 2>&1; then
-        echo -e "${RED}Fail2Ban 未安装${RESET}"
-    else
-        warn "正在关闭 Fail2Ban 防护..."
-        service fail2ban stop
-        echo -e "${YELLOW}✅ Fail2Ban 防护已关闭${RESET}"
-    fi
-    read -p $'\033[32m按回车返回菜单...\033[0m'
-}
-
-# -------------------------
-# 菜单
-# -------------------------
-while true; do
-    clear
-    echo -e "${GREEN}===SSH 防暴力破解管理菜单===${RESET}"
-    echo -e "${GREEN}1. 安装开启SSH防暴力破解${RESET}"
-    echo -e "${GREEN}2. 关闭SSH防暴力破解${RESET}"
-    echo -e "${GREEN}3. 配置SSH防护参数${RESET}"
-    echo -e "${GREEN}4. 查看SSH拦截记录${RESET}"
-    echo -e "${GREEN}5. 查看防御规则列表${RESET}"
-    echo -e "${GREEN}6. 查看日志实时监控${RESET}"
-    echo -e "${GREEN}7. 卸载防御程序${RESET}"
-    echo -e "${GREEN}0. 退出${RESET}"
-    read -p $'\033[32m请输入你的选择: \033[0m' choice
-
-    case "$choice" in
-        1)
-            install_fail2ban
-            configure_ssh
-            ;;
-        2)
-            disable_fail2ban
-            ;;
-        3)
-            configure_ssh
-            ;;
-        4)
-            view_banned
-            ;;
-        5)
-            view_jails
-            ;;
-        6)
-            monitor_log
-            read -p $'\033[32m按回车返回菜单...\033[0m'
-            ;;
-        7)
-            uninstall_fail2ban
-            ;;
-        0)
-            break
-            ;;
-        *)
-            echo -e "${RED}无效选择，请重新输入${RESET}"
-            sleep 1
-            ;;
-    esac
-done
+# =========================================================
+# 执行主逻辑
+# =========================================================
+fail2ban_menu
