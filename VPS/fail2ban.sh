@@ -162,7 +162,7 @@ fail2ban_menu() {
         echo -e "${GREEN}  5. 查看当前防御规则列表${RESET}"
         echo -e "${GREEN}  6. 查看日志实时监控${RESET}"
         echo -e "${GREEN}  7. 卸载 Fail2Ban${RESET}"
-        echo -e "${GREEN} 11. 更新 Fail2Ban${RESET}"
+        echo -e "${GREEN}  8. 更新 Fail2Ban${RESET}"
         echo -e "${GREEN}  0. 退出${RESET}"
         echo -e "${GREEN}===============================${RESET}"
         echo -ne "${GREEN} 请选择: ${RESET}"
@@ -235,7 +235,7 @@ fail2ban_menu() {
                 uninstall_fail2ban
                 break
                 ;;
-            11)
+            8)
                 update_fail2ban
                 read -p $'\033[32m按回车返回菜单...\033[0m'
                 ;;
