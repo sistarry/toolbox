@@ -10,9 +10,9 @@ RED="\033[31m"
 BLUE="\033[36m"
 RESET="\033[0m"
 
-echo -e "${BLUE}========================================${RESET}"
-echo -e "${GREEN}      ⏰ 智能时间同步配置脚本${RESET}"
-echo -e "${BLUE}========================================${RESET}"
+echo -e "${GREEN}========================================${RESET}"
+echo -e "${GREEN}         ⏰ 智能时间同步配置            ${RESET}"
+echo -e "${GREEN}========================================${RESET}"
 
 # 1. 权限检查
 if [ "$EUID" -ne 0 ]; then
@@ -58,25 +58,24 @@ fi
 # 4. 执行同步逻辑
 if [ "$OS" == "Alpine" ]; then
     # ================= Alpine 逻辑 =================
-    echo -e "${YELLOW}🔄 正在配置 Alpine 时间同步 (Chrony)...${RESET}"
+    echo -e "${YELLOW}🚀 启动时间同步服务...${RESET}"
     apk add --no-cache chrony
     
     # 强制同步一次
     rc-update add chronyd default
     rc-service chronyd stop >/dev/null 2>&1 || true
     
-    echo -e "${YELLOW}🚀 正在进行首次强制对时...${RESET}"
     chronyd -q 'server ntp.aliyun.com iburst' || true
     
     rc-service chronyd start
-    echo -e "${GREEN}✔ Chrony 服务已启动${RESET}"
+    echo -e "${GREEN}✔ 时间同步已成功启动${RESET}"
     date
 
 else
     # ================= Debian/Ubuntu 逻辑 =================
     echo -e "${YELLOW}🔄 检查并关闭冲突的 NTP 服务...${RESET}"
-    systemctl stop ntp chrony 2>/dev/null || true
-    systemctl disable ntp chrony 2>/dev/null || true
+    systemctl stop ntp chrony openntpd 2>/dev/null || true
+    systemctl disable ntp chrony openntpd 2>/dev/null || true
 
     if ! dpkg -s systemd-timesyncd >/dev/null 2>&1; then
         echo -e "${YELLOW}📦 安装 systemd-timesyncd...${RESET}"
@@ -84,11 +83,13 @@ else
     fi
 
     echo -e "${YELLOW}🚀 启动时间同步服务...${RESET}"
+    # 1. 解锁并直接启动服务
     systemctl unmask systemd-timesyncd >/dev/null 2>&1 || true
-    timedatectl set-ntp false
-    sleep 1
-    timedatectl set-ntp true
+    systemctl enable systemd-timesyncd >/dev/null 2>&1 || true
     systemctl restart systemd-timesyncd
+
+    # 2. 尝试通知 timedatectl
+    timedatectl set-ntp true >/dev/null 2>&1 || true
 
     sleep 2
     if systemctl is-active --quiet systemd-timesyncd; then
