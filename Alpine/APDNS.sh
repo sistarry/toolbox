@@ -1,8 +1,5 @@
-#!/bin/bash
-
-# ========================================
-# DNS 管理工具 一键部署脚本 (Alpine Linux)
-# ========================================
+#!/bin/sh
+set -e
 
 GREEN="\033[32m"
 RED="\033[31m"
@@ -11,110 +8,167 @@ RESET="\033[0m"
 
 RESOLV_FILE="/etc/resolv.conf"
 
-# 环境初始化与系统检测
-if [[ $EUID -ne 0 ]]; then
-    echo -e "${RED}请使用 root 权限运行此脚本${RESET}"
+# =========================================================
+# root 检测 (Alpine 标准 sh 兼容语法)
+# =========================================================
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}错误: 请使用 root 权限运行此脚本${RESET}"
     exit 1
 fi
 
-if [ -f /etc/alpine-release ]; then
-    OS="alpine"
-else
-    OS="linux"
-fi
 
-prepare_deps() {
-    if [[ "$OS" == "alpine" ]]; then
-        if ! command -v chattr >/dev/null 2>&1; then
-            echo -e "${YELLOW}正在为 Alpine 安装 e2fsprogs-extra...${RESET}"
-            apk add --no-cache e2fsprogs-extra
+# =========================================================
+# 动态获取当前正在生效的 DNS 状态 (针对 Alpine 深度健壮优化)
+# =========================================================
+get_dns_status() {
+    if [ -f "$RESOLV_FILE" ]; then
+        # 1. 兼容 BusyBox 的方式提取所有 nameserver
+        local all_dns=$(awk '$1 == "nameserver" {print $2}' "$RESOLV_FILE")
+        
+        # 2. 纯 IPv4 提取（过滤掉含冒号的，并合并为单行，去除末尾空格）
+        STATUS_IPv4=$(echo "$all_dns" | awk '!/:/ {printf "%s ", $0}' | sed 's/[[:space:]]*$//')
+        
+        # 3. 纯 IPv6 提取（保留含冒号的，并合并为单行，去除末尾空格）
+        STATUS_IPv6=$(echo "$all_dns" | awk '/:/ {printf "%s ", $0}' | sed 's/[[:space:]]*$//')
+        
+        # 如果变量为空，则给予友好提示
+        [ -z "$STATUS_IPv4" ] && STATUS_IPv4="未配置"
+        [ -z "$STATUS_IPv6" ] && STATUS_IPv6="未配置"
+    else
+        STATUS_IPv4="${RED}文件不存在${RESET}"
+        STATUS_IPv6="${RED}文件不存在${RESET}"
+    fi
+
+    # 4. 检查文件是否被锁定
+    if command -v lsattr >/dev/null 2>&1 && [ -f "$RESOLV_FILE" ]; then
+        if lsattr "$RESOLV_FILE" 2>/dev/null | head -n 1 | cut -d' ' -f1 | grep -q 'i'; then
+            LOCK_STATUS="${RED}已锁定 (🔒)${RESET}"
+        else
+            LOCK_STATUS="${GREEN}未锁定 (🔓)${RESET}"
         fi
+    else
+        LOCK_STATUS="不支持检测"
     fi
 }
-
-disable_resolved() {
-    if command -v systemctl >/dev/null 2>&1; then
-        if systemctl list-unit-files | grep -q "systemd-resolved"; then
-            echo -e "${YELLOW}检测到 systemd-resolved，正在停用...${RESET}"
-            systemctl disable --now systemd-resolved 2>/dev/null
-        fi
-    fi
-    [ -L "$RESOLV_FILE" ] && rm -f "$RESOLV_FILE"
-}
-
+# =========================================================
+# 设置 resolv.conf DNS
+# =========================================================
 set_dns_resolvconf() {
     DNS1=$1
     DNS2=$2
-    prepare_deps
-    disable_resolved
+
     echo -e "${GREEN}正在设置 DNS: $DNS1 $DNS2${RESET}"
-    chattr -i $RESOLV_FILE 2>/dev/null
+
+    # 解锁文件（如果支持 chattr）
+    if command -v chattr >/dev/null 2>&1; then
+        chattr -i $RESOLV_FILE 2>/dev/null || true
+    fi
+    
     rm -f $RESOLV_FILE
+
     cat > $RESOLV_FILE <<EOF
 nameserver $DNS1
-nameserver $DNS2
+EOF
+
+    if [ -n "$DNS2" ]; then
+        echo "nameserver $DNS2" >> $RESOLV_FILE
+    fi
+
+    cat >> $RESOLV_FILE <<EOF
 options timeout:2 attempts:3
 EOF
-    read -p "是否锁定 resolv.conf 防止被系统修改? (y/n): " LOCK
-    if [[ "$LOCK" == "y" ]]; then
-        chattr +i $RESOLV_FILE 2>/dev/null
-        echo -e "${GREEN}已通过 chattr 锁定 resolv.conf${RESET}"
+
+    echo -ne "${GREEN}是否锁定 resolv.conf 防止网络重启被覆盖? (y/n): ${RESET}"
+    read -r LOCK </dev/tty
+    if [ "$LOCK" = "y" ] || [ "$LOCK" = "Y" ]; then
+        if command -v chattr >/dev/null 2>&1; then
+            chattr +i $RESOLV_FILE 2>/dev/null || true
+            echo -e "${GREEN}已成功锁定 resolv.conf${RESET}"
+        else
+            echo -e "${YELLOW}当前系统缺少 chattr 命令，无法锁定文件${RESET}"
+        fi
     fi
-    echo -e "${GREEN}DNS 更新完成${RESET}"
+
+    echo -e "${GREEN}DNS 配置更新完成！${RESET}"
 }
 
+# =========================================================
+# 自定义 DNS 输入
+# =========================================================
 custom_dns() {
-    read -p "请输入主 DNS: " MAIN_DNS
-    read -p "请输入备用 DNS: " BACKUP_DNS
-    # 修正后的逻辑
-    if [[ -z "$MAIN_DNS" ]]; then
+    echo -ne "${GREEN}请输入主 DNS: ${RESET}"
+    read -r MAIN_DNS </dev/tty
+    echo -ne "${GREEN}请输入备用 DNS (可留空): ${RESET}"
+    read -r BACKUP_DNS </dev/tty
+
+    if [ -z "$MAIN_DNS" ]; then
         echo -e "${RED}主 DNS 不能为空${RESET}"
         return
     fi
+
     set_dns_resolvconf "$MAIN_DNS" "$BACKUP_DNS"
 }
 
+# =========================================================
+# 恢复默认
+# =========================================================
 restore_default() {
-    echo -e "${YELLOW}恢复系统默认 DNS...${RESET}"
-    chattr -i $RESOLV_FILE 2>/dev/null
+    echo -e "${YELLOW}正在恢复系统默认 DNS...${RESET}"
+    if command -v chattr >/dev/null 2>&1; then
+        chattr -i $RESOLV_FILE 2>/dev/null || true
+    fi
     rm -f $RESOLV_FILE
-    echo -e "${GREEN}已解锁并删除静态配置DNS，请重启VPS或配置新的DNS${RESET}"
+    # Alpine 可以通过重启网络触发 udhcpc 自动重新获取 DNS
+    echo -e "${GREEN}静态 DNS 已清理。提示：在 Alpine 下可执行 'rc-service networking restart' 重新获取 DHCP DNS${RESET}"
 }
 
-show_dns() {
-    echo -e "\n${GREEN}===== 当前 DNS 状态 =====${RESET}"
-    [ -f "$RESOLV_FILE" ] && cat $RESOLV_FILE || echo "文件不存在"
-    echo
+# =========================================================
+# DNS 视觉面板菜单
+# =========================================================
+dns_menu() {
+    while true; do
+        # 每次循环动态读取最新 DNS 状态
+        get_dns_status
+
+        clear
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN}   ◈    DNS 系统管理面板   ◈   ${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN} IPv4 DNS : ${YELLOW}${STATUS_IPv4}${RESET}"
+        echo -e "${GREEN} IPv6 DNS : ${YELLOW}${STATUS_IPv6}${RESET}"
+        echo -e "${GREEN} 锁定状态 : ${LOCK_STATUS}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN}  1. Google DNS (8.8.8.8)${RESET}"
+        echo -e "${GREEN}  2. Cloudflare DNS (1.1.1.1)${RESET}"
+        echo -e "${GREEN}  3. 阿里云 DNS (223.5.5.5)${RESET}"
+        echo -e "${GREEN}  4. 腾讯云 DNS (119.29.29.29)${RESET}"
+        echo -e "${GREEN}  5. IPv6 双公网 DNS${RESET}"
+        echo -e "${GREEN}  6. 输入自定义DNS${RESET}"
+        echo -e "${GREEN}  7. 清理静态配置并恢复默认${RESET}"
+        echo -e "${GREEN}  0. 退出${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -ne "${GREEN} 请选择: ${RESET}"
+        
+        read -r choice </dev/tty
+
+        case $choice in
+            1) set_dns_resolvconf "8.8.8.8" "1.1.1.1" ;;
+            2) set_dns_resolvconf "1.1.1.1" "1.0.0.1" ;;
+            3) set_dns_resolvconf "223.5.5.5" "223.6.6.6" ;;
+            4) set_dns_resolvconf "119.29.29.29" "119.28.28.28" ;;
+            5) set_dns_resolvconf "2606:4700:4700::1111" "2001:4860:4860::8888" ;;
+            6) custom_dns ;;
+            7) restore_default ;;
+            0) break ;;
+            *) echo -e "${RED}无效选择，请重新输入...${RESET}"; sleep 1; continue ;;
+        esac
+
+        echo -ne "${GREEN}按回车返回面板...${RESET}"
+        read -r </dev/tty
+    done
 }
 
-menu() {
-    clear
-    echo -e "${GREEN}======  DNS 管理工具 ======${RESET}"
-    echo -e "${GREEN}1) Google DNS (8.8.8.8,1.1.1.1)${RESET}"
-    echo -e "${GREEN}2) Cloudflare DNS (1.1.1.1,1.0.0.1)${RESET}"
-    echo -e "${GREEN}3) 阿里云 DNS (223.5.5.5,223.6.6.6 )${RESET}"
-    echo -e "${GREEN}4) 腾讯云 DNS (119.29.29.29,119.28.28.28)${RESET}"
-    echo -e "${GREEN}5) Claw 专用 DNS (100.100.2.136,100.100.2.138)${RESET}"
-    echo -e "${GREEN}6) IPv6 DNS (Cloudflare+Google)${RESET}"
-    echo -e "${GREEN}7) 自定义 DNS${RESET}"
-    echo -e "${GREEN}8) 恢复默认${RESET}"
-    echo -e "${GREEN}9) 查看当前 DNS${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
-    read -p $'\033[32m请选择: \033[0m' choice
-    case $choice in
-        1) set_dns_resolvconf 8.8.8.8 1.1.1.1 ;;
-        2) set_dns_resolvconf 1.1.1.1 1.0.0.1 ;;
-        3) set_dns_resolvconf 223.5.5.5 223.6.6.6 ;;
-        4) set_dns_resolvconf 119.29.29.29 119.28.28.28 ;;
-        5) set_dns_resolvconf 100.100.2.136 100.100.2.138 ;;
-        6) set_dns_resolvconf 2606:4700:4700::1111 2001:4860:4860::8888 ;;
-        7) custom_dns ;;
-        8) restore_default ;;
-        9) show_dns ;;
-        0) exit 0 ;;
-    esac
-    read -p "按回车返回菜单..."
-    menu
-}
-
-menu
+# =========================================================
+# 执行主逻辑
+# =========================================================
+dns_menu
