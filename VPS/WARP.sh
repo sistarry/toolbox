@@ -130,7 +130,7 @@ while true; do
     clear
     get_swap_status
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}         ◈  VPS SWAP 管理面板  ◈        ${RESET}"
+    echo -e "${GREEN}       ◈  Linux  SWAP 管理面板  ◈     ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 系统环境  : ${YELLOW}${OS_ID}${RESET}"
     echo -e "${GREEN} SWAP状态  : ${STATUS}"
@@ -138,7 +138,6 @@ while true; do
     echo -e "${GREEN}  1. 添加 SWAP (自定大小)${RESET}"
     echo -e "${GREEN}  2. 删除 SWAP (彻底清理)${RESET}"
     echo -e "${GREEN}  3. 查看系统详细内存状态${RESET}"
-    echo -e "${GREEN} ------------------------------------- ${RESET}"
     echo -e "${GREEN}  0. 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -ne "${GREEN} 请输入操作编号: ${RESET}"
