@@ -6,7 +6,49 @@ RED="\033[31m"
 RESET="\033[0m"
 YELLOW="\033[33m"
 
-# 检查 Fail2Ban 是否运行
+# =========================================================
+# 动态获取 Fail2Ban 的状态、版本、监听端口与拦截数据
+# =========================================================
+get_fail2ban_status() {
+    # 1. 检查运行状态
+    if systemctl is-active --quiet fail2ban 2>/dev/null; then
+        STATUS="${YELLOW}已运行${RESET}"
+    else
+        STATUS="${RED}未运行${RESET}"
+    fi
+    
+    # 2. 获取版本号
+    if command -v fail2ban-client >/dev/null 2>&1; then
+        VERSION_SHOW=$(fail2ban-client --version | head -n 1 | awk '{print $2}')
+    else
+        VERSION_SHOW="未安装"
+    fi
+    
+    # 3. 动态获取 SSH 监听端口
+    if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
+        local port_check=$(grep -E '^\s*port\s*=' /etc/fail2ban/jail.d/sshd.local | head -n 1 | awk -F'=' '{print $2}' | tr -d ' ')
+        PORT_SHOW=${port_check:-22}
+    else
+        PORT_SHOW="未知"
+    fi
+    
+    # 4. 统计当前拦截的 IP 总数
+    if systemctl is-active --quiet fail2ban 2>/dev/null && command -v fail2ban-client >/dev/null 2>&1; then
+        local jails=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://' | tr ',' ' ')
+        local total_banned=0
+        for jail in $jails; do
+            local count=$(fail2ban-client status "$jail" | grep "Currently banned:" | awk '{print $4}')
+            total_banned=$((total_banned + count))
+        done
+        SITE_COUNT=$total_banned
+    else
+        SITE_COUNT=0
+    fi
+}
+
+# =========================================================
+# Fail2Ban 功能核心函数
+# =========================================================
 check_fail2ban() {
     if ! systemctl is-active --quiet fail2ban; then
         echo -e "${GREEN}Fail2Ban 未运行，正在启动...${RESET}"
@@ -15,7 +57,6 @@ check_fail2ban() {
     fi
 }
 
-# 安装 Fail2Ban
 install_fail2ban() {
     echo -e "${GREEN}正在安装 Fail2Ban...${RESET}"
     if [ -f /etc/debian_version ]; then
@@ -32,7 +73,25 @@ install_fail2ban() {
     sleep 1
 }
 
-# 配置 SSH 防护
+# 新增：更新 Fail2Ban 函数
+update_fail2ban() {
+    if ! command -v fail2ban-client >/dev/null 2>&1; then
+        echo -e "${RED}Fail2Ban 未安装，无法更新，请先选择选项 1 进行安装${RESET}"
+        return
+    fi
+    
+    echo -e "${GREEN}正在检查并更新 Fail2Ban...${RESET}"
+    if [ -f /etc/debian_version ]; then
+        apt update
+        apt install --only-upgrade -y fail2ban
+    elif [ -f /etc/redhat-release ]; then
+        yum update -y fail2ban
+    fi
+    
+    systemctl restart fail2ban
+    echo -e "${GREEN}Fail2Ban 更新并重启完成${RESET}"
+}
+
 configure_ssh() {
     if [ -f /etc/debian_version ]; then
         LOG_PATH="/var/log/auth.log"
@@ -68,7 +127,6 @@ EOF
     echo -e "${GREEN}SSH 防暴力破解配置完成${RESET}"
 }
 
-# 卸载 Fail2Ban
 uninstall_fail2ban() {
     echo -e "${GREEN}正在卸载 Fail2Ban...${RESET}"
     systemctl stop fail2ban || true
@@ -80,22 +138,38 @@ uninstall_fail2ban() {
     echo -e "${GREEN}Fail2Ban 已卸载${RESET}"
 }
 
-# 菜单
+# =========================================================
+# 换装后的全新 Fail2Ban 管理面板 (带端口与更新选项)
+# =========================================================
 fail2ban_menu() {
     while true; do
-        clear
-        echo -e "${GREEN}====SSH 防暴力破解管理菜单====${RESET}"
-        echo -e "${GREEN}1. 安装开启SSH防暴力破解${RESET}"
-        echo -e "${GREEN}2. 关闭SSH防暴力破解${RESET}"
-        echo -e "${GREEN}3. 配置SSH防护参数${RESET}"
-        echo -e "${GREEN}4. 查看SSH拦截记录${RESET}"
-        echo -e "${GREEN}5. 查看防御规则列表${RESET}"
-        echo -e "${GREEN}6. 查看日志实时监控${RESET}"
-        echo -e "${GREEN}7. 卸载防御程序${RESET}"
-        echo -e "${GREEN}0. 退出${RESET}"
-        read -p $'\033[32m请输入你的选择: \033[0m' sub_choice
+        # 每次循环动态更新 Fail2Ban 的数据
+        get_fail2ban_status
 
-        case $sub_choice in
+        clear
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN} ◈  SSH 防暴力破解管理面板  ◈  ${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN} 状态  : ${STATUS}"
+        echo -e "${GREEN} 版本  : ${YELLOW}${VERSION_SHOW}${RESET}"
+        echo -e "${GREEN} 端口  : ${YELLOW}${PORT_SHOW}${RESET}"
+        echo -e "${GREEN} 封禁  : ${YELLOW}${SITE_COUNT} 个 IP${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -e "${GREEN}  1. 安装开启SSH防护${RESET}"
+        echo -e "${GREEN}  2. 关闭SSH防护功能${RESET}"
+        echo -e "${GREEN}  3. 配置SSH防护参数${RESET}"
+        echo -e "${GREEN}  4. 查看SSH拦截记录${RESET}"
+        echo -e "${GREEN}  5. 查看当前防御规则列表${RESET}"
+        echo -e "${GREEN}  6. 查看日志实时监控${RESET}"
+        echo -e "${GREEN}  7. 卸载 Fail2Ban${RESET}"
+        echo -e "${GREEN} 11. 更新 Fail2Ban${RESET}"
+        echo -e "${GREEN}  0. 退出${RESET}"
+        echo -e "${GREEN}===============================${RESET}"
+        echo -ne "${GREEN} 请选择: ${RESET}"
+        
+        read -r choice </dev/tty
+
+        case $choice in
             1)
                 if ! command -v fail2ban-client >/dev/null 2>&1; then
                     install_fail2ban
@@ -152,7 +226,6 @@ fail2ban_menu() {
             6)
                 check_fail2ban
                 echo -e "${GREEN}进入日志实时监控，按 Ctrl+C 返回菜单${RESET}"
-                # 捕获 Ctrl+C 防止退出整个脚本
                 trap 'echo -e "\n${GREEN}已退出日志监控，返回菜单${RESET}"' SIGINT
                 tail -n 20 -f /var/log/fail2ban.log || true
                 trap - SIGINT
@@ -161,6 +234,10 @@ fail2ban_menu() {
             7)
                 uninstall_fail2ban
                 break
+                ;;
+            11)
+                update_fail2ban
+                read -p $'\033[32m按回车返回菜单...\033[0m'
                 ;;
             0)
                 break
@@ -173,5 +250,7 @@ fail2ban_menu() {
     done
 }
 
-# 主逻辑
+# =========================================================
+# 执行主逻辑
+# =========================================================
 fail2ban_menu
