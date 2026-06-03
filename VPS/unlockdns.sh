@@ -210,7 +210,7 @@ while true; do
     printf "${GREEN}  %02d. %-14s${RESET}\n" "$count" "${dns_order[total_elements-1]}"
     
     echo -e "${GREEN} ------------------------------------- ${RESET}"
-    echo -e "${GREEN}   0. 退出管理面板${RESET}"
+    echo -e "${GREEN}   0. 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -ne "${GREEN} 请输入操作编号: ${RESET}"
     
