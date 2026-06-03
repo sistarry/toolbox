@@ -8,6 +8,17 @@ RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
+# 动态获取系统环境名称 (OS_ID)
+get_os_id() {
+    if [[ -f /etc/alpine-release ]]; then
+        echo "Alpine Linux $(cat /etc/alpine-release)"
+    elif [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+        echo "${NAME} ${VERSION_ID}"
+    else
+        echo "Unknown Linux"
+    fi
+}
 
 # 在 Alpine 上安装 tzdata
 install_tzdata_alpine() {
@@ -75,25 +86,32 @@ set_timezone() {
     echo -e "${GREEN}✅ 时区已设置为 $zone${RESET}"
 }
 
+# 初始化系统环境和时区状态变量
+OS_ID=$(get_os_id)
+
 # 菜单显示
 show_menu() {
     clear
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${GREEN}         🌍 通用时区管理${RESET}"
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${GREEN} 当前时区:${YELLOW} $(get_timezone)${RESET}"
-    echo -e "${GREEN} 1) 设置为 Etc/UTC全球标准${RESET}"
-    echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
-    echo -e "${GREEN} 3) 设置为 America/New_York(美国)${RESET}"
-    echo -e "${GREEN} 4) 设置为 Europe/London(英国)${RESET}"
-    echo -e "${GREEN} 5) 自定义时区${RESET}"
-    echo -e "${GREEN} 0) 退出${RESET}"
+    CURRENT_TZ=$(get_timezone)
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -e "${GREEN}         ◈  Linux 时区管理面板  ◈     ${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -e "${GREEN} 系统环境  : ${YELLOW}${OS_ID}${RESET}"
+    echo -e "${GREEN} 当前时区  : ${YELLOW}${CURRENT_TZ}${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -e "${GREEN}  1. 设置为 Etc/UTC 全球标准${RESET}"
+    echo -e "${GREEN}  2. 设置为 Asia/Shanghai (中国)${RESET}"
+    echo -e "${GREEN}  3. 设置为 America/New_York (美国)${RESET}"
+    echo -e "${GREEN}  4. 设置为 Europe/London (英国)${RESET}"
+    echo -e "${GREEN}  5. 自定义输入时区${RESET}"
+    echo -e "${GREEN}  0. 退出${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -ne "${GREEN} 请输入操作编号: ${RESET}"
 }
 
 # 主循环
 while true; do
     show_menu
-    echo -en "${GREEN} 请输入选项: ${RESET}"
     read choice
     case "$choice" in 
         1)
