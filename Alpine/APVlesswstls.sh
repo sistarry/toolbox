@@ -192,7 +192,6 @@ download_singbox() {
   return 0
 }
 
-# Alpine OpenRC 服务脚本模板（支持创建PID运行目录、重定向捕获日志并修正属主）
 tpl_singbox_openrc_service() {
   cat << 'EOF'
 #!/sbin/openrc-run
@@ -258,10 +257,10 @@ get_random_port() {
 
 get_sb_status() {
   if has_command rc-service && rc-service singbox-vless-ws status 2>/dev/null | grep -q "started"; then
-    echo -e "${GREEN}● 运行中 ${RESET}"
+    echo -e "${YELLOW}● 运行中 ${RESET}"
   else
     if pgrep -f "$EXECUTABLE_INSTALL_PATH run" >/dev/null 2>&1; then
-      echo -e "${GREEN}● 运行中 ${RESET}"
+      echo -e "${YELLOW}● 运行中 ${RESET}"
     else
       echo -e "${RED}● 未运行${RESET}"
     fi
@@ -277,7 +276,6 @@ get_current_port_display() {
 }
 
 restart_singbox_service() {
-  # 确保日志文件存在并有正确属主
   touch "$SB_LOG" 2>/dev/null || true
   if is_user_exists "sing-box" && getent group "sing-box" >/dev/null 2>&1; then
     chown sing-box:sing-box "$SB_LOG" 2>/dev/null || true
@@ -293,26 +291,54 @@ restart_singbox_service() {
   fi
 }
 
+fix_external_cert_permission_vless() {
+  local cert="$1"
+  local key="$2"
+  
+  if [[ "$cert" == /root/* ]] || [[ "$key" == /root/* ]]; then
+    error "致命拒绝: 检测到您的证书位于 /root/ 目录下！"
+    warn "原因分析: /root 目录权限严苛(700)，非 root 用户无法穿透检索。"
+    info "权威推荐: 请将证书手动移动到公共目录 (如 /etc/amee/ 或 /etc/ssl/) 后再试。"
+    return 1
+  fi
+
+  info "正在强行赋予证书所在的多级父目录检索穿透权限 (o+x)..."
+  local dir
+  for file in "$cert" "$key"; do
+    dir=$(dirname "$file")
+    while [[ "$dir" != "/" && -n "$dir" ]]; do
+      chmod o+x "$dir" 2>/dev/null || true
+      dir=$(dirname "$dir")
+    done
+  done
+  
+  info "正在规范化自定义目录下的证书和私钥读取白名单权限 (644)..."
+  chmod 644 "$cert" 2>/dev/null || true
+  chmod 644 "$key" 2>/dev/null || true
+  return 0
+}
+
 # =========================================================
-# 4. 证书、端口交互、配置写入与自定义 Socks5 出口
+# 4. 经过重构、全面固化的证书申请与路径同步交互
 # =========================================================
 inst_cert() {
   mkdir -p /etc/singbox-vless-ws
-  
+
   echo "---------------------------------------------"
   echo -e "sing-box TLS 证书申请方式如下："
-  echo -e " 1) Acme自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
-  echo -e " 2) 自定义证书路径"
+  echo -e " 1) Acme自动申请 (Let'sEncrypt)${YELLOW}（默认）${RESET}"
+  echo -e " 2) ZeroSSL自动申请"
+  echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
-  read -rp "请输入选项 [1-2] (直接回车默认Acme自动申请): " certInput
+  read -rp "请输入选项 [1-3] (直接回车默认Let'sEncrypt申请): " certInput
   certInput=${certInput:-1}
 
   cert_path="/etc/singbox-vless-ws/fullchain.pem"
   key_path="/etc/singbox-vless-ws/privkey.pem"
 
-  if [[ $certInput == 1 ]]; then
-    if [[ $(check_port "80") -eq 0 ]]; then
+  if [[ $certInput == 1 || $certInput == 2 ]]; then
+    if ss -tunlp | grep -w tcp | awk '{print $5}' | sed 's/.*://g' | grep -q -w "80"; then
       warn "检测到 80 端口已被占用，Acme 独立模式可能会失败。请确保已暂时关闭 Web 服务。"
     fi
 
@@ -324,48 +350,100 @@ inst_cert() {
     has_command socat || install_software socat
 
     local acme_cmd="/root/.acme.sh/acme.sh"
+    local rand_prefix
+    rand_prefix=$(openssl rand -hex 6 2>/dev/null || date +%s | tail -c 8)
+    local user_email="${rand_prefix}@gmail.com"
+
     if [[ ! -f "$acme_cmd" ]]; then
-      curl https://get.acme.sh | sh -s email=$(date +%s%N 2>/dev/null || date +%s)@gmail.com
+      curl https://get.acme.sh | sh -s email="${user_email}"
     fi
-    
-    "$acme_cmd" --set-default-ca --server letsencrypt
-    
-    info "正在向 Let's Encrypt 申请证书..."
+
+    if [[ $certInput == 1 ]]; then
+      info "正在切换 ACME 默认 CA 为 Let's Encrypt..."
+      "$acme_cmd" --set-default-ca --server letsencrypt
+    elif [[ $certInput == 2 ]]; then
+      info "正在切换 ACME 默认 CA 为 ZeroSSL 并注册账号..."
+      "$acme_cmd" --set-default-ca --server zerossl
+      "$acme_cmd" --register-account -m "${user_email}" --server zerossl
+    fi
+
+    info "正在向 CA 机构申请证书..."
+    rm -f "$cert_path" "$key_path"
     if [[ "$vps_ip" =~ ":" ]]; then
       "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --listen-v6 --insecure
     else
       "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --insecure
     fi
     
-    if "$acme_cmd" --install-cert -d "${domain}" --key-file "$key_path" --fullchain-file "$cert_path" --ecc; then
+    local reload_trigger="[ -f /etc/init.d/singbox-vless-ws ] && rc-service singbox-vless-ws restart || echo '[信息] 初次部署，跳过服务同步'"
+
+    if "$acme_cmd" --install-cert -d "${domain}" \
+      --key-file "$key_path" \
+      --fullchain-file "$cert_path" \
+      --ecc \
+      --reloadcmd "$reload_trigger"; then
+      
       echo "$domain" > /etc/singbox-vless-ws/ca.log
       sb_domain=$domain
-      info "Acme 证书申请并成功分发至安全沙箱！"
+      info "证书申请并成功分发至安全沙箱！"
     else
-      error "Acme 证书申请失败，自动切换回自定义证书路径。"
-      certInput=2
-    fi
-    
-  elif [[ $certInput == 2 ]]; then
-    local user_cert user_key
-    read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
-    read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
-    read -rp "请输入证书对应的域名: " sb_domain
-    
-    if [[ -f "$user_cert" && -f "$user_key" ]]; then
-      cp -f "$user_cert" "$cert_path"
-      cp -f "$user_key" "$key_path"
-      info "自定义证书已成功同步解耦至内部安全区。"
-    else
-      error "找不到输入的证书文件，自动Acme 证书申请。"
-      certInput=1
+      error "自动证书申请失败，切换回自定义证书路径。"
+      certInput=3
     fi
   fi
 
-  chmod 644 "$cert_path"
-  chmod 600 "$key_path"
+  if [[ $certInput == 3 ]]; then
+    while true; do
+      local user_cert user_key cert_dir guessed_key default_sni
+      echo "---------------------------------------------"
+      read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
+      if [[ -z "$user_cert" ]]; then
+        error "路径不能为空，请重新输入。"
+        continue
+      fi
+
+      cert_dir=$(dirname "$user_cert")
+      guessed_key=""
+      for k_name in "privkey.pem" "private.key" "cert.key" "key.pem" "key.key"; do
+        if [[ -f "${cert_dir}/${k_name}" ]]; then
+          guessed_key="${cert_dir}/${k_name}"
+          break
+        fi
+      done
+
+      default_sni=$(basename "$cert_dir")
+      [[ "$default_sni" == "certs" || "$default_sni" == "ssl" || -z "$default_sni" ]] && default_sni="uuobc.csyk.dpdns.org"
+
+      local key_prompt="请输入密钥文件 (privkey.pem/key) 的路径"
+      [[ -n "$guessed_key" ]] && key_prompt="请输入密钥文件路径 [已智能匹配，回车默认: ${guessed_key}]"
+      read -rp "${key_prompt}: " user_key
+      user_key=${user_key:-$guessed_key}
+
+      read -rp "请输入证书对应的 SNI 域名 [回车默认: ${default_sni}]: " sb_domain
+      sb_domain=${sb_domain:-$default_sni}
+      
+      if [[ -f "$user_cert" && -f "$user_key" ]]; then
+        rm -f "$cert_path" "$key_path"
+        if fix_external_cert_permission_vless "$user_cert" "$user_key"; then
+          ln -sf "$user_cert" "$cert_path"
+          ln -sf "$user_key" "$key_path"
+          info "自定义外部证书已通过安全软链接无缝同步。"
+          break
+        else
+          return 1
+        fi
+      else
+        error "找不到输入的证书文件，请检查路径是否正确并重新输入！"
+      fi
+    done
+  fi
+
+  info "正在强行修复 sing-box 配置安全区内的权限与软链接属主..."
+  chmod 755 /etc/singbox-vless-ws
+  chmod 644 "$cert_path" "$key_path" 2>/dev/null || true
   if is_user_exists "sing-box" && getent group "sing-box" >/dev/null 2>&1; then
     chown -R sing-box:sing-box /etc/singbox-vless-ws
+    chown -h sing-box:sing-box /etc/singbox-vless-ws/* 2>/dev/null || true
   fi
 }
 
@@ -405,9 +483,9 @@ configure_custom_socks5_outbound() {
     echo "---------------------------------------------"
     echo "请选择出口模式："
     if [[ "$current_type" == "socks" ]]; then
-        echo -e "当前模式: ${YELLOW}Socks5 代理出口${RESET}"
+        echo -e "当前模式: ${YELLOW}Socks5代理出口${RESET}"
     else
-        echo -e "当前模式: ${GREEN}本地直连出口${RESET}"
+        echo -e "当前模式: ${GREEN}直连出口${RESET}"
     fi
     echo "1) 直连出口"
     echo "2) Socks5出口"
@@ -480,6 +558,7 @@ configure_custom_socks5_outbound() {
             --argjson port "$socks_port" \
             --arg user "$socks_user" \
             --arg pass "$socks_pass" \
+            --arg password "$socks_pass" \
             '.outbounds = [ { "type": "socks", "tag": "custom-socks5-out", "server": $host, "server_port": $port, "username": $user, "password": $pass } ]' "$SB_CONFIG" > "$tmp_file"
     else
         jq \
@@ -560,22 +639,23 @@ EOF
 IP    : ${ip}
 端口  : $port
 UUID  : $auth_pwd
-SIN   : $sb_domain
+SNI   : $sb_domain
 HOST  : $sb_domain
 路径  : $ws_path
 ---------------------------
 📄 V6VPS 请自行替换 IP 地址为 V6 ★
-[信息] V2rayN   链接：
+[信息] V2rayN    链接：
 vless://$auth_pwd@$url_ip:$port?sni=$sb_domain&host=$sb_domain&security=tls&type=ws&path=$(echo "$ws_path" | sed 's/\//%2F/g')#$hostname-Vlesswstls
 ---------------------------------
 EOF
 
   if is_user_exists "sing-box" && getent group "sing-box" >/dev/null 2>&1; then
     chown -R sing-box:sing-box /etc/singbox-vless-ws
+    chown -h sing-box:sing-box /etc/singbox-vless-ws/* 2>/dev/null || true
   fi
 
   if restart_singbox_service; then
-    info "sing-box (VLESS+WS+TLS) 服务配置并启动成功！"
+    info "sing-box (VLESS+WS+TLS) 服务配置并通过 OpenRC 启动成功！"
   else
     error "sing-box 服务启动失败，请查看日志。"
   fi
@@ -781,13 +861,13 @@ showconf() {
   echo -e "${YELLOW}端口    : ${main_port}${RESET}"
   echo -e "${YELLOW}UUID    : ${auth_pwd}${RESET}"
   echo -e "${YELLOW}SNI     : ${sb_domain}${RESET}"
-  echo -e "${YELLOW}host     : ${sb_domain}${RESET}"
+  echo -e "${YELLOW}host    : ${sb_domain}${RESET}"
   echo -e "${YELLOW}WS 路径 : ${ws_path}${RESET}"
-  echo -e "${GREEN}---------------------------${RESET}"
+  echo -e "${GREEN}---------------------------------${RESET}"
   echo -e "${YELLOW}📄 V6VPS 请自行替换 IP 地址为 V6 ★${RESET}"
   echo -e "${GREEN}[信息] V2rayN 链接：${RESET}"
   echo -e "${YELLOW}vless://${auth_pwd}@${url_ip}:${main_port}?sub=1&sni=${sb_domain}&host=${sb_domain}&security=tls&allowInsecure=${is_insecure}&type=ws&path=$(echo "$ws_path" | sed 's/\//%2F/g')#${hostname}-Vlesswstls${RESET}"
-  echo -e "${YELLOW}---------------------------------${RESET}"
+  echo -e "${GREEN}---------------------------------${RESET}"
 }
 
 # =========================================================
@@ -854,12 +934,13 @@ menu() {
         restart_singbox_service && info "服务/进程已重启！"
         pause ;;
       8) 
-        #  适配 Alpine 环境查看实时滚动日志
         if [[ -f "$SB_LOG" ]]; then
            echo -e "${CYAN}正在实时读取 sing-box 核心日志 (按 Ctrl+C 即可退出)...${RESET}"
            echo "------------------------------------------------------------------------"
-           # 使用 tail -f 实时追踪最后50行日志
-           tail -n 50 -f "$SB_LOG" || true
+           # 核心改动：在子 Shell 中执行并保护主进程，使其不被 Ctrl+C 连带杀死
+           (trap 'exit 0' INT; tail -n 50 -f "$SB_LOG") || true
+           echo -e "\n${GREEN}[信息] 已退出日志查看。${RESET}"
+           pause
         else
            error "未发现核心日志文件 ($SB_LOG)，服务可能未曾启动。"
            pause
