@@ -262,7 +262,7 @@ detect_os
 
 while true; do
     show_menu
-    echo -ne "${GREEN}请输入您的首选操作编号: ${RESET}"
+    echo -ne "${GREEN}请输入您的操作编号: ${RESET}"
     read -r sub_choice
 
     # 兼容非标数字格式输入
