@@ -389,6 +389,17 @@ show_cron(){
 # 9. 卸载 acme.sh
 # ===============================
 uninstall_acme(){
+
+    yellow "警告：此操作将从系统彻底卸载 ACME 并清除所有已导出的本地证书和配置目录 ($SSL_DIR)！"
+    read -p "确定要继续卸载吗？(y/n): " confirm
+    
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        yellow "已取消卸载操作。"
+        pause
+        return 0
+    fi
+
+    yellow "正在从 Alpine 系统清理 ACME 及其运行目录..."
     [ -f "$ACME_HOME/acme.sh" ] && "$ACME_HOME/acme.sh" --uninstall >/dev/null 2>&1
     [ -d "$ACME_HOME" ] && rm -rf "$ACME_HOME"
     [ -d "/etc/acme" ] && rm -rf "/etc/acme"
