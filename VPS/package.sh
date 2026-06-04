@@ -1,273 +1,296 @@
-#!/bin/bash
+#!/bin/sh
+# =========================================================================
+#       ◈ 多系统通用运维工具箱部署面板 
+# =========================================================================
 
-# ----------------------
-# 定义颜色
-# ----------------------
+# 权限校验
+if [ "$(id -u)" -ne 0 ]; then
+    echo "\033[31m❌ 错误：请使用 root 权限或 sudo 运行此脚本！\033[0m"
+    exit 1
+fi
+
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-# ----------------------
-# 通用安装函数
-# ----------------------
-install_tool() {
-    local pkg="$1"
-    echo -e "${GREEN}正在安装 $pkg ...${RESET}"
-    if command -v apt &>/dev/null; then
-        apt update && apt install -y "$pkg"
-    elif command -v yum &>/dev/null; then
-        yum install -y "$pkg"
-    elif command -v apk &>/dev/null; then
-        apk add --no-cache "$pkg"
-    else
-        echo -e "${RED}不支持的包管理器${RESET}"
-        return 1
-    fi
-    echo -e "${GREEN}$pkg 安装完成${RESET}"
-}
-
-# ----------------------
-# 系统检测函数
-# ----------------------
+# ================== 精准系统检测 ==================
 detect_os() {
     if [ -f /etc/os-release ]; then
         os_name=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-    elif command -v lsb_release &>/dev/null; then
-        os_name=$(lsb_release -i | cut -f2 | tr -d '"')
     else
-        echo -e "${RED}无法确定操作系统类型${RESET}"
-        exit 1
+        os_name="unknown"
     fi
-}
-
-# ----------------------
-# 系统安装函数
-# ----------------------
-install_sys_tool() {
-    local tool="$1"
-    echo -e "${GREEN}正在安装 $tool ...${RESET}"
-
+    
+    # 规范化家族名称
     case "$os_name" in
-        centos|rocky)
-            yum install epel-release -y
-            yum install -y "$tool"
-            ;;
-
-        amzn)
-            amazon-linux-extras install epel -y
-            yum install -y "$tool"
-            ;;
-
-        debian|ubuntu)
-            if [[ "$tool" == "mtr" ]]; then
-                apt update && apt install -y mtr-tiny
-            else
-                apt update && apt install -y "$tool"
-            fi
-            ;;
-
-        alpine)
-            apk add --no-cache "$tool"
-            ;;
-
-        *)
-            install_tool "$tool"
-            ;;
-    esac
-
-    echo -e "${GREEN}$tool 安装完成${RESET}"
-}
-
-
-# ----------------------
-# 在 / 目录运行工具
-# ----------------------
-run_in_root() {
-    cd / || return
-    "$@"
-    cd ~ || return
-}
-
-# ----------------------
-# 显示帮助或运行工具
-# ----------------------
-run_tool() {
-    local tool="$1"
-    local mode="$2" # help / run
-    case "$mode" in
-        help)
-            echo -e "${GREEN}显示 $tool 帮助信息:${RESET}"
-            "$tool" --help
-            ;;
-        run)
-            echo -e "${GREEN}运行 $tool ...${RESET}"
-            "$tool"
-            ;;
-        *)
-            echo -e "${RED}未知模式: $mode${RESET}"
-            ;;
+        fedora|rocky|alma|centos) os_family="rhel" ;;
+        ubuntu|debian|kali|linuxmint) os_family="debian" ;;
+        alpine) os_family="alpine" ;;
+        amzn) os_family="amazon" ;;
+        *) os_family="unknown" ;;
     esac
 }
 
-# ----------------------
-# 判断工具是否已安装，返回状态
-# ----------------------
-check_installed() {
+# ================== 核心通用安装引擎 ==================
+install_tool_core() {
     local tool="$1"
-    if command -v "$tool" &>/dev/null; then
-        return 0
+    local sys_mode="$2"
+    
+    echo -e "${YELLOW}⚙️ 正在为您在 ${os_name} 系统上配置 ${tool} ...${RESET}"
+    
+    # 针对特定系统工具做特殊分支处理
+    if [ "$sys_mode" = "sys" ]; then
+        case "$os_family" in
+            rhel)
+                yum install epel-release -y >/dev/null 2>&1
+                yum install -y "$tool"
+                return $?
+                ;;
+            amazon)
+                amazon-linux-extras install epel -y >/dev/null 2>&1 || yum install epel-release -y >/dev/null 2>&1
+                yum install -y "$tool"
+                return $?
+                ;;
+            debian)
+                if [ "$tool" = "mtr" ]; then
+                    apt-get update -y && apt-get install -y mtr-tiny
+                    return $?
+                fi
+                ;;
+        esac
+    fi
+
+    # 标准通用安装路由
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update -y >/dev/null 2>&1 && apt-get install -y "$tool"
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y "$tool"
+    elif command -v yum >/dev/null 2>&1; then
+        yum install -y "$tool"
+    elif command -v apk >/dev/null 2>&1; then
+        apk add --no-cache "$tool"
     else
+        echo -e "${RED}❌ 错误：无法识别此系统的包管理器！${RESET}"
         return 1
     fi
 }
 
-# ----------------------
-# 工具列表及支持系统
-# ----------------------
-declare -A tools
-tools=(
-    [1]="curl:help:"
-    [2]="wget:help:"
-    [3]="sudo:help:"
-    [4]="socat:help:"
-    [5]="htop:run:"
-    [6]="iftop:run:"
-    [7]="unzip:help:"
-    [8]="tar:help:"
-    [9]="tmux:help:"
-    [10]="ffmpeg:help:"
-    [11]="btop:run:"
-    [12]="ranger:run_root:"
-    [13]="ncdu:run_root:"
-    [14]="fzf:run_root:"
-    [15]="vim:help_root:"
-    [16]="nano:help_root:"
-    [17]="git:help_root:"
-    [18]="screen:sys:centos,rocky,amzn"
-    [19]="masscan:sys:centos,rocky,amzn"
-    [20]="iperf3:sys:"
-    [21]="mtr:sys:"
-)
+# 检查是否安装
+check_installed() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-# ----------------------
-# 显示菜单函数（菜单字体绿色，状态彩色）
-# ----------------------
+# ================== 工具元数据驱动器 (代替容易闪退的关联数组) ==================
+# 格式化存储明细： 编号 | 工具名称 | 运行测试模式 | 系统专属限制 (留空代表通用)
+get_tool_data() {
+    case "$1" in
+        1)  echo "curl:help:" ;;
+        2)  echo "wget:help:" ;;
+        3)  echo "sudo:help:" ;;
+        4)  echo "socat:help:" ;;
+        5)  echo "htop:run:" ;;
+        6)  echo "iftop:run:" ;;
+        7)  echo "unzip:help:" ;;
+        8)  echo "tar:help:" ;;
+        9)  echo "tmux:help:" ;;
+        10) echo "ffmpeg:help:" ;;
+        11) echo "btop:run:" ;;
+        12) echo "ranger:run_root:" ;;
+        13) echo "ncdu:run_root:" ;;
+        14) echo "fzf:run_root:" ;;
+        15) echo "vim:help_root:" ;;
+        16) echo "nano:help_root:" ;;
+        17) echo "git:help_root:" ;;
+        18) echo "screen:sys:centos,rocky,amzn" ;;
+        19) echo "masscan:sys:centos,rocky,amzn" ;;
+        20) echo "iperf3:sys:" ;;
+        21) echo "mtr:sys:" ;;
+        *)  echo "NONE" ;;
+    esac
+}
+
+# ================== 智能动态菜单渲染 ==================
 show_menu() {
     clear
-    echo -e "${GREEN}========== 工具安装菜单 ===========${RESET}"
-    echo -e "${GREEN}系统: $os_name${RESET}"
-    for i in $(seq 1 21); do
-        IFS=":" read -r tool mode support_os <<< "${tools[$i]}"
-        if [[ -n "$support_os" && ! ",$support_os," =~ ",$os_name," ]]; then
-            continue
+    echo -e "${GREEN}=====================================${RESET}"
+    echo -e "${GREEN}     ◈ 运维必备全能工具箱面板 ◈      ${RESET}"
+    echo -e "${GREEN}=====================================${RESET}"
+    echo -e "${GREEN} 宿主系统:${RESET} ${YELLOW}$os_name${RESET}"
+    echo -e "${GREEN} 核心架构:${RESET} ${YELLOW}$(uname -m)${RESET}"
+    echo -e "${GREEN}------------------------------------=${RESET}"
+    
+    local i=1
+    while [ $i -le 21 ]; do
+        local data=$(get_tool_data $i)
+        IFS=":" read -r tool mode support_os _ <<EOF
+$data
+EOF
+        # 校验系统特定的软件展示限制
+        if [ -n "$support_os" ]; then
+            echo ",$support_os," | grep -q ",$os_name,"
+            if [ $? -ne 0 ]; then
+                i=$((i+1))
+                continue
+            fi
         fi
+
+        # 状态标色
         if check_installed "$tool"; then
             status="${GREEN}✔ 已安装${RESET}"
         else
             status="${RED}✖ 未安装${RESET}"
         fi
 
-        if [[ $i -lt 10 ]]; then
-            # 小于 10 → 前补零
-            printf "${GREEN} [0%d] %-10s${RESET} %b\n" "$i" "$tool" "$status"
-        else
-            printf "${GREEN} [%2d] %-10s${RESET} %b\n" "$i" "$tool" "$status"
-        fi
+        # 优雅的对齐格式化输出
+        printf "${GREEN} [%02d] %-12s${RESET} %b\n" "$i" "$tool" "$status"
+        i=$((i+1))
     done
-    echo -e "${GREEN} [99] 卸载已安装工具${RESET}"
-    echo -e "${GREEN} [ 0] 退出${RESET}"
-    echo -e "${GREEN}===================================${RESET}"
+    
+    echo -e "${GREEN}-------------------------------------${RESET}"
+    echo -e "${YELLOW} [99] 工具卸载${RESET}"
+    echo -e "${RED} [00] 退出${RESET}"
+    echo -e "${GREEN}=====================================${RESET}"
 }
 
+# ================== 动作调度核心执行器 ==================
+execute_action() {
+    local tool="$1"
+    local mode="$2"
 
-# ----------------------
-# 卸载函数（支持多选）
-# ----------------------
-uninstall_tool() {
-    installed_tools=()
-    for i in $(seq 1 21); do
-        IFS=":" read -r tool mode support_os <<< "${tools[$i]}"
-        if check_installed "$tool"; then
-            installed_tools+=("$tool")
+    if ! check_installed "$tool"; then
+        install_tool_core "$tool" "$mode"
+        if [ $? -ne 0 ] || ! check_installed "$tool"; then
+            echo -e "${RED}❌ $tool 安装失败，请检查软件源仓库配置。${RESET}"
+            return 1
         fi
+        echo -e "${GREEN}✅ $tool 成功部署就绪！${RESET}"
+    else
+        echo -e "${GREEN}💡 检测到 $tool 已经安装在系统环境中。${RESET}"
+    fi
+
+    # 引导运行或调出帮助信息
+    echo -e "${YELLOW}-------------------------------------${RESET}"
+    case "$mode" in
+        help)      echo -e "即将调取帮助快照: $tool --help"; sleep 1; "$tool" --help ;;
+        run)       echo -e "即将立刻进入并运行工具: $tool"; sleep 1; "$tool" ;;
+        run_root)  echo -e "即将切入根路径运行工具: $tool"; sleep 1; cd / && "$tool"; cd ~ ;;
+        help_root) echo -e "即将切入根路径调取帮助: $tool -h"; sleep 1; cd / && "$tool" -h; cd ~ ;;
+        sys)       echo -e "环境包部署完成，您现在可以直接在全局键入 [ ${tool} ] 使用它。" ;;
+    esac
+}
+
+# ================== 智能多选卸载引擎 (精准检测版) ==================
+uninstall_mode() {
+    clear
+    echo -e "${RED}=====================================${RESET}"
+    echo -e "${RED}      ◈ 软件卸载清洗中心 ◈          ${RESET}"
+    echo -e "${RED}=====================================${RESET}"
+    
+    # 动态扫描已存在的工具
+    local count=0
+    local i=1
+    while [ $i -le 21 ]; do
+        local data=$(get_tool_data $i)
+        IFS=":" read -r tool _ <<EOF
+$data
+EOF
+        if check_installed "$tool"; then
+            count=$((count+1))
+            eval "inst_tool_$count=\"$tool\""
+            echo -e "${GREEN}  $count) $tool${RESET}"
+        fi
+        i=$((i+1))
     done
 
-    if [ ${#installed_tools[@]} -eq 0 ]; then
-        echo -e "${RED}没有已安装的工具可卸载${RESET}"
+    if [ $count -eq 0 ]; then
+        echo -e "${YELLOW}🍃 系统非常洁净，没有发现可供卸载的工具组件。${RESET}"
+        read -r -p "按 [回车键] 返回菜单..." dummy
         return
     fi
 
-    echo -e "${YELLOW}已安装工具:${RESET}"
-    for idx in "${!installed_tools[@]}"; do
-        echo -e "${GREEN}$((idx+1))) ${installed_tools[$idx]}${RESET}"
-    done
-
-    read -rp $'\033[32m请输入要卸载的编号（空格或逗号分隔可多选）: \033[0m' choices
-    # 替换逗号为空格
-    choices=${choices//,/ }
+    echo ""
+    echo -ne "${YELLOW}请输入需要清洗的软件编号 (支持以空格或逗号多选, 如 1 3 5): ${RESET}"
+    read -r choices
+    
+    # 兼容处理用户输入的逗号
+    choices=$(echo "$choices" | tr ',' ' ')
+    
     for choice in $choices; do
-        if [[ "$choice" -ge 1 && "$choice" -le ${#installed_tools[@]} ]]; then
-            tool_to_remove="${installed_tools[$((choice-1))]}"
-            echo -e "${GREEN}正在卸载 $tool_to_remove ...${RESET}"
-            if command -v apt &>/dev/null; then
-                apt remove -y "$tool_to_remove"
-            elif command -v yum &>/dev/null; then
-                yum remove -y "$tool_to_remove"
-            elif command -v apk &>/dev/null; then
-                apk del "$tool_to_remove"
-            else
-                echo -e "${RED}不支持的包管理器${RESET}"
+        # 验证数字合法性
+        echo "$choice" | grep -q '^[0-9]\+$' || continue
+        if [ "$choice" -ge 1 ] && [ "$choice" -le $count ]; then
+            eval "target_tool=\$inst_tool_$choice"
+            
+            # 映射实际的真实包名
+            local real_package="$target_tool"
+            if [ "$os_family" = "debian" ] && [ "$target_tool" = "mtr" ]; then
+                real_package="mtr-tiny"
             fi
-            echo -e "${GREEN}$tool_to_remove 卸载完成${RESET}"
+
+            echo -e "${YELLOW}⚡ 正在全盘清洗组件: $target_tool (实际包名: $real_package) ...${RESET}"
+            
+            if command -v apt-get >/dev/null 2>&1; then
+                apt-get purge -y "$real_package"
+                apt-get autoremove -y >/dev/null 2>&1
+            elif command -v dnf >/dev/null 2>&1; then
+                dnf remove -y "$real_package"
+            elif command -v yum >/dev/null 2>&1; then
+                yum remove -y "$real_package"
+            elif command -v apk >/dev/null 2>&1; then
+                apk del "$real_package"
+            fi
+            
+            # 【核心修复】强制刷新当前环境的命令哈希表，防止缓存误报
+            hash -r 2>/dev/null
+
+            # 重新检查命令是否还存在
+            if check_installed "$target_tool"; then
+                echo -e "${RED}❌ $target_tool 移除失败！可能该组件是系统核心依赖，被包管理器保护。${RESET}"
+            else
+                echo -e "${GREEN}✓ $target_tool 已安全移除！${RESET}"
+            fi
         else
-            echo -e "${RED}无效选择: $choice${RESET}"
+            echo -e "${RED}❌ 无效的选择序列号: $choice${RESET}"
         fi
     done
+    read -r -p "操作完成，按 [回车键] 返回主菜单..." dummy
 }
 
-# ----------------------
-# 主程序
-# ----------------------
+# ================== 主循环入口 ==================
 detect_os
 
 while true; do
     show_menu
-    read -rp $'\033[32m请输入要操作的编号: \033[0m' sub_choice
+    echo -ne "${GREEN}请输入您的首选操作编号: ${RESET}"
+    read -r sub_choice
 
-    # 验证输入是否为纯数字
-    if ! [[ "$sub_choice" =~ ^[0-9]+$ ]]; then
-        echo -e "${RED}无效输入，请输入数字${RESET}"
-        read -rp "按回车返回菜单..." _
+    # 兼容非标数字格式输入
+    if [ "$sub_choice" = "0" ] || [ "$sub_choice" = "00" ]; then
+        exit 0
+    fi
+
+    if [ "$sub_choice" = "99" ]; then
+        uninstall_mode
         continue
     fi
 
-    [[ "$sub_choice" == "0" || "$sub_choice" == "00" ]] && break
-
-    if [[ "$sub_choice" == "99" ]]; then
-        uninstall_tool
-        echo -e "${GREEN}按回车返回菜单...${RESET}"
-        read -r
+    # 判断输入合法性与范围
+    echo "$sub_choice" | grep -q '^[0-9]\+$'
+    if [ $? -ne 0 ] || [ "$sub_choice" -lt 1 ] || [ "$sub_choice" -gt 21 ]; then
+        echo -e "${RED}❌ 警告：请输入有效的菜单指令数字！${RESET}"
+        sleep 1
         continue
     fi
 
-    if [[ -n "${tools[$sub_choice]}" ]]; then
-        IFS=":" read -r tool mode support_os <<< "${tools[$sub_choice]}"
-        clear
-        case "$mode" in
-            help) install_tool "$tool" && run_tool "$tool" help ;;
-            run) install_tool "$tool" && run_tool "$tool" run ;;
-            run_root) install_tool "$tool" && run_in_root "$tool" ;;
-            help_root) install_tool "$tool" && run_in_root "$tool" -h ;;
-            sys) install_sys_tool "$tool" ;;
-            *) echo -e "${RED}未知模式: $mode${RESET}" ;;
-        esac
-        cd ~
-        echo -e "${GREEN}按回车返回菜单...${RESET}"
-        read -r
-    else
-        echo -e "${RED}无效选择: $sub_choice${RESET}"
-        echo -e "${GREEN}按回车返回菜单...${RESET}"
-        read -r
+    # 获取选定的配置行
+    tool_raw_data=$(get_tool_data "$sub_choice")
+    if [ "$tool_raw_data" != "NONE" ]; then
+        IFS=":" read -r target_tool target_mode _ <<EOF
+$tool_raw_data
+EOF
+        execute_action "$target_tool" "$target_mode"
+        echo ""
+        read -r -p "👉 任务完毕，按 [回车键] 重回主菜单..." dummy
     fi
 done
