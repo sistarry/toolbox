@@ -144,7 +144,7 @@ while true; do
     echo -e "${GREEN} 活跃主网卡 : ${YELLOW}${iface}${RESET}"
     echo -e "${GREEN} IPv4 状态  : ${V4_STATUS}"
     echo -e "${GREEN} IPv6 状态  : ${V6_STATUS}"
-    echo -e "${GREEN}---------------------------------------${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN}  1) 禁用 IPv6（可选临时或永久）${RESET}"
     echo -e "${GREEN}  2) 开启 IPv6${RESET}"
     echo -e "${GREEN}  3) 查看IP状态&公网连通性测试${RESET}"
