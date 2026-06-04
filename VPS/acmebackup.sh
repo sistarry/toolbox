@@ -55,7 +55,7 @@ mkdir -p "$INSTALL_DIR"
 # ACME路径
 #################################
 ACME_HOME="/root/.acme.sh"
-SSL_DIR="/root/ssl"
+SSL_DIR="/etc/acmessl"
 
 #################################
 # 卸载
