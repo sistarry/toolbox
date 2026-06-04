@@ -27,12 +27,13 @@ install_iperf3() {
 
     echo -e "${YELLOW}未检测到 iperf3，正在自动安装...${RESET}"
 
-    if [ -f /etc/debian_version ]; then
-        apt update -y >/dev/null 2>&1
-        apt install -y iperf3 >/dev/null 2>&1
+    if [ -f /etc/alpine-release ]; then
+        # 针对 Alpine Linux 的支持
+        apk add --no-cache iperf3
+    elif [ -f /etc/debian_version ]; then
+        apt update -y && apt install -y iperf3
     elif [ -f /etc/redhat-release ]; then
-        yum install -y epel-release >/dev/null 2>&1
-        yum install -y iperf3 >/dev/null 2>&1
+        yum install -y epel-release && yum install -y iperf3
     else
         echo -e "${RED}不支持的系统，请手动安装 iperf3${RESET}"
         exit 1
@@ -105,7 +106,7 @@ menu() {
     while true; do
         clear
         echo -e "${ORANGE}===================================${RESET}"
-        echo -e "${ORANGE}        iperf3 一键测速管理         ${RESET}"
+        echo -e "${ORANGE}          iperf3 测速管理          ${RESET}"
         echo -e "${ORANGE}===================================${RESET}"
         echo -e " ${GREEN}1) 启动 iperf3 服务器${RESET}"
         echo -e " ${GREEN}2) TCP 下载 (↓)${RESET}"
