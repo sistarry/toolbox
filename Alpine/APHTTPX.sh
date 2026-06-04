@@ -354,6 +354,7 @@ show_current_config() {
     pass=$(jq -r '.inbounds[0].settings.accounts[0].pass // empty' "$XRAY_CONFIG" 2>/dev/null || echo "")
 
     echo -e "${GREEN}====== Xray HTTP 服务端配置 ======${RESET}"
+    echo -e "${YELLOW}📄 V6VPS 请自行替换 IP 地址为 V6 ★${RESET}"
     echo -e "${YELLOW}服务器公网 IP   : ${ip}${RESET}"
     echo -e "${YELLOW}服务监听端口    : ${port}${RESET}"
     
