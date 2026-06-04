@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Alpine sing-box AnyTLS 专属管理面板
+# sing-box AnyTLS Alpine管理面板
 # SPDX-License-Identifier: MIT
 #
 set -Eop pipefail
@@ -153,6 +153,50 @@ get_current_port_display() {
   else echo "-"; fi
 }
 
+# 修复外部自定义证书的穿透访问权限，确保非root运行的 singbox-anytls 用户有权读取
+fix_external_cert_permission() {
+  local cert="$1"
+  local key="$2"
+  
+  # 针对 /root 目录的致命硬拦截
+  if [[ "$cert" == /root/* ]] || [[ "$key" == /root/* ]]; then
+    error "致命拒绝: 检测到您的证书位于 /root/ 目录下！"
+    warn "原因分析: /root 目录权限极为严苛(700)，任何非root用户(包括 singbox-anytls)均无权穿透。"
+    warn "         即使强行赋予文件 644 权限，内核也会因路径阻塞拒绝读取。"
+    info "权威推荐: 请在 acme.sh 命令中加上 --install-cert 指令，将证书自动分发到公共目录"
+    info "         (例如: /etc/sing-box-anytls/certs/ 或 /etc/ssl/ 文件夹下) 再试。"
+    return 1
+  fi
+
+  # 1. 自动提取并【逐级向上】放行外部证书的所有上级目录
+  info "正在为外部证书路径逐级赋予检索穿透权限 (+x) ..."
+  local dir
+  for file in "$cert" "$key"; do
+    dir=$(dirname "$file")
+    while [[ "$dir" != "/" && -n "$dir" ]]; do
+      chmod o+x "$dir" 2>/dev/null || true
+      
+      # 3. 如果系统支持 ACL，精准安全地给 sing-box 账号加上特殊通行证
+      if command -v setfacl >/dev/null 2>&1; then
+        setfacl -m u:"$RUN_USER":rx "$dir" 2>/dev/null || true
+      fi
+      
+      dir=$(dirname "$dir")
+    done
+  done
+  
+  # 2. 确保证书和密钥文件本身可读（私钥通常建议 640 或 644，为了降权用户读取，这里规范为 644 或配合 ACL）
+  info "正在规范化外部证书与私钥文件的读取权限 ..."
+  chmod 644 "$cert" 2>/dev/null || true
+  chmod 644 "$key" 2>/dev/null || true
+  
+  if command -v setfacl >/dev/null 2>&1; then
+    setfacl -m u:"$RUN_USER":r "$cert" "$key" 2>/dev/null || true
+  fi
+  
+  return 0
+}
+
 # =========================================================
 # 5. 面板节点配置生成核心逻辑 (AnyTLS)
 # =========================================================
@@ -162,7 +206,7 @@ inst_cert() {
   echo "---------------------------------------------"
   echo -e "AnyTLS 证书申请方式如下："
   echo -e " 1) 必应伪装自签证书 ${YELLOW}（默认）${RESET}"
-  echo -e " 2) Acme自动申请 (需放行 80 端口)"
+  echo -e " 2) Acme自动申请 (需放行80端口)"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
@@ -199,41 +243,62 @@ inst_cert() {
         "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --insecure
       fi
       
-      if "$acme_cmd" --install-cert -d "${domain}" --key-file "$key_path" --fullchain-file "$cert_path" --ecc; then
+      # =========================================================
+      # 【智能状态探针】纯 OpenRC 架构：有配置(续期)则重启，无配置(初装)则静默
+      # =========================================================
+      local reload_cmd="[ -f /etc/sing-box-anytls/config.json ] && /sbin/rc-service sing-box-anytls restart || echo '[信息] 初次部署，跳过服务同步'"
+
+      if "$acme_cmd" --install-cert -d "${domain}" \
+        --key-file "$key_path" \
+        --fullchain-file "$cert_path" \
+        --ecc \
+        --reloadcmd "$reload_cmd"; then
         echo "$domain" > "$CONFIG_DIR/certs/ca.log"
         sb_domain=$domain
-        info "Acme 专属伪装证书申请并成功分发！"
+        info "Acme 专属伪装证书申请并成功分发（已配置自动续签重启机制）！"
       else
         error "Acme 证书申请失败，自动切换回自签模式。"
         certInput=1
       fi
     fi
   elif [[ $certInput == 3 ]]; then
-    local user_cert user_key
-    read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
-    read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
-    read -rp "请输入证书对应的域名: " sb_domain
-    
-    if [[ -f "$user_cert" && -f "$user_key" ]]; then
-      cp -f "$user_cert" "$cert_path"
-      cp -f "$user_key" "$key_path"
-      info "自定义证书已成功同步至配置安全区。"
-    else
-      error "找不到输入的证书文件，自动降级回自签模式。"
-      certInput=1
-    fi
+    while true; do
+      local user_cert user_key
+      read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
+      read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
+      read -rp "请输入证书对应的域名: " sb_domain
+      
+      if [[ -f "$user_cert" && -f "$user_key" ]]; then
+        rm -f "$cert_path" "$key_path"
+        
+        # 建立软链接之前，先修复外部文件和目录的穿透访问权限
+        fix_external_cert_permission "$user_cert" "$user_key"
+
+        ln -sf "$user_cert" "$cert_path"
+        ln -sf "$user_key" "$key_path"
+        info "自定义证书已成功通过软链接同步至内部安全区。"
+        break
+      else
+        error "找不到输入的证书文件，请重新输入。"
+        echo "---------------------------------------------"
+      fi
+    done
   fi
 
   if [[ $certInput == 1 ]]; then
     info "将使用必应自签证书作为 AnyTLS 外壳的节点证书"
+    rm -f "$cert_path" "$key_path"
     openssl ecparam -genkey -name prime256v1 -out "$key_path"
     openssl req -new -x509 -days 36500 -key "$key_path" -out "$cert_path" -subj "/CN=www.bing.com"
     sb_domain="www.bing.com"
+    
+    chmod 644 "$cert_path" || true
+    chmod 600 "$key_path" || true
   fi
 
-  chmod 644 "$cert_path"
-  chmod 600 "$key_path"
-  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR/certs"
+  # 规范所有权：使用 -h 规避穿透修改外部真实证书所有权
+  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR"
+  chown -h ${RUN_USER}:${RUN_USER} "$cert_path" "$key_path" 2>/dev/null || true
 }
 
 inst_port() {
@@ -552,7 +617,7 @@ menu() {
     raw_status=$(get_anytls_status)
     status=""
     if [[ "$raw_status" == "RUNNING" ]]; then
-      status="${GREEN}● 运行中${RESET}"
+      status="${YELLOW}● 运行中${RESET}"
     else
       status="${RED}● 未运行${RESET}"
     fi
@@ -568,12 +633,12 @@ menu() {
     echo -e "${GREEN}端口   :${RESET} ${YELLOW}${port_show}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 安装 Sing-box AnyTLS${RESET}"
-    echo -e "${GREEN}2. 更新 Sing-box AnyTLS${RESET}"
-    echo -e "${GREEN}3. 卸载 Sing-box AnyTLS${RESET}"
+    echo -e "${GREEN}2. 更新 Sing-box${RESET}"
+    echo -e "${GREEN}3. 卸载 Sing-box${RESET}"
     echo -e "${GREEN}4. 修改配置${RESET}"
-    echo -e "${GREEN}5. 启动 Sing-box AnyTLS${RESET}"
-    echo -e "${GREEN}6. 停止 Sing-box AnyTLS${RESET}"
-    echo -e "${GREEN}7. 重启 Sing-box AnyTLS${RESET}"
+    echo -e "${GREEN}5. 启动 Sing-box${RESET}"
+    echo -e "${GREEN}6. 停止 Sing-box${RESET}"
+    echo -e "${GREEN}7. 重启 Sing-box${RESET}"
     echo -e "${GREEN}8. 查看日志${RESET}"
     echo -e "${GREEN}9. 查看节点配置${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
