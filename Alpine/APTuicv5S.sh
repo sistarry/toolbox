@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Alpine sing-box TUIC v5 专属管理面板 
+# sing-box TUIC v5 Alpine专属
 # SPDX-License-Identifier: MIT
 #
 set -Eop pipefail
@@ -19,7 +19,15 @@ RUN_USER="singbox-tuic"
 
 TMP_DIR=$(mktemp -d -t sb-tuic.XXXXXX)
 
-# 颜色标准规范 —— 
+# 全局上下文锁
+port=""
+auth_uuid=""
+auth_pwd=""
+cert_path="/etc/sing-box-tuic/certs/cert.pem"
+key_path="/etc/sing-box-tuic/certs/key.pem"
+tuic_domain=""
+
+# 颜色标准规范
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
@@ -111,10 +119,11 @@ get_latest_version() {
 
 clear_old_iptables() {
   if [[ -f "${CONFIG_DIR}/hopping.txt" && -f "${CONFIG_DIR}/main_port.txt" ]]; then
-    local old_hop=$(cat "${CONFIG_DIR}/hopping.txt")
-    local old_port=$(cat "${CONFIG_DIR}/main_port.txt")
-    local old_start=${old_hop%-*}
-    local old_end=${old_hop#*-}
+    local old_hop old_port old_start old_end
+    old_hop=$(cat "${CONFIG_DIR}/hopping.txt")
+    old_port=$(cat "${CONFIG_DIR}/main_port.txt")
+    old_start="${old_hop%-*}"
+    old_end="${old_hop#*-}"
 
     if [[ -n "$old_start" && -n "$old_end" && -n "$old_port" ]]; then
       info "正在强力清除旧有的 iptables 端口跳跃规则..."
@@ -129,15 +138,16 @@ clear_old_iptables() {
 apply_new_iptables() {
   clear_old_iptables
   if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
-    local hop_val=$(cat "${CONFIG_DIR}/hopping.txt")
-    local start_p=${hop_val%-*}
-    local end_p=${hop_val#*-}
+    local hop_val start_p end_p
+    hop_val=$(cat "${CONFIG_DIR}/hopping.txt")
+    start_p="${hop_val%-*}"
+    end_p="${hop_val#*-}"
     
     info "正在应用 iptables 转发规则: UDP $start_p-$end_p => 主端口 $port"
-    if iptables -t nat -A PREROUTING -p udp -m multiport --dports "$start_p:$end_p" -j REDIRECT --to-ports "$port"; then
+    if iptables -t nat -A PREROUTING -p udp -m multiport --dports "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null; then
       ip6tables -t nat -A PREROUTING -p udp -m multiport --dports "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null || true
     else
-      iptables -t nat -A PREROUTING -p udp --dport "$start_p:$end_p" -j REDIRECT --to-ports "$port"
+      iptables -t nat -A PREROUTING -p udp --dport "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null || true
       ip6tables -t nat -A PREROUTING -p udp --dport "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null || true
     fi
     
@@ -149,9 +159,6 @@ apply_new_iptables() {
   fi
 }
 
-# =========================================================
-# 4. 网络诊断与配置管理辅助
-# =========================================================
 get_public_ip() {
     local ip
     for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
@@ -168,8 +175,8 @@ get_public_ip() {
 }
 
 check_port() {
-  local port="$1"
-  if ss -tunlp | grep -w udp | awk '{print $5}' | sed 's/.*://g' | grep -q -w "$port"; then
+  local check_p="$1"
+  if ss -tunlp | grep -w udp | awk '{print $5}' | sed 's/.*://g' | grep -q -w "$check_p"; then
     return 1
   fi
   return 0
@@ -210,15 +217,43 @@ get_current_port_display() {
 }
 
 # =========================================================
-# 5. 面板节点配置生成核心逻辑
+# 5. 核心流控与经过实测的四步权限强力穿透修复逻辑
 # =========================================================
+fix_external_cert_permission_final() {
+  local cert="$1"
+  local key="$2"
+  
+  if [[ "$cert" == /root/* ]] || [[ "$key" == /root/* ]]; then
+    error "致命拒绝: 检测到您的证书位于 /root/ 目录下！"
+    warn "原因分析: /root 目录权限极为严苛(700)，非 root 用户无法穿透检索。"
+    info "权威推荐: 请将证书手动移动到公共目录 (如 /etc/amee/ 或 /etc/ssl/) 后再试。"
+    return 1
+  fi
+
+  info "正在强行赋予证书所在的多级父目录检索穿透权限..."
+  local dir
+  for file in "$cert" "$key"; do
+    dir=$(dirname "$file")
+    while [[ "$dir" != "/" && -n "$dir" ]]; do
+      chmod o+x "$dir" 2>/dev/null || true
+      dir=$(dirname "$dir")
+    done
+  done
+  
+  info "正在规范化自定义目录下的证书和私钥读取白名单权限..."
+  chmod 644 "$cert" 2>/dev/null || true
+  chmod 644 "$key" 2>/dev/null || true
+  
+  return 0
+}
+
 inst_cert() {
   mkdir -p "$CONFIG_DIR/certs"
 
   echo "---------------------------------------------"
   echo -e "Tuic 协议证书申请方式如下："
   echo -e " 1) 必应自签证书 ${YELLOW}（默认）${RESET}"
-  echo -e " 2) Acme自动申请 (需放行 80 端口)"
+  echo -e " 2) Acme自动申请 (需放行80端口)"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
@@ -237,13 +272,20 @@ inst_cert() {
       tuic_domain=$(cat "$CONFIG_DIR/certs/ca.log")
       info "检测到已有域名 [${tuic_domain}] 的安全区证书，正在复用..."
     else
+      local domain
       read -rp "请输入需要申请证书的域名: " domain
       [[ -z $domain ]] && error "未输入域名，无法执行操作！" && return 1
       
       info "正在检查并安装 Acme.sh 依赖..."
       local acme_cmd="/root/.acme.sh/acme.sh"
       if [[ ! -f "$acme_cmd" ]]; then
-        curl https://get.acme.sh | sh -s email=$(date +%s%N | md5sum | cut -c 1-16)@gmail.com
+        # 使用 Alpine 100% 自带的 openssl 生成标准的 12 位随机十六进制字符作为谷歌邮箱前缀
+        local rand_prefix
+        rand_prefix=$(openssl rand -hex 6 2>/dev/null || date +%s | tail -c 8)
+        local random_google_email="${rand_prefix}@gmail.com"
+        
+        info "已为您随机生成合规谷歌邮箱: ${random_google_email}"
+        curl https://get.acme.sh | sh -s email="${random_google_email}"
       fi
       
       "$acme_cmd" --set-default-ca --server letsencrypt
@@ -255,7 +297,13 @@ inst_cert() {
         "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --insecure
       fi
       
-      if "$acme_cmd" --install-cert -d "${domain}" --key-file "$key_path" --fullchain-file "$cert_path" --ecc; then
+      local reload_cmd="[ -f /etc/sing-box-tuic/config.json ] && /sbin/rc-service sing-box-tuic restart || echo '[信息] 初次部署，跳过服务同步'"
+      
+      if "$acme_cmd" --install-cert -d "${domain}" \
+        --key-file "$key_path" \
+        --fullchain-file "$cert_path" \
+        --ecc \
+        --reloadcmd "$reload_cmd"; then
         echo "$domain" > "$CONFIG_DIR/certs/ca.log"
         tuic_domain=$domain
         info "Acme 证书申请并成功分发！"
@@ -265,31 +313,66 @@ inst_cert() {
       fi
     fi
   elif [[ $certInput == 3 ]]; then
-    local user_cert user_key
-    read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
-    read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
-    read -rp "请输入证书对应的域名: " tuic_domain
-    
-    if [[ -f "$user_cert" && -f "$user_key" ]]; then
-      cp -f "$user_cert" "$cert_path"
-      cp -f "$user_key" "$key_path"
-      info "自定义证书已成功同步至配置安全区。"
-    else
-      error "找不到输入的证书文件，自动降级回自签模式。"
-      certInput=1
-    fi
+    while true; do
+      local user_cert user_key cert_dir guessed_key default_sni
+      echo "---------------------------------------------"
+      read -rp "请输入公钥文件 (cert.crt/pem) 的路径: " user_cert
+      if [[ -z "$user_cert" ]]; then
+        error "路径不能为空，请重新输入。"
+        continue
+      fi
+
+      # 智能推导同目录下的私钥文件
+      cert_dir=$(dirname "$user_cert")
+      guessed_key=""
+      for k_name in "private.key" "cert.key" "key.pem" "privkey.pem" "key.key"; do
+        if [[ -f "${cert_dir}/${k_name}" ]]; then
+          guessed_key="${cert_dir}/${k_name}"
+          break
+        fi
+      done
+      
+      # 智能推导可能的 SNI 域名
+      default_sni=$(basename "$cert_dir")
+      [[ "$default_sni" == "certs" || "$default_sni" == "ssl" || -z "$default_sni" ]] && default_sni="tuic.org"
+
+      local key_prompt="请输入密钥文件 (key.pem/key) 的路径"
+      [[ -n "$guessed_key" ]] && key_prompt="请输入密钥文件路径 [已为您智能匹配，回车默认: ${guessed_key}]"
+      read -rp "${key_prompt}: " user_key
+      user_key=${user_key:-$guessed_key}
+
+      read -rp "请输入证书对应的 SNI 域名 [回车默认: ${default_sni}]: " tuic_domain
+      tuic_domain=${tuic_domain:-$default_sni}
+      
+      if [[ -f "$user_cert" && -f "$user_key" ]]; then
+        rm -f "$cert_path" "$key_path"
+        if fix_external_cert_permission_final "$user_cert" "$user_key"; then
+          ln -sf "$user_cert" "$cert_path"
+          ln -sf "$user_key" "$key_path"
+          info "自定义外部证书已通过安全软链接无缝同步。"
+          break
+        else
+          return 1
+        fi
+      else
+        error "找不到输入的证书文件，请检查路径是否正确并重新输入！"
+      fi
+    done
   fi
 
   if [[ $certInput == 1 ]]; then
     info "将使用必应自签证书作为 Tuic 的节点证书"
+    rm -f "$cert_path" "$key_path"
     openssl ecparam -genkey -name prime256v1 -out "$key_path"
     openssl req -new -x509 -days 36500 -key "$key_path" -out "$cert_path" -subj "/CN=www.bing.com"
     tuic_domain="www.bing.com"
   fi
 
-  chmod 644 "$cert_path"
-  chmod 600 "$key_path"
-  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR/certs"
+  # 全面固化黄金四步的配置安全区修正
+  info "正在强行修复 sing-box 配置安全区内的权限与软链接属主..."
+  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR"
+  chown -h ${RUN_USER}:${RUN_USER} "$CONFIG_DIR/certs"/* 2>/dev/null || true
+  chmod 755 "$CONFIG_DIR" "$CONFIG_DIR/certs"
 }
 
 inst_port() {
@@ -304,7 +387,9 @@ inst_port() {
   while true; do
     read -rp "$prompt_msg" port
     if [[ -z "$port" ]]; then
-      if [[ -n "$default_port" ]]; then port="$default_port" && break
+      if [[ -n "$default_port" ]]; then 
+        port="$default_port"
+        break
       else
         port=$(get_random_port)
         info "已为您随机分配未被占用端口: $port" && break
@@ -314,44 +399,79 @@ inst_port() {
         error "端口 ${port} 已被其它程序占用，请更换。" && continue
       fi
       break
-    else error "请输入有效的端口数字 (1-65535)"; fi
+    else 
+      error "请输入有效的端口数字 (1-65535)"
+    fi
   done
 
+  local default_hop=""
+  if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
+    default_hop=$(cat "${CONFIG_DIR}/hopping.txt")
+  fi
+
   echo "---------------------------------------------"
-  echo -e "Tuic 端口群使用模式 ："
+  if [[ -n "$default_hop" ]]; then
+    echo -e "Tuic 端口群使用模式 [当前已启用跳跃: ${default_hop}]："
+  else
+    echo -e "Tuic 端口群使用模式 ："
+  fi
   echo -e " 1) 单端口模式"
   echo -e " 2) 端口跳跃模式 ${YELLOW}（默认)${RESET}"
   echo "---------------------------------------------"
   local jumpInput
-  read -rp "请选择端口模式 [1-2] (默认2): " jumpInput
-  jumpInput=${jumpInput:-2}
+  read -rp "请选择端口模式 [1-2] (直接回车默认不变或选择默认项): " jumpInput
+  
+  if [[ -z "$jumpInput" && -n "$default_hop" ]]; then
+    info "检测到回车确认，将 100% 保持原有端口跳跃配置 [${default_hop}] 保持不变。"
+    echo "$port" > "${CONFIG_DIR}/main_port.txt"
+    return 0
+  fi
 
+  jumpInput=${jumpInput:-2}
   clear_old_iptables
 
   if [[ $jumpInput == 2 ]]; then
+    local old_start="" old_end="" firstport="" endport=""
+    if [[ -n "$default_hop" ]]; then
+      old_start="${default_hop%-*}"
+      old_end="${default_hop#*-}"
+    fi
+
     while true; do
-      read -rp "设置外部跳跃起始端口 (建议10000-65535): " firstport
-      read -rp "设置外部跳跃末尾端口 (必须大于起始端口): " endport
-      if is_valid_port "$firstport" && is_valid_port "$endport" && [[ $firstport -lt $endport ]]; then break
-      else error "输入无效，起始端口必须小于末尾端口，请重新输入。"; fi
+      local start_prompt="设置外部跳跃起始端口 (建议10000-65535)"
+      [[ -n "$old_start" ]] && start_prompt="设置外部跳跃起始端口 [当前: ${old_start}, 回车不修改]"
+      read -rp "${start_prompt}: " firstport
+      firstport=${firstport:-$old_start}
+
+      local end_prompt="设置外部跳跃末尾端口 (必须大于起始端口)"
+      [[ -n "$old_end" ]] && end_prompt="设置外部跳跃末尾端口 [当前: ${old_end}, 回车不修改]"
+      read -rp "${end_prompt}: " endport
+      endport=${endport:-$old_end}
+
+      if is_valid_port "$firstport" && is_valid_port "$endport" && [[ $firstport -lt $endport ]]; then 
+        break
+      else 
+        error "输入无效，起始端口必须小于末尾端口，请重新输入。"
+      fi
     done
     echo "$firstport-$endport" > "${CONFIG_DIR}/hopping.txt"
   else
     rm -f "${CONFIG_DIR}/hopping.txt" "${CONFIG_DIR}/main_port.txt"
-    info "将继续使用单端口模式"
+    info "已成功切换回单端口纯净模式"
     if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
     if [[ -f /etc/init.d/ip6tables ]]; then /etc/init.d/ip6tables save &>/dev/null || true; fi
   fi
 }
 
 write_and_show_config() {
-  local HOSTNAME=$(hostname -s | sed 's/ /_/g')
-  local vps_ip=$(get_public_ip)
-  local last_ip="$vps_ip"
+  local HOSTNAME vps_ip last_ip is_insecure skip_cert hopping_param
+  HOSTNAME=$(hostname -s | sed 's/ /_/g')
+  vps_ip=$(get_public_ip)
+  last_ip="$vps_ip"
   [[ "$vps_ip" =~ ":" ]] && last_ip="[$vps_ip]"
 
-  local is_insecure="0"
-  local skip_cert="false"
+  is_insecure="0"
+  skip_cert="false"
   if [[ "$tuic_domain" == "www.bing.com" ]]; then
     is_insecure="1"
     skip_cert="true"
@@ -402,11 +522,12 @@ EOF
 
   chmod 640 "$TUIC_CONFIG"
   chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR"
+  chown -h ${RUN_USER}:${RUN_USER} "$CONFIG_DIR/certs"/* 2>/dev/null || true
 
   apply_new_iptables
   mkdir -p "$TUIC_DIR"
   
-  local hopping_param=""
+  hopping_param=""
   if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
     hopping_param="&mport=$(cat "${CONFIG_DIR}/hopping.txt")"
   fi
@@ -420,18 +541,14 @@ Surge 配置:
 $HOSTNAME-tuicv5 = tuic-v5, $last_ip, $port, password=$auth_pwd, uuid=$auth_uuid, ecn=true, skip-cert-verify=${skip_cert}, sni=$tuic_domain
 EOF
 
-  rc-service sing-box-tuic restart
-  if rc-service sing-box-tuic status | grep -q "started"; then
-    info "sing-box TUIC 服务配置并启动成功！"
-  else
-    error "sing-box-tuic 启动失败，可在菜单中按 8 查看详细的闪退日志。"
-  fi
+  info "正在重启 OpenRC 服务管理器..."
+  rc-service sing-box-tuic stop >/dev/null 2>&1 || true
+  sleep 1.5
+  rc-service sing-box-tuic start
+  
   showconf
 }
 
-# =========================================================
-# 6. 安装、更新与卸载核心流控
-# =========================================================
 write_openrc_script() {
   cat << 'EOF' > "$OPENRC_SERVICE_PATH"
 #!/sbin/openrc-run
@@ -490,7 +607,8 @@ download_core() {
   fi
   
   tar -xzf sing-box.tar.gz -C "$TMP_DIR"
-  local extracted=$(find "$TMP_DIR" -type f -name sing-box | head -n 1)
+  local extracted
+  extracted=$(find "$TMP_DIR" -type f -name sing-box | head -n 1)
   [[ -n "$extracted" ]] || { error "解压目标核心错误"; return 1; }
   
   rc-service sing-box-tuic stop >/dev/null 2>&1 || true
@@ -537,7 +655,6 @@ update_tuic() {
 unsttuic() {
   warn "即将执行全面清洁卸载..."
   
-  # 【修复核心】：必须在删除配置文件和存储路径之前清空 iptables，否则 clear_old_iptables 会读不到数据导致卸载残留
   clear_old_iptables
   if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
   if [[ -f /etc/init.d/ip6tables ]]; then /etc/init.d/ip6tables save &>/dev/null || true; fi
@@ -557,11 +674,12 @@ changeconf() {
     return 1
   fi
 
-  local old_uuid=$(jq -r '.inbounds[0].users[0].uuid // empty' "$TUIC_CONFIG")
-  local old_pwd=$(jq -r '.inbounds[0].users[0].password // empty' "$TUIC_CONFIG")
-  local old_cert=$(jq -r '.inbounds[0].tls.certificate_path // empty' "$TUIC_CONFIG")
-  local old_key=$(jq -r '.inbounds[0].tls.key_path // empty' "$TUIC_CONFIG")
-  local old_sni=$(jq -r '.inbounds[0].tls.server_name // "www.bing.com"' "$TUIC_CONFIG")
+  local old_uuid old_pwd old_cert old_key old_sni change_cert_flag
+  old_uuid=$(jq -r '.inbounds[0].users[0].uuid // empty' "$TUIC_CONFIG")
+  old_pwd=$(jq -r '.inbounds[0].users[0].password // empty' "$TUIC_CONFIG")
+  old_cert=$(jq -r '.inbounds[0].tls.certificate_path // empty' "$TUIC_CONFIG")
+  old_key=$(jq -r '.inbounds[0].tls.key_path // empty' "$TUIC_CONFIG")
+  old_sni=$(jq -r '.inbounds[0].tls.server_name // "www.bing.com"' "$TUIC_CONFIG")
 
   clear
   echo -e "${GREEN}====== 修改 sing-box Tuic 配置 ======${RESET}"
@@ -570,15 +688,12 @@ changeconf() {
   
   inst_port 
 
-  local auth_uuid
   read -rp "设置 Tuic 验证 UUID [当前: ${old_uuid}, 回车不修改]: " auth_uuid
   auth_uuid=${auth_uuid:-$old_uuid}
 
-  local auth_pwd
   read -rp "设置 Tuic 验证密码 [当前: ${old_pwd}, 回车不修改]: " auth_pwd
   auth_pwd=${auth_pwd:-$old_pwd}
 
-  local cert_path key_path tuic_domain
   echo "---------------------------------------------"
   read -rp "是否需要修改证书？[y/N] (直接回车默认不修改): " change_cert_flag
   if [[ "$change_cert_flag" == "y" || "$change_cert_flag" == "Y" ]]; then
@@ -609,16 +724,16 @@ showconf() {
 menu() {
   while true; do
     clear
-    local raw_status=$(get_tuic_status)
-    local status=""
+    local raw_status status version port_show choice
+    raw_status=$(get_tuic_status)
     if [[ "$raw_status" == "RUNNING" ]]; then
-      status="${GREEN}● 运行中${RESET}"
+      status="${YELLOW}● 运行中${RESET}"
     else
       status="${RED}● 未运行${RESET}"
     fi
 
-    local version=$(get_installed_version)
-    local port_show=$(get_current_port_display)
+    version=$(get_installed_version)
+    port_show=$(get_current_port_display)
 
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}       Sing-box Tuicv5 面板     ${RESET}"
@@ -628,18 +743,18 @@ menu() {
     echo -e "${GREEN}端口   :${RESET} ${YELLOW}${port_show}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 安装 Sing-box Tuicv5${RESET}"
-    echo -e "${GREEN}2. 更新 Sing-box Tuicv5${RESET}"
-    echo -e "${GREEN}3. 卸载 Sing-box Tuicv5${RESET}"
+    echo -e "${GREEN}2. 更新 Sing-box${RESET}"
+    echo -e "${GREEN}3. 卸载 Sing-box${RESET}"
     echo -e "${GREEN}4. 修改配置${RESET}"
-    echo -e "${GREEN}5. 启动 Sing-box Tuicv5${RESET}"
-    echo -e "${GREEN}6. 停止 Sing-box Tuicv5${RESET}"
-    echo -e "${GREEN}7. 重启 Sing-box Tuicv5${RESET}"
+    echo -e "${GREEN}5. 启动 Sing-box${RESET}"
+    echo -e "${GREEN}6. 停止 Sing-box${RESET}"
+    echo -e "${GREEN}7. 重启 Sing-box${RESET}"
     echo -e "${GREEN}8. 查看日志${RESET}"
     echo -e "${GREEN}9. 查看节点配置${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
 
-    local choice=""
+    choice=""
     read -r -p $'\033[32m请输入选项: \033[0m' choice || true
     [[ -z "$choice" ]] && continue
 
