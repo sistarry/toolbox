@@ -412,7 +412,7 @@ inst_cert() {
       done
 
       default_sni=$(basename "$cert_dir")
-      [[ "$default_sni" == "certs" || "$default_sni" == "ssl" || -z "$default_sni" ]] && default_sni="uuobc.csyk.dpdns.org"
+      [[ "$default_sni" == "certs" || "$default_sni" == "ssl" || -z "$default_sni" ]] && default_sni="vless.org"
 
       local key_prompt="请输入密钥文件 (privkey.pem/key) 的路径"
       [[ -n "$guessed_key" ]] && key_prompt="请输入密钥文件路径 [已智能匹配，回车默认: ${guessed_key}]"
