@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Alpine sing-box Hysteria 2 专属管理面板
+# sing-box Hysteria 2 [Alpine专属]
 # SPDX-License-Identifier: MIT
 #
 set -Eop pipefail
@@ -215,13 +215,58 @@ get_current_port_display() {
 # =========================================================
 # 5. 面板节点配置生成核心逻辑 (Hysteria 2)
 # =========================================================
+
+
+# 精准修复外部自定义证书的穿透访问权限，确保非 root 运行的 singbox-hy2 用户有权读取
+fix_external_cert_permission() {
+  local cert="$1"
+  local key="$2"
+  
+  # 针对 /root 目录的致命硬拦截
+  if [[ "$cert" == /root/* ]] || [[ "$key" == /root/* ]]; then
+    error "致命拒绝: 检测到您的证书位于 /root/ 目录下！"
+    warn "原因分析: /root 目录权限极为严苛(700)，任何非 root 用户(包括 singbox-hy2)均无权穿透。"
+    warn "         即使强行赋予文件 644 权限，内核也会因路径阻塞拒绝读取。"
+    info "权威推荐: 请在 acme.sh 命令中加上 --install-cert 指令，将证书自动分发到公共目录"
+    info "         (例如: /etc/sing-box-hy2/certs/ 或 /etc/ssl/ 文件夹下) 再试。"
+    return 1
+  fi
+
+  # 1. 自动提取并【逐级向上】放行外部证书的所有上级目录
+  info "正在为外部证书路径逐级赋予检索穿透权限 (+x) ..."
+  local dir
+  for file in "$cert" "$key"; do
+    dir=$(dirname "$file")
+    while [[ "$dir" != "/" && -n "$dir" ]]; do
+      chmod o+x "$dir" 2>/dev/null || true
+      
+      # 如果系统支持 ACL，精准安全地给 sing-box 账号加上特殊通行证
+      if command -v setfacl >/dev/null 2>&1; then
+        setfacl -m u:"$RUN_USER":rx "$dir" 2>/dev/null || true
+      fi
+      dir=$(dirname "$dir")
+    done
+  done
+  
+  # 2. 确保证书和密钥文件本身可读
+  info "正在规范化外部证书与私钥文件的读取权限 ..."
+  chmod 644 "$cert" 2>/dev/null || true
+  chmod 644 "$key" 2>/dev/null || true
+  
+  if command -v setfacl >/dev/null 2>&1; then
+    setfacl -m u:"$RUN_USER":r "$cert" "$key" 2>/dev/null || true
+  fi
+  return 0
+}
+
+
 inst_cert() {
   mkdir -p "$CONFIG_DIR/certs"
 
   echo "---------------------------------------------"
   echo -e "Hysteria 2 协议证书申请方式如下："
   echo -e " 1) 必应自签证书 "
-  echo -e " 2) Acme自动申请 (需放行 80 端口)${YELLOW}（默认）${RESET}"
+  echo -e " 2) Acme自动申请(需放行80端口)${YELLOW}（默认）${RESET}"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
@@ -258,7 +303,14 @@ inst_cert() {
         "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --insecure
       fi
       
-      if "$acme_cmd" --install-cert -d "${domain}" --key-file "$key_path" --fullchain-file "$cert_path" --ecc; then
+      # 【智能状态探针】纯 OpenRC 架构：有配置(续期)则重启，无配置(初装)则静默
+      local reload_cmd="[ -f /etc/sing-box-hy2/config.json ] && /sbin/rc-service sing-box-hy2 restart || echo '[信息] 初次部署，跳过服务同步'"
+      
+      if "$acme_cmd" --install-cert -d "${domain}" \
+        --key-file "$key_path" \
+        --fullchain-file "$cert_path" \
+        --ecc \
+        --reloadcmd "$reload_cmd"; then
         echo "$domain" > "$CONFIG_DIR/certs/ca.log"
         hy2_domain=$domain
         info "Acme 证书申请并成功分发！"
@@ -268,31 +320,45 @@ inst_cert() {
       fi
     fi
   elif [[ $certInput == 3 ]]; then
-    local user_cert user_key
-    read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
-    read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
-    read -rp "请输入证书对应的域名: " hy2_domain
-    
-    if [[ -f "$user_cert" && -f "$user_key" ]]; then
-      cp -f "$user_cert" "$cert_path"
-      cp -f "$user_key" "$key_path"
-      info "自定义证书已成功同步至配置安全区。"
-    else
-      error "找不到输入的证书文件，自动降级回自签模式。"
-      certInput=1
-    fi
+    while true; do
+      local user_cert user_key
+      read -rp "请输入公钥文件 (fullchain.pem/crt) 的路径: " user_cert
+      read -rp "请输入密钥文件 (privkey.pem/key) 的路径: " user_key
+      read -rp "请输入证书对应的域名: " hy2_domain
+      
+      if [[ -f "$user_cert" && -f "$user_key" ]]; then
+        rm -f "$cert_path" "$key_path"
+        
+        # 建立软链接或拷贝之前，先穿透修复外部文件和目录的读取权限
+        if fix_external_cert_permission "$user_cert" "$user_key"; then
+          ln -sf "$user_cert" "$cert_path"
+          ln -sf "$user_key" "$key_path"
+          info "自定义外部证书已通过安全软链接无缝同步。"
+          break
+        else
+          return 1
+        fi
+      else
+        error "找不到输入的证书文件，请重新确认路径。"
+        echo "---------------------------------------------"
+      fi
+    done
   fi
 
   if [[ $certInput == 1 ]]; then
-    info "将使用必应自签证书作为 Hysteria 2 的节点证书"
+    info "将使用必应自签证书作为 Hysteria 2 外壳的节点证书"
+    rm -f "$cert_path" "$key_path"
     openssl ecparam -genkey -name prime256v1 -out "$key_path"
     openssl req -new -x509 -days 36500 -key "$key_path" -out "$cert_path" -subj "/CN=www.bing.com"
     hy2_domain="www.bing.com"
+    
+    chmod 644 "$cert_path" || true
+    chmod 600 "$key_path" || true
   fi
 
-  chmod 644 "$cert_path"
-  chmod 600 "$key_path"
-  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR/certs"
+  # 规范所有权：使用 -h 规避穿透修改外部真实证书所有权
+  chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR"
+  chown -h ${RUN_USER}:${RUN_USER} "$cert_path" "$key_path" 2>/dev/null || true
 }
 
 inst_port() {
@@ -320,28 +386,70 @@ inst_port() {
     else error "请输入有效的端口数字 (1-65535)"; fi
   done
 
+  # =========================================================
+  # 【记忆重构核心】读取并展示现有的端口跳跃配置
+  # =========================================================
+  local default_hop=""
+  if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
+    default_hop=$(cat "${CONFIG_DIR}/hopping.txt")
+  fi
+
   echo "---------------------------------------------"
-  echo -e "Hysteria 2 端口群使用模式 ："
+  if [[ -n "$default_hop" ]]; then
+    echo -e "Hysteria 2 端口群使用模式 [当前已启用跳跃: ${default_hop}]："
+  else
+    echo -e "Hysteria 2 端口群使用模式 ："
+  fi
   echo -e " 1) 单端口模式"
   echo -e " 2) 端口跳跃模式 ${YELLOW}（默认)${RESET}"
   echo "---------------------------------------------"
+  
   local jumpInput
-  read -rp "请选择端口模式 [1-2] (默认2): " jumpInput
+  read -rp "请选择端口模式 [1-2] (直接回车默认不变或选择默认项): " jumpInput
+  
+  # 如果用户直接回车，且以前有跳跃记录，则直接保持现有的 iptables 逻辑并退出函数
+  if [[ -z "$jumpInput" && -n "$default_hop" ]]; then
+    info "检测到回车确认，将 100% 保持原有端口跳跃配置 [${default_hop}] 保持不变。"
+    # 刷新主端口记录，防止主端口变了但跳跃目标没变
+    echo "$port" > "${CONFIG_DIR}/main_port.txt"
+    return 0
+  fi
+
+  # 如果没有旧配置且直接回车，则走向默认选项 2
   jumpInput=${jumpInput:-2}
 
+  # 只有在用户明确重新选择模式时，才清理旧防火墙规则
   clear_old_iptables
 
   if [[ $jumpInput == 2 ]]; then
+    local old_start="" old_end=""
+    if [[ -n "$default_hop" ]]; then
+      old_start="${default_hop%-*}"
+      old_end="${default_hop#*-}"
+    fi
+
     while true; do
-      read -rp "设置外部跳跃起始端口 (建议10000-65535): " firstport
-      read -rp "设置外部跳跃末尾端口 (必须大于起始端口): " endport
-      if is_valid_port "$firstport" && is_valid_port "$endport" && [[ $firstport -lt $endport ]]; then break
-      else error "输入无效，起始端口必须小于末尾端口，请重新输入。"; fi
+      local start_prompt="设置外部跳跃起始端口 (建议10000-65535)"
+      [[ -n "$old_start" ]] && start_prompt="设置外部跳跃起始端口 [当前: ${old_start}, 回车不修改]"
+      read -rp "${start_prompt}: " firstport
+      firstport=${firstport:-$old_start}
+
+      local end_prompt="设置外部跳跃末尾端口 (必须大于起始端口)"
+      [[ -n "$old_end" ]] && end_prompt="设置外部跳跃末尾端口 [当前: ${old_end}, 回车不修改]"
+      read -rp "${end_prompt}: " endport
+      endport=${endport:-$old_end}
+
+      if is_valid_port "$firstport" && is_valid_port "$endport" && [[ $firstport -lt $endport ]]; then 
+        break
+      else 
+        error "输入无效！起始端口必须小于末尾端口，且范围在 1-65535 之间，请重新输入。"; 
+      fi
     done
     echo "$firstport-$endport" > "${CONFIG_DIR}/hopping.txt"
   else
+    # 用户明确选择了 1 (单端口模式)，清除记录文件
     rm -f "${CONFIG_DIR}/hopping.txt" "${CONFIG_DIR}/main_port.txt"
-    info "将继续使用单端口模式"
+    info "已成功切换回单端口纯净模式"
     if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
     if [[ -f /etc/init.d/ip6tables ]]; then /etc/init.d/ip6tables save &>/dev/null || true; fi
   fi
@@ -610,7 +718,7 @@ menu() {
     raw_status=$(get_hy2_status)
     local status=""
     if [[ "$raw_status" == "RUNNING" ]]; then
-      status="${GREEN}● 运行中${RESET}"
+      status="${YELLOW}● 运行中${RESET}"
     else
       status="${RED}● 未运行${RESET}"
     fi
@@ -628,12 +736,12 @@ menu() {
     echo -e "${GREEN}端口   :${RESET} ${YELLOW}${port_show}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 安装 Sing-box Hysteria2${RESET}"
-    echo -e "${GREEN}2. 更新 Sing-box Hysteria2${RESET}"
-    echo -e "${GREEN}3. 卸载 Sing-box Hysteria2${RESET}"
+    echo -e "${GREEN}2. 更新 Sing-box${RESET}"
+    echo -e "${GREEN}3. 卸载 Sing-box${RESET}"
     echo -e "${GREEN}4. 修改配置${RESET}"
-    echo -e "${GREEN}5. 启动 Sing-box Hysteria2${RESET}"
-    echo -e "${GREEN}6. 停止 Sing-box Hysteria2${RESET}"
-    echo -e "${GREEN}7. 重启 Sing-box Hysteria2${RESET}"
+    echo -e "${GREEN}5. 启动 Sing-box${RESET}"
+    echo -e "${GREEN}6. 停止 Sing-box${RESET}"
+    echo -e "${GREEN}7. 重启 Sing-box${RESET}"
     echo -e "${GREEN}8. 查看日志${RESET}"
     echo -e "${GREEN}9. 查看节点配置${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
