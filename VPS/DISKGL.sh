@@ -382,7 +382,8 @@ main() {
     check_root
     while true; do
         show_menu
-        read -p " 请输入选项: " opt </dev/tty
+        echo -ne "${GREEN} 请输入选项: ${RESET}"
+        read opt
         case "$opt" in
             1) view_disk_info ;;
             2) mount_disk ;;
