@@ -1,6 +1,6 @@
-#!/bin/bash
-# 查看进程彩色高亮脚本 v2.3
-# 提示文字统一绿色
+#!/bin/sh
+# 查看进程彩色高亮脚本
+# 完美兼容 BusyBox /proc & top 机制
 
 # ================== 颜色定义 ==================
 RED="\033[31m"
@@ -14,64 +14,107 @@ BOLD="\033[1m"
 echo -e "${GREEN}请选择排序方式:${RESET}"
 echo -e "${GREEN}1) CPU 占用排序${RESET}"
 echo -e "${GREEN}2) 内存占用排序${RESET}"
-read -p "$(echo -e "${GREEN}输入选项 (默认 1 CPU): ${RESET}")" sort_choice
-sort_choice=${sort_choice:-1}
 
-read -p "$(echo -e "${GREEN}是否启用实时刷新？(y/N): ${RESET}")" resp
-[[ "$resp" =~ ^[Yy]$ ]] && REFRESH=1 || REFRESH=0
+printf "${GREEN}输入选项 (默认 1 CPU): ${RESET}"
+read -r sort_choice
+if [ -z "$sort_choice" ]; then
+    sort_choice="1"
+fi
 
-read -p "$(echo -e "${GREEN}请输入进程名关键字过滤（默认显示所有进程）: ${RESET}")" FILTER_KEY
+printf "${GREEN}是否启用实时刷新？(y/N): ${RESET}"
+read -r resp
+case "$resp" in
+    [Yy]*) REFRESH=1 ;;
+    *) REFRESH=0 ;;
+esac
+
+printf "${GREEN}请输入进程名关键字过滤（默认显示所有进程）: ${RESET}"
+read -r FILTER_KEY
+
+# ================== 核心显示逻辑 ==================
+show_processes() {
+    # 打印统一表头
+    printf "${BOLD}%-8s %-12s %-8s %-8s %s${RESET}\n" \
+        "PID" "USER" "CPU(%)" "MEM(%)" "COMMAND"
+
+    # 检测是否为 Alpine 环境
+    if [ -f /etc/alpine-release ]; then
+        # ---------------- Alpine 引擎 (使用 top 静态快照) ----------------
+        # BusyBox top 输出格式通常为: PID USER STATUS VSZ %CPU %MEM COMMAND
+        # 排序：top 默认按 CPU 排序。如果是内存排序，用 sort 对第 6 列操作
+        if [ "$sort_choice" = "2" ]; then
+            SORT_CMD="sort -k 6,6 -r -n"
+        else
+            SORT_CMD="sort -k 5,5 -r -n"
+        fi
+
+        top -b -n 1 | awk '
+            found { print $0 }
+            /PID[[:space:]]+USER/ { found=1 }
+        ' | $SORT_CMD 2>/dev/null | awk -v kw="$FILTER_KEY" -v r_col="$RED" -v rst="$RESET" '
+            BEGIN { idx = 1 }
+            {
+                pid = $1; user = $2; cpu = $5; mem = $6;
+                # 提取 COMMAND
+                cmd = ""
+                for (i=7; i<=NF; i++) cmd = cmd $i " "
+                sub(/ *$/, "", cmd)
+
+                if (pid == "" || pid ~ /[^0-9]/) next
+                if (kw != "" && index(cmd, kw) == 0) next
+
+                if (idx <= 10) {
+                    printf "%-8s %-12s %-8s %-8s %s\n", \
+                        r_col pid rst, r_col user rst, r_col cpu rst, r_col mem rst, r_col cmd rst
+                } else {
+                    printf "%-8s %-12s %-8s %-8s %s\n", pid, user, cpu, mem, cmd
+                }
+                idx++
+            }
+        '
+    else
+        # ---------------- 标准 Linux 引擎 (使用 ps) ----------------
+        if [ "$sort_choice" = "2" ]; then
+            SORT_COL=4
+        else
+            SORT_COL=3
+        fi
+
+        ps -eo pid,user,%cpu,%mem,args 2>/dev/null | awk 'NR>1' | sort -k ${SORT_COL},${SORT_COL} -r -n | awk -v kw="$FILTER_KEY" -v r_col="$RED" -v rst="$RESET" '
+            BEGIN { idx = 1 }
+            {
+                pid = $1; user = $2; cpu = $3; mem = $4;
+                cmd = ""
+                for (i=5; i<=NF; i++) cmd = cmd $i " "
+                sub(/ *$/, "", cmd)
+
+                if (cmd ~ /awk -v kw=/ || pid == "") next
+                if (kw != "" && index(cmd, kw) == 0) next
+
+                if (idx <= 10) {
+                    printf "%-8s %-12s %-8s %-8s %s\n", \
+                        r_col pid rst, r_col user rst, r_col cpu rst, r_col mem rst, r_col cmd rst
+                } else {
+                    printf "%-8s %-12s %-8s %-8s %s\n", pid, user, cpu, mem, cmd
+                }
+                idx++
+            }
+        '
+    fi
+}
 
 # ================== 循环显示 ==================
 while true; do
-    [ $REFRESH -eq 1 ] && clear
-
-    # 表头
-    printf "${BOLD}%-8s %-20s %-10s %-10s %-20s %s${RESET}\n" \
-        "PID" "USER" "CPU(%)" "MEM(%)" "START" "COMMAND"
-
-    # 获取进程数据并排序
-    if [[ "$sort_choice" == "2" ]]; then
-        ps -eo pid,user,%cpu,%mem,lstart,args --sort=-%mem | tail -n +2
-    else
-        ps -eo pid,user,%cpu,%mem,lstart,args --sort=-%cpu | tail -n +2
-    fi | nl -w1 -s' ' | while read -r rank pid user cpu mem l1 l2 l3 l4 args; do
-        # 过滤进程名
-        if [[ -n "$FILTER_KEY" && "$FILTER_KEY" != "" && "$args" != *"$FILTER_KEY"* ]]; then
-            continue
-        fi
-
-        start_time="$l1 $l2 $l3 $l4"
-
-        # 高亮前10名
-        if [ "$rank" -le 10 ]; then
-            pid_color="${RED}$pid${RESET}"
-            user_color="${RED}$user${RESET}"
-            cpu_color="${RED}$cpu${RESET}"
-            mem_color="${RED}$mem${RESET}"
-            command_color="${RED}$args${RESET}"
-        else
-            pid_color="$pid"
-            user_color="$user"
-            cpu_color="$cpu"
-            mem_color="$mem"
-            command_color="$args"
-        fi
-
-        # 使用 %b 确保颜色转义序列生效
-        printf "%-8b %-20b %-10b %-10b %-20b %b\n" \
-            "$pid_color" "$user_color" "$cpu_color" "$mem_color" "$start_time" "$command_color"
-    done
-
-    # ================== 退出逻辑 ==================
-    if [ $REFRESH -eq 1 ]; then
-        echo -e "\n${GREEN}输入 ${RED}0${GREEN} 回车退出实时刷新，其他回车继续...${RESET}"
+    if [ "$REFRESH" -eq 1 ]; then
+        clear
+        show_processes
+        echo -e "\n${GREEN}输入 ${RED}0${GREEN} 退出实时刷新，回车继续刷新...${RESET}"
         read -r input
-        if [ "$input" == "0" ]; then
-            echo -e "${GREEN}退出实时刷新${RESET}"
+        if [ "$input" = "0" ]; then
             break
         fi
     else
+        show_processes
         break
     fi
 done
