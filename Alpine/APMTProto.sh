@@ -154,7 +154,7 @@ show_config() {
     if [ ! -f "$WORKDIR/link.txt" ]; then
         red_echo "未找到连接配置，请确保已成功安装。"
     else
-        purple_echo "==== 当前 MTProto 连接配置 ===="
+        purple_echo "==== 当前 MTProto 连接配置(V6VPS替换IP地址为V6)===="
         cat "$WORKDIR/link.txt"
     fi
 }
