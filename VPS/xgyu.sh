@@ -111,7 +111,7 @@ while true; do
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 检测到系统 : ${YELLOW}${OS}${RESET}"
     echo -e "${GREEN} 当前语言包 : ${YELLOW}${CURRENT_LANG}${RESET}"
-    echo -e "${GREEN}---------------------------------------${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN}  1) 切换为【中文环境】${RESET}"
     echo -e "${GREEN}  2) 切换为【英文环境】${RESET}"
     echo -e "${GREEN}  0) 退出${RESET}"
