@@ -311,6 +311,7 @@ show_current_config() {
     echo -e "${YELLOW}用户名       : ${user}${RESET}"
     echo -e "${YELLOW}密码         : ${pass}${RESET}"
     echo -e "${YELLOW}分享存放路径 : ${X_LINK}${RESET}"
+    echo -e "${YELLOW}📄 V6VPS 请自行替换 IP 地址为 V6 ★${RESET}"
     
     if [[ -f "$X_LINK" ]]; then
         echo -e "${GREEN}====== 👉 通用客户端 Socks5 链接 ======${RESET}"
