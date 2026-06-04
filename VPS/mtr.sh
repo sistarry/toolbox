@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==========================================
-# mtr 一键检测脚本
-# 自动安装 + 菜单模式
+# mtr 一键检测脚本 (全系统完美兼容版)
+# 自动安装 + 菜单模式 (支持 Debian/RHEL/Alpine)
 # ==========================================
 
 GREEN="\033[32m"
@@ -10,7 +10,6 @@ RED="\033[31m"
 BLUE="\033[36m"
 RESET="\033[0m"
 ORANGE='\033[38;5;208m'
-
 
 # =============================
 # 自动检测并安装 mtr
@@ -23,11 +22,14 @@ install_mtr() {
 
     echo -e "${YELLOW}未检测到 mtr，正在自动安装...${RESET}"
 
-    if [ -f /etc/debian_version ]; then
-        apt update -y >/dev/null 2>&1
-        apt install -y mtr >/dev/null 2>&1
+    if [ -f /etc/alpine-release ]; then
+        # 兼容 Alpine Linux
+        apk add --no-cache mtr
+    elif [ -f /etc/debian_version ]; then
+        # 修复 Debian/Ubuntu 的包名深坑：使用 mtr-tiny
+        apt update -y && apt install -y mtr-tiny
     elif [ -f /etc/redhat-release ]; then
-        yum install -y mtr >/dev/null 2>&1
+        yum install -y mtr
     else
         echo -e "${RED}不支持的系统，请手动安装 mtr${RESET}"
         exit 1
@@ -60,7 +62,7 @@ get_target() {
 run_live() {
     get_target || return
     echo -e "${GREEN}启动实时模式${RESET}"
-    mtr $TARGET
+    mtr "$TARGET"
 }
 
 # =============================
@@ -75,8 +77,8 @@ run_report() {
     # 如果为空，使用默认值
     if [ -z "$input_count" ]; then
         send_count=100
-    # 判断是否为纯数字
-    elif [[ "$input_count" =~ ^[0-9]+$ ]]; then
+    # 将原来的 [[ ... =~ ... ]] 改为 POSIX 纯数字校验，防止在 Alpine/sh 报错闪退
+    elif echo "$input_count" | grep -q '^[0-9]\+$'; then
         send_count="$input_count"
     else
         echo -e "${RED}输入无效，使用默认 100 包${RESET}"
@@ -87,7 +89,8 @@ run_report() {
     echo -e "${GREEN}生成报告模式 (发送 $send_count 个包)...${RESET}"
     mtr -r -c "$send_count" "$TARGET"
 
-    read -p "按回车返回菜单..."
+    echo ""
+    read -p "按回车返回菜单..." dummy
 }
 
 # =============================
