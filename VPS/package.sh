@@ -118,7 +118,7 @@ show_menu() {
     echo -e "${GREEN}=====================================${RESET}"
     echo -e "${GREEN} 宿主系统:${RESET} ${YELLOW}$os_name${RESET}"
     echo -e "${GREEN} 核心架构:${RESET} ${YELLOW}$(uname -m)${RESET}"
-    echo -e "${GREEN}------------------------------------=${RESET}"
+    echo -e "${GREEN}-------------------------------------${RESET}"
     
     local i=1
     while [ $i -le 21 ]; do
