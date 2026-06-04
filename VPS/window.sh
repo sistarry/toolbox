@@ -78,7 +78,7 @@ install_v6dd() {
 while true; do
     clear
     echo -e "${GREEN}===================================${RESET}"
-    echo -e "${GREEN}       Windows10 DD       ${RESET}"
+    echo -e "${GREEN}           Windows10 DD            ${RESET}"
     echo -e "${GREEN}===================================${RESET}"
     echo -e "${GREEN}1) 安装必要工具${RESET}"
     echo -e "${GREEN}2) V4 DD安装Windows10${RESET}"
