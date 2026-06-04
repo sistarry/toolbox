@@ -174,7 +174,7 @@ add_rule(){
     case "$choice" in
         1)
             MODE="block"
-            read -p $'\033[32m国家代码: \033[0m' COUNTRY
+            read -p $'\033[32m国家代码(例如 cn us jp): \033[0m' COUNTRY
             read -p $'\033[32m端口 (多个空格): \033[0m' PORTS
             ;;
         2)
@@ -286,15 +286,35 @@ uninstall_all(){
 # ================== 菜单 ==================
 menu(){
     clear
-    echo -e "${GREEN}===== VPS国家防火墙 =====${RESET}"
+
+    # 读取最新配置
+    local v_mode="未配置"
+    local v_country="无"
+    local v_ports="无"
+    if [ -f "$CONF" ]; then
+        source $CONF 2>/dev/null
+        [ "$MODE" == "block" ] && v_mode="${RED}仅封锁${RESET}"
+        [ "$MODE" == "allow" ] && v_mode="${GREEN}仅放行${RESET}"
+        [ -n "$COUNTRY" ] && v_country=$(echo "$COUNTRY" | tr 'a-z' 'A-Z')
+        [ -n "$PORTS" ] && v_ports="$PORTS"
+    fi
+
+    echo -e "${GREEN}=========================${RESET}"
+    echo -e "${GREEN}  ◈   VPS国家防火墙   ◈  ${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
+    echo -e "${GREEN}当前模式: ${v_mode}"
+    echo -e "${GREEN}目标国家: ${YELLOW}${v_country}${RESET}"
+    echo -e "${GREEN}受控端口: ${YELLOW}${v_ports}${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}1 添加规则${RESET}"
     echo -e "${GREEN}2 删除端口规则${RESET}"
-    echo -e "${GREEN}3 查看规则${RESET}"
+    echo -e "${GREEN}3 查看规则详情${RESET}"
     echo -e "${GREEN}4 添加白名单${RESET}"
     echo -e "${GREEN}5 删除白名单${RESET}"
     echo -e "${GREEN}6 更新${RESET}"
     echo -e "${GREEN}7 卸载${RESET}"
     echo -e "${GREEN}0 退出${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
     read -r -p $'\033[32m请选择: \033[0m' num
     case $num in
         1) add_rule ;;
