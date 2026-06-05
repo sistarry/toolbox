@@ -109,9 +109,9 @@ get_menu_status() {
     # 1. 检查 IPv4 本地地址
     local v4_addr=$(ip -4 addr show dev "$iface" 2>/dev/null | grep "inet" | awk '{print $2}' | head -n1)
     if [ -z "$v4_addr" ]; then
-        V4_STATUS="${RED}未就绪 (无IP)${RESET}"
+        V4_STATUS="${RED}未就绪${RESET}"
     else
-        V4_STATUS="${YELLOW}已启用 (${v4_addr})${RESET}"
+        V4_STATUS="${YELLOW}已启用${RESET}"
     fi
 
     # 2. 检查 IPv6 内核状态与本地地址
@@ -123,7 +123,7 @@ get_menu_status() {
         if [ -z "$v6_addr" ]; then
             V6_STATUS="${YELLOW}已开启${RESET}"
         else
-            V6_STATUS="${YELLOW}已启用(${v6_addr})${RESET}"
+            V6_STATUS="${YELLOW}已启用${RESET}"
         fi
     fi
 }
