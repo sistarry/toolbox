@@ -688,7 +688,7 @@ docker_backup_menu() {
 monitor_docker_containers() {
     clear
     echo -e "${GREEN}========================================${RESET}"
-    echo -e "${GREEN}         🐳 Docker 容器监控${RESET}"
+    echo -e "${GREEN}          🐳 Docker 容器监控${RESET}"
     echo -e "${GREEN}========================================${RESET}"
 
     # 获取并处理数据 (按内存排序)
@@ -721,12 +721,24 @@ monitor_docker_containers() {
             sed 's/about //' | \
             sed 's/ago/前/')
         
+        # 2. 新增：获取并格式化端口信息
+        local ports
+        ports=$(docker ps -a --filter "name=^/${name}$" --format "{{.Ports}}")
+        
+        # 如果端口为空，显示“无端口映射”；否则去掉 0.0.0.0: 或 ::: 以便手机端美观显示
+        if [ -z "$ports" ]; then
+            ports="无端口映射"
+        else
+            # 将 "0.0.0.0:8080->80/tcp, :::8080->80/tcp" 简化为 "8080->80/tcp" 这样的干净格式
+            ports=$(echo "$ports" | sed 's/0.0.0.0://g' | sed 's/::://g' | sed 's/, /\n        │     /g')
+        fi
 
-        # 2. 手机端纵向块状输出
+        # 3. 手机端纵向块状输出
         echo -e "${YELLOW}◈ 容器: ${RESET}${YELLOW}${name}${RESET}"
         echo -e "  ├─ ${YELLOW}CPU 占用: ${RESET}${CPU_COLOR}${cpu}${RESET}"
         echo -e "  ├─ ${YELLOW}内存使用: ${RESET}${mem}"
         echo -e "  ├─ ${YELLOW}网络 I/O: ${RESET}${net}"
+        echo -e "  ├─ ${YELLOW}端口映射: ${RESET}${CYAN}${ports}${RESET}"
         echo -e "  └─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
         echo -e "${YELLOW}----------------------------------------${RESET}"
     done
