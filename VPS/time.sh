@@ -94,10 +94,10 @@ show_menu() {
     clear
     CURRENT_TZ=$(get_timezone)
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}         ◈  Linux 时区管理面板  ◈     ${RESET}"
+    echo -e "${GREEN}        ◈  Linux 时区管理面板  ◈       ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN} 系统环境  : ${YELLOW}${OS_ID}${RESET}"
-    echo -e "${GREEN} 当前时区  : ${YELLOW}${CURRENT_TZ}${RESET}"
+    echo -e "${GREEN} 系统环境 : ${YELLOW}${OS_ID}${RESET}"
+    echo -e "${GREEN} 当前时区 : ${YELLOW}${CURRENT_TZ}${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN}  1. 设置为 Etc/UTC 全球标准${RESET}"
     echo -e "${GREEN}  2. 设置为 Asia/Shanghai (中国)${RESET}"
