@@ -78,13 +78,13 @@ fi
 # --------------------------
 # 开放所有端口逻辑
 # --------------------------
-echo -e "${GREEN}防火墙组件: $FW_TYPE，开始清空规则${RESET}"
+echo -e "${GREEN}防火墙组件:${RESET} ${YELLOW}$FW_TYPE${RESET} ${GREEN}开始清空规则${RESET}"
 
 if [[ "$FW_TYPE" == "ufw" ]]; then
     # 既然是要开放所有端口，最稳妥的做法是直接禁用 UFW
     ufw disable >/dev/null 2>&1
     ufw --force reset >/dev/null 2>&1
-    echo -e "${GREEN}✓ UFW 已禁用并重置（默认放行所有流量）${RESET}"
+    echo -e "${YELLOW}✓ UFW ${RESET}${GREEN}已禁用并重置（默认放行所有流量）${RESET}"
 
 elif [[ "$FW_TYPE" == "iptables" ]]; then
     # 清空所有规则并设置默认策略为 ACCEPT
@@ -108,7 +108,7 @@ elif [[ "$FW_TYPE" == "iptables" ]]; then
         ip6tables -F
         ip6tables -X
     fi
-    echo -e "${GREEN}✓ iptables 规则已清空${RESET}"
+    echo -e "${YELLOW}✓ iptables${RESET} ${GREEN}规则已清空${RESET}"
 
 elif [[ "$FW_TYPE" == "nftables" ]]; then
     # 彻底刷新 nftables 规则集
@@ -117,7 +117,7 @@ elif [[ "$FW_TYPE" == "nftables" ]]; then
     nft add chain inet filter input '{ type filter hook input priority 0; policy accept; }'
     nft add chain inet filter forward '{ type filter hook forward priority 0; policy accept; }'
     nft add chain inet filter output '{ type filter hook output priority 0; policy accept; }'
-    echo -e "${GREEN}✓ nftables 规则集已重置为全放行${RESET}"
+    echo -e "${YELLOW}✓ nftables${RESET} ${GREEN}规则集已重置为全放行${RESET}"
 fi
 
 # --------------------------
