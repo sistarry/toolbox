@@ -78,7 +78,7 @@ fi
 # --------------------------
 # 开放所有端口逻辑
 # --------------------------
-echo -e "${GREEN}检测到系统防火墙组件: $FW_TYPE，开始清空规则...${RESET}"
+echo -e "${GREEN}防火墙组件: $FW_TYPE，开始清空规则${RESET}"
 
 if [[ "$FW_TYPE" == "ufw" ]]; then
     # 既然是要开放所有端口，最稳妥的做法是直接禁用 UFW
@@ -108,7 +108,7 @@ elif [[ "$FW_TYPE" == "iptables" ]]; then
         ip6tables -F
         ip6tables -X
     fi
-    echo -e "${GREEN}✓ iptables 规则已清空，默认策略已设为 ACCEPT (IPv4/IPv6)${RESET}"
+    echo -e "${GREEN}✓ iptables 规则已清空${RESET}"
 
 elif [[ "$FW_TYPE" == "nftables" ]]; then
     # 彻底刷新 nftables 规则集
@@ -117,14 +117,14 @@ elif [[ "$FW_TYPE" == "nftables" ]]; then
     nft add chain inet filter input '{ type filter hook input priority 0; policy accept; }'
     nft add chain inet filter forward '{ type filter hook forward priority 0; policy accept; }'
     nft add chain inet filter output '{ type filter hook output priority 0; policy accept; }'
-    echo -e "${GREEN}✓ nftables 规则集已重置为全放行 (ACCEPT)${RESET}"
+    echo -e "${GREEN}✓ nftables 规则集已重置为全放行${RESET}"
 fi
 
 # --------------------------
 # 提示与警告
 # --------------------------
-echo -e "${RED}==================================================${RESET}"
+echo -e "${RED}=====================================${RESET}"
 echo -e "${YELLOW}警告：VPS 本地防火墙已完全关闭/放通！${RESET}"
 echo -e "${YELLOW}提示：如果依然无法访问，请务必检查：${RESET}"
 echo -e "${YELLOW}云服务商控制台（阿里云/腾讯云/AWS等）的「安全组/防火墙」是否放行。${RESET}"
-echo -e "${RED}==================================================${RESET}"
+echo -e "${RED}=====================================${RESET}"
