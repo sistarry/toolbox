@@ -46,6 +46,9 @@ prompt_reboot() {
 # V4DD 安装流程
 install_v4dd() {
     echo -e "${GREEN}开始 V4DD Windows 10 安装流程...${RESET}"
+    # 检查下载工具
+    command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || install_tools
+
     bash <(curl -sSL https://raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh) -windows 10 -lang "cn"
     show_account_info
     prompt_reboot
@@ -80,18 +83,16 @@ while true; do
     echo -e "${GREEN}===================================${RESET}"
     echo -e "${GREEN}           Windows10 DD            ${RESET}"
     echo -e "${GREEN}===================================${RESET}"
-    echo -e "${GREEN}1) 安装必要工具${RESET}"
-    echo -e "${GREEN}2) V4 DD安装Windows10${RESET}"
-    echo -e "${GREEN}3) V6 DD安装Windows10${RESET}"
-    echo -e "${GREEN}4) 重启系统${RESET}"
+    echo -e "${GREEN}1) V4 DD 安装Windows10${RESET}"
+    echo -e "${GREEN}2) V6 DD 安装Windows10${RESET}"
+    echo -e "${GREEN}3) 重启系统${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     echo -ne "${GREEN}请输入编号: ${RESET}"
     read choice
     case $choice in
-        1) install_tools ;;
-        2) install_v4dd ;;
-        3) install_v6dd ;;
-        4) 
+        1) install_v4dd ;;
+        2) install_v6dd ;;
+        3) 
             echo -ne "${YELLOW}确定要立即重启系统吗？(y/N): ${RESET}"
             read confirm
             case $confirm in
@@ -105,4 +106,3 @@ while true; do
     echo -e "${GREEN}按回车返回菜单...${RESET}"
     read
 done
-
