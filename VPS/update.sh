@@ -29,13 +29,33 @@ fi
 if [ "$ID" = "alpine" ]; then
     echo -e "${YELLOW}🚀 Alpine更新与环境配置...${RESET}"
 
+    # -------------------------
+    # 环境变量与检测
+    # -------------------------
+    IS_CONTAINER=0
+    
+    # 1. 检测 Docker
+    if [ -f /.dockerenv ] || grep -qi docker /proc/1/cgroup 2>/dev/null; then
+        IS_CONTAINER=1
+        echo -e "${YELLOW}🐳 检测到当前运行在 Docker 容器环境${RESET}"
+    # 2. 检测 LXC
+    elif grep -qi lxc /proc/1/environ 2>/dev/null || grep -qi lxc /proc/self/cgroup 2>/dev/null; then
+        IS_CONTAINER=1
+        echo -e "${YELLOW}📦 检测到当前运行在 LXC 容器环境 (将跳过内核网络优化)${RESET}"
+    fi
     # 更新索引并安装基础工具 + cron
-    # Alpine 的 cron 包名就叫 dcron (或者使用 busybox 自带的)
+    # 如果是容器，就不安装后面可能用到的 openntpd 等硬件工具
     apk update && apk upgrade
-    apk add --no-cache \
-        bash curl wget vim tar sudo git gzip \
-        openssl openssh ca-certificates tzdata \
-        dcron jq gcompat # 安装 cron 守护进程
+    
+    # 基础装机必备组件
+    APK_PACKAGES="bash curl wget vim tar sudo git gzip openssl bind-tools openssh ca-certificates tzdata dcron jq gcompat"
+    
+    # 只有非容器环境（物理机/VM）才安装时间同步服务
+    if [ "$IS_CONTAINER" -eq 0 ]; then
+        APK_PACKAGES="$APK_PACKAGES openntpd"
+    fi
+    
+    apk add --no-cache $APK_PACKAGES
 
     # -------------------------
     # 时区设置
@@ -52,32 +72,100 @@ if [ "$ID" = "alpine" ]; then
     fi
 
     # -------------------------
+    # 时间同步 (容器内跳过)
+    # -------------------------
+    if [ "$IS_CONTAINER" -eq 0 ]; then
+        echo -e "${YELLOW}⏰ 正在配置时间同步 (NTP)...${RESET}"
+        # 允许 openntpd 强制步进同步时间（防止时间偏差过大）
+        sed -i 's/#constraints/constraints/g' /etc/ntpd.conf 2>/dev/null
+        
+        if [ -f /run/openrc/softlevel ]; then
+            rc-update add openntpd default
+            rc-service openntpd restart
+            echo -e "${GREEN}✔ OpenNTPD 服务已启动并设为自启${RESET}"
+        else
+            # 备用方案：直接使用 busybox 自带的 ntpd 进行单次强制同步
+            ntpd -n -q -p pool.ntp.org >/dev/null 2>&1 &
+            echo -e "${GREEN}✔ 已在后台触发 ntp 单次同步${RESET}"
+        fi
+    else
+        echo -e "${BLUE}容器环境：跳过硬件时间同步，共享宿主机时间${RESET}"
+    fi
+
+    # -------------------------
+    # 开启 BBR + FQ (容器内跳过)
+    # -------------------------
+    if [ "$IS_CONTAINER" -eq 0 ]; then
+        echo -e "${YELLOW}🚀 正在配置网络优化 (BBR + FQ)...${RESET}"
+        
+        # 检查当前内核是否已加载或支持 tcp_bbr
+        if modprobe tcp_bbr 2>/dev/null || sysctl net.ipv4.tcp_congestion_control | grep -q bbr; then
+            # 写入 sysctl 配置文件
+            cat > /etc/sysctl.d/99-bbr.conf << EOF
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+EOF
+            # 尝试立即刷新内核参数
+            sysctl -p /etc/sysctl.d/99-bbr.conf >/dev/null 2>&1
+            
+            # 验证结果
+            CURRENT_CC=$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')
+            CURRENT_QDISC=$(sysctl net.core.default_qdisc | awk '{print $3}')
+            
+            if [ "$CURRENT_CC" = "bbr" ]; then
+                echo -e "${GREEN}✔ BBR 拥塞控制算法激活成功！(当前 qdisc: $CURRENT_QDISC)${RESET}"
+            else
+                echo -e "${YELLOW}⚠ 内核参数已写入，可能需要重启系统以完全生效${RESET}"
+            fi
+        else
+            echo -e "${RED}❌ 当前系统内核似乎不支持 BBR，已跳过配置${RESET}"
+        fi
+    else
+        echo -e "${BLUE}容器环境：无内核修改权限，跳过 BBR 配置${RESET}"
+    fi
+
+   # -------------------------
+    # 安装 NextTrace (所有环境均不跳过)
+    # -------------------------
+    echo -e "${YELLOW}📡 正在安装 NextTrace 路由追踪工具...${RESET}"
+    
+    # 容器内可能缺少 curl，前面已经安装了。如果报错，这里会尝试用 wget 备用
+    if curl -splJf https://nxtrace.org/nt | bash; then
+        echo -e "${GREEN}✔ NextTrace 安装成功！(可直接运行 nexttrace 或 nt)${RESET}"
+    elif wget -qO- https://nxtrace.org/nt | bash; then
+        echo -e "${GREEN}✔ NextTrace 通过 wget 安装成功！${RESET}"
+    else
+        echo -e "${RED}❌ NextTrace 安装失败，请检查网络连接或 DNS 设置${RESET}"
+    fi
+
+    # -------------------------
     # Cron 服务配置
     # -------------------------
     echo -e "${YELLOW}⏰ 正在启动 Cron 服务...${RESET}"
-    
-    # 确保 cron 目录存在
     mkdir -p /var/spool/cron/crontabs
 
-    # 判断运行环境启动 crond
-    # 如果在 Docker 中，通常需要手动启动；如果在物理机/虚拟机，可用 rc-service
     if [ -f /run/openrc/softlevel ]; then
         # 针对普通 Alpine 系统 (OpenRC)
         rc-update add dcron default
-        rc-service dcron start
+        rc-service dcron start 2>/dev/null || rc-service dcron restart
     else
         # 针对 Docker 容器环境
-        # 后台启动 crond
+        # 先杀掉已有的，防止重复启动报错
+        pkill -9 crond 2>/dev/null
         crond -b -L /var/log/cron.log
     fi
+    echo -e "${GREEN}✔ Cron 服务配置就绪${RESET}"
+
     # -------------------------
-    # 🧹 清理缓存 (新增)
+    # 🧹 清理缓存
     # -------------------------
     echo -e "${YELLOW}🧹 清理 APK 缓存...${RESET}"
     rm -rf /var/cache/apk/*
 
-    echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
-    echo -e "${YELLOW}当前时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}🎉 系统更新与优化工作已全部完成！${RESET}"
+    echo -e "${YELLOW}📅 完成时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
     exit 0
 fi
@@ -477,7 +565,7 @@ enable_time_sync
 cleanup
 
 # 最终展示
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${GREEN}🎉 系统更新工作已全部完成！${RESET}"
 echo -e "${YELLOW}📅 完成时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
