@@ -619,54 +619,64 @@ docker_backup_menu() {
     done
 }
 
-# -----------------------------
-# 容器监控 (兼容 Alpine BusyBox)
-# -----------------------------
 monitor_docker_containers() {
     clear
-    echo -e "${YELLOW}========================================${RESET}"
-    echo -e "${YELLOW}         🐳 Docker 容器监控${RESET}"
-    echo -e "${YELLOW}========================================${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}          🐳 Docker 容器监控${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
 
-    if ! check_docker_running; then return; fi
-
+    # 获取并处理数据 (按内存排序)
     docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" | sort -k3 -hr | while IFS=$'\t' read -r name cpu mem net; do
+        
+        # 1. 获取运行时间并深度汉化
         local raw_status
         raw_status=$(docker ps -a --filter "name=^/${name}$" --format "{{.Status}}")
         
-        # 汉化引擎 (BusyBox 兼容)
+        # 汉化引擎：包含时间、单位、状态
         local uptime
         uptime=$(echo "$raw_status" | \
-            sed 's/Up /运行 /; s/Exited/已停止/; s/(healthy)/(健康)/; s/(unhealthy)/(非健康)/; s/(starting)/(启动中)/; s/seconds/秒/; s/second/秒/; s/minutes/分钟/; s/minute/分钟/; s/hours/小时/; s/hour/小时/; s/days/天/; s/day/天/; s/weeks/周/; s/week/周/; s/months/月/; s/month/月/; s/about //; s/ago/前/')
+            sed 's/Up /运行 /' | \
+            sed 's/Exited/已停止/' | \
+            sed 's/(healthy)/(健康)/' | \
+            sed 's/(unhealthy)/(非健康)/' | \
+            sed 's/(starting)/(启动中)/' | \
+            sed 's/seconds/秒/' | \
+            sed 's/second/秒/' | \
+            sed 's/minutes/分钟/' | \
+            sed 's/minute/分钟/' | \
+            sed 's/hours/小时/' | \
+            sed 's/hour/小时/' | \
+            sed 's/days/天/' | \
+            sed 's/day/天/' | \
+            sed 's/weeks/周/' | \
+            sed 's/week/周/' | \
+            sed 's/months/月/' | \
+            sed 's/month/月/' | \
+            sed 's/about //' | \
+            sed 's/ago/前/')
+        
+        # 2. 新增：获取并格式化端口信息
+        local ports
+        ports=$(docker ps -a --filter "name=^/${name}$" --format "{{.Ports}}")
+        
+        # 如果端口为空，显示“无端口映射”；否则去掉 0.0.0.0: 或 ::: 以便手机端美观显示
+        if [ -z "$ports" ]; then
+            ports="无端口映射"
+        else
+            # 将 "0.0.0.0:8080->80/tcp, :::8080->80/tcp" 简化为 "8080->80/tcp" 这样的干净格式
+            ports=$(echo "$ports" | sed 's/0.0.0.0://g' | sed 's/::://g' | sed 's/, /\n        │     /g')
+        fi
 
-        # 获取端口原始数据
-        local raw_ports
-        raw_ports=$(docker ps -a --filter "name=^/${name}$" --format "{{.Ports}}")
-
+        # 3. 手机端纵向块状输出
         echo -e "${YELLOW}◈ 容器: ${RESET}${YELLOW}${name}${RESET}"
-        echo -e "  ├─ ${YELLOW}CPU 占用: ${RESET}${cpu}"
+        echo -e "  ├─ ${YELLOW}CPU 占用: ${RESET}${CPU_COLOR}${cpu}${RESET}"
         echo -e "  ├─ ${YELLOW}内存使用: ${RESET}${mem}"
         echo -e "  ├─ ${YELLOW}网络 I/O: ${RESET}${net}"
-        echo -e "  ├─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
-        
-        # 兼容 BusyBox 的端口格式化输出
-        if [ -z "$raw_ports" ]; then
-            echo -e "  └─ ${YELLOW}端口映射: ${RESET}${CYAN}无端口映射${RESET}"
-        else
-            echo -e "  └─ ${YELLOW}端口映射: ${RESET}"
-            # 1. 过滤掉无用的 0.0.0.0: 和 :::
-            # 2. 用 tr 把逗号空格变成换行
-            # 3. 用 while 循环加上美化的缩进线条
-            echo "$raw_ports" | sed 's/0.0.0.0://g; s/::://g' | tr ',' '\n' | while read -r port; do
-                # 去除两端可能存在的空格
-                port=$(echo "$port" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-                [ -n "$port" ] && echo -e "        ${YELLOW}│${RESET}  ${CYAN}${port}${RESET}"
-            done
-        fi
+        echo -e "  ├─ ${YELLOW}端口映射: ${RESET}${CYAN}${ports}${RESET}"
+        echo -e "  └─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
         echo -e "${YELLOW}----------------------------------------${RESET}"
     done
 }
-
 # -----------------------------
 # 主菜单
 # -----------------------------
