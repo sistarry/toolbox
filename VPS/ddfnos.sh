@@ -1,59 +1,75 @@
 #!/bin/bash
+# ========================================
+# 安全版 fNOS 重装执行器
+# 功能: 下载远程重装脚本，一键重装为 fNOS
+# ========================================
 
+GITHUB_URL="https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh"
+CNB_URL="https://cnb.cool/bin456789/reinstall/-/git/raw/main/reinstall.sh"
+SCRIPT_NAME="reinstall.sh"
+
+# 颜色
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-menu() {
-    clear
-    echo -e "${GREEN}=== DD飞牛管理菜单 ===${RESET}"
-    echo -e "${GREEN}1) 安装必要工具${RESET}"
-    echo -e "${GREEN}2) DD飞牛系统${RESET}"
-    echo -e "${GREEN}3) 重启系统${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
-    read -p $'\033[32m请选择操作: \033[0m' choice
-    case $choice in
-        1)
-            echo -e "${GREEN}正在下载重装系统脚本...${RESET}"
-            curl -O https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh || wget -O reinstall.sh https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh
-            chmod +x reinstall.sh
-            echo -e "${GREEN}✅ 脚本已下载完成，可以执行 DD 飞牛系统${RESET}"
-            pause
-            ;;
-        2)
-            if [ ! -f "reinstall.sh" ]; then
-                echo -e "${RED}❌ 未找到 reinstall.sh，请先执行 [1 安装重装系统脚本]${RESET}"
-            else
-                echo -e "${YELLOW}重要提示：执行 DD 飞牛系统会重装系统并清空所有数据！${RESET}"
-                echo -e "${YELLOW}此操作不可逆，请谨慎选择！${RESET}"
-                read -p $'\033[31m是否继续？(y/N): \033[0m' confirm
-                if [[ "$confirm" =~ ^[Yy]$ ]]; then
-                    echo -e "${GREEN}🚀 正在执行 DD 飞牛系统...${RESET}"
-                    bash reinstall.sh fnos
-                else
-                    echo -e "${RED}已取消操作${RESET}"
-                fi
-            fi
-            pause
-            ;;
-        3)
-            reboot
-            ;;
-        0)
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}无效选择，请重新输入${RESET}"
-            sleep 1
-            menu
-            ;;
-    esac
-}
+echo -e "${YELLOW}警告: 此操作将会完全重装系统为 fNOS，磁盘上所有数据将丢失！${RESET}"
+echo -e "${YELLOW}请确保已备份重要数据！${RESET}"
 
-pause() {
-    read -p $'\033[32m按回车键返回菜单...\033[0m'
-    menu
-}
+# 用户确认
+read -p $'\033[31m你确定要继续吗？(y/n): \033[0m' CONFIRM
+if [[ "$CONFIRM" != "y" ]]; then
+    echo -e "${RED}已取消操作${RESET}"
+    exit 1
+fi
 
-menu
+# 线路选择
+echo -e "请选择下载源线路:"
+echo -e " 1) 国内机专用镜像 (CNB)"
+echo -e " 2) GitHub 镜像代理"
+echo -e " 3) GitHub 直连"
+read -p "请输入编号 (默认 3): " LINE_CHOICE
+LINE_CHOICE=${LINE_CHOICE:-3}
+
+# 根据选择下载脚本
+echo -e "${GREEN}正在下载重装...${RESET}"
+DOWNLOAD_SUCCESS=1
+
+case "$LINE_CHOICE" in
+    1)
+        echo -e "${GREEN}使用国内 CNB 镜像源下载...${RESET}"
+        curl -fsSL -o "$SCRIPT_NAME" "$CNB_URL" || wget -O "$SCRIPT_NAME" "$CNB_URL"
+        [ $? -eq 0 ] && DOWNLOAD_SUCCESS=0
+        ;;
+    2)
+        echo -e "${GREEN}使用 GitHub 代理下载...${RESET}"
+        wget -q "https://v6.gh-proxy.org/${GITHUB_URL}" -O "$SCRIPT_NAME" && DOWNLOAD_SUCCESS=0
+        ;;
+    3)
+        echo -e "${GREEN}使用 GitHub 直连下载...${RESET}"
+        wget -q "$GITHUB_URL" -O "$SCRIPT_NAME" && DOWNLOAD_SUCCESS=0
+        ;;
+    *)
+        echo -e "${RED}输入错误，默认使用 GitHub 直连...${RESET}"
+        wget -q "$GITHUB_URL" -O "$SCRIPT_NAME" && DOWNLOAD_SUCCESS=0
+        ;;
+esac
+
+if [ $DOWNLOAD_SUCCESS -ne 0 ]; then
+    echo -e "${RED}❌ 下载失败，请检查网络或更换线路。${RESET}"
+    exit 1
+fi
+
+chmod +x "$SCRIPT_NAME"
+
+# 执行重装脚本 (不再传递任何额外参数，仅指定系统为 fnos)
+echo -e "${GREEN}🔧 正在执行 fNOS 重装配置...${RESET}"
+./"$SCRIPT_NAME" fnos
+
+# 绿色重启提示
+echo -e "${GREEN}✔ 重装环境已配置完成。${RESET}"
+read -p "按 Enter 确认重启并开始重装进程..." dummy
+
+echo -e "${GREEN}>>> 正在重启系统，请稍后通过浏览器访问 fNOS 后台进行初始化...${RESET}"
+reboot
