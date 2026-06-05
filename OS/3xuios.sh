@@ -19,7 +19,7 @@ fi
 case "$OS" in
     alpine)
         # 执行 Alpine 适配版脚本
-        bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh)
+        bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AP3X-UI.sh)
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
         # 执行原版脚本
