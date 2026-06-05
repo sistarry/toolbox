@@ -625,7 +625,7 @@ docker_backup_menu() {
 monitor_docker_containers() {
     clear
     echo -e "${YELLOW}========================================${RESET}"
-    echo -e "${YELLOW}        🐳 Docker 容器监控${RESET}"
+    echo -e "${YELLOW}         🐳 Docker 容器监控${RESET}"
     echo -e "${YELLOW}========================================${RESET}"
 
     if ! check_docker_running; then return; fi
@@ -639,11 +639,30 @@ monitor_docker_containers() {
         uptime=$(echo "$raw_status" | \
             sed 's/Up /运行 /; s/Exited/已停止/; s/(healthy)/(健康)/; s/(unhealthy)/(非健康)/; s/(starting)/(启动中)/; s/seconds/秒/; s/second/秒/; s/minutes/分钟/; s/minute/分钟/; s/hours/小时/; s/hour/小时/; s/days/天/; s/day/天/; s/weeks/周/; s/week/周/; s/months/月/; s/month/月/; s/about //; s/ago/前/')
 
+        # 获取端口原始数据
+        local raw_ports
+        raw_ports=$(docker ps -a --filter "name=^/${name}$" --format "{{.Ports}}")
+
         echo -e "${YELLOW}◈ 容器: ${RESET}${YELLOW}${name}${RESET}"
         echo -e "  ├─ ${YELLOW}CPU 占用: ${RESET}${cpu}"
         echo -e "  ├─ ${YELLOW}内存使用: ${RESET}${mem}"
         echo -e "  ├─ ${YELLOW}网络 I/O: ${RESET}${net}"
-        echo -e "  └─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
+        echo -e "  ├─ ${YELLOW}运行状态: ${RESET}${YELLOW}${uptime}${RESET}"
+        
+        # 兼容 BusyBox 的端口格式化输出
+        if [ -z "$raw_ports" ]; then
+            echo -e "  └─ ${YELLOW}端口映射: ${RESET}${CYAN}无端口映射${RESET}"
+        else
+            echo -e "  └─ ${YELLOW}端口映射: ${RESET}"
+            # 1. 过滤掉无用的 0.0.0.0: 和 :::
+            # 2. 用 tr 把逗号空格变成换行
+            # 3. 用 while 循环加上美化的缩进线条
+            echo "$raw_ports" | sed 's/0.0.0.0://g; s/::://g' | tr ',' '\n' | while read -r port; do
+                # 去除两端可能存在的空格
+                port=$(echo "$port" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                [ -n "$port" ] && echo -e "        ${YELLOW}│${RESET}  ${CYAN}${port}${RESET}"
+            done
+        fi
         echo -e "${YELLOW}----------------------------------------${RESET}"
     done
 }
