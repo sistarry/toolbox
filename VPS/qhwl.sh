@@ -109,7 +109,7 @@ get_menu_status() {
     # 1. 检查 IPv4 本地地址
     local v4_addr=$(ip -4 addr show dev "$iface" 2>/dev/null | grep "inet" | awk '{print $2}' | head -n1)
     if [ -z "$v4_addr" ]; then
-        V4_STATUS="${RED}未就绪${RESET}"
+        V4_STATUS="${RED}未启用${RESET}"
     else
         V4_STATUS="${YELLOW}已启用${RESET}"
     fi
