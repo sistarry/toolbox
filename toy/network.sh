@@ -201,7 +201,7 @@ menu(){
         echo -e "${GREEN}2) 发送网络信息到 Telegram${RESET}"
         echo -e "${GREEN}3) 修改Telegram配置${RESET}"
         echo -e "${GREEN}4) 设置定时任务${RESET}"
-        echo -e "${GREEN}5) 卸载脚本${RESET}"
+        echo -e "${GREEN}5) 卸载${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
         read -rp "$(echo -e ${GREEN}请选择: ${RESET})" choice
         case $choice in
