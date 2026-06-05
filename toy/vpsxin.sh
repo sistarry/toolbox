@@ -278,7 +278,7 @@ setup_cron_job(){
   echo -e "${green}2) 每周发送一次 VPS 信息 (周一 0点)${re}"
   echo -e "${green}3) 每月发送一次 VPS 信息 (1号 0点)${re}"
   echo -e "${green}4) 自定义时间 (Cron表达式)${re}"
-  echo -e "${green}5) 删除当前任务(仅本脚本相关)${re}"
+  echo -e "${green}5) 删除当前任务${re}"
   echo -e "${green}6) 查看当前任务${re}"
   echo -e "${green}0) 返回菜单${re}"
 
@@ -314,7 +314,7 @@ setup_cron_job(){
 
     5)
       crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
-      echo -e "${red}❌ 已删除本脚本相关的定时任务${re}"
+      echo -e "${red}❌ 已删除相关的定时任务${re}"
       return
       ;;
 
@@ -347,7 +347,7 @@ pause_return(){
 
 # ================== 卸载脚本 ==================
 uninstall_script(){
-    echo -e "${yellow}正在卸载脚本及配置和定时任务...${re}"
+    echo -e "${yellow}正在卸载及配置和定时任务...${re}"
 
     CRON_CMD="bash $SCRIPT_PATH send"
 
