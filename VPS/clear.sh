@@ -181,8 +181,15 @@ system_clean_menu() {
                 clean_docker
                 ;;
             3)
-                echo -e "${YELLOW}正在从远程获取自动清理并执行...${RESET}"
-                bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) || true
+                # 使用 --connect-timeout 限制直连等待时间为 5 秒
+                if bash <(curl -fsSL --connect-timeout 5 https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) 2>/dev/null; then
+                    echo
+                else
+                    echo -e "${YELLOW}直连超时或失败，正在通过代理获取...${RESET}"
+                    bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) || {
+                        echo -e "${RED}错误: 通过代理获取脚本也失败了，请检查网络连接。${RESET}"
+                    }
+                fi
                 ;;
             0)
                 break
