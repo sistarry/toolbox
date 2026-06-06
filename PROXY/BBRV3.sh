@@ -3147,10 +3147,6 @@ uninstall_all() {
 
 main() {
     
-    # 检查 root 权限
-    check_root
-
-    auto_cleanup_legacy_mtu
 
     # 加载用户配置（如果存在）
     [ -f "/etc/bbr-xanmod.conf" ] && source "/etc/bbr-xanmod.conf"
