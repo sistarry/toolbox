@@ -154,19 +154,6 @@ get_status_text() {
 
     # 1. 验证 BBR 状态及版本
     if [ "$cc" == "bbr" ]; then
-        # 尝试获取 BBR 的具体版本号
-        bbr_version=$(modinfo tcp_bbr 2>/dev/null | grep -i 'version:' | awk '{print $2}' | tr -d '[:space:]')
-    
-        # 如果 modinfo 没查到，尝试从内核日志获取
-        if [ -z "$bbr_version" ]; then
-            bbr_version=$(dmesg 2>/dev/null | grep -i 'BBR' | grep -oE 'v[0-9](\.[0-9]+)*' | head -n 1)
-        fi
-    
-        # 如果还是空，默认显示为 v1 (大部分原生内核情况)
-        if [ -z "$bbr_version" ]; then
-            bbr_version="1"
-        fi
-
         BBR_STATUS="${YELLOW}已启用${NC}"
     else
         BBR_STATUS="${RED}未启用${NC}"
@@ -346,8 +333,8 @@ menu() {
                 exit 0
                 ;;
             *)
-                echo -e "${RED}❌ 输入错误，3秒后自动返回重试...${NC}"
-                sleep 3
+                echo -e "${RED}❌ 输入错误${NC}"
+                sleep 1
                 ;;
         esac
     done
