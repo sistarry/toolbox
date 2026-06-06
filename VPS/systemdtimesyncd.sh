@@ -68,8 +68,10 @@ if [ "$OS" == "Alpine" ]; then
     chronyd -q 'server ntp.aliyun.com iburst' || true
     
     rc-service chronyd start
-    echo -e "${GREEN}✔ 时间同步已成功启动${RESET}"
-    date
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}🎉 ✔ 时间同步已成功启动！           ${RESET}"
+    echo -e "${YELLOW}📅 ✔ 时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
 else
     # ================= Debian/Ubuntu 逻辑 =================
@@ -99,6 +101,5 @@ else
     fi
     echo -e "${BLUE}========== 当前状态 ==========${RESET}"
     timedatectl status
+    echo -e "${BLUE}==============================${RESET}"
 fi
-
-echo -e "${BLUE}==================================${RESET}"
