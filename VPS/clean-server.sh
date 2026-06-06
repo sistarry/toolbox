@@ -9,7 +9,6 @@ RED="\033[31m"
 RESET="\033[0m"
 
 SCRIPT_PATH="/usr/local/bin/clean-server"
-# 修复：只保留纯粹的原始文件下载直链
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh" 
 CONFIG_FILE="/etc/clean-server.conf"
 
@@ -27,7 +26,7 @@ get_system_status() {
         TG_STATUS="未配置"
     fi
 
-    # 2. 检查定时任务状态 (支持 Alpine BusyBox crontab)
+    # 2. 检查定时任务状态
     if crontab -l 2>/dev/null | grep -q "$SCRIPT_PATH --auto"; then
         CRON_STATUS="${YELLOW}已开启${RESET}"
     else
@@ -75,12 +74,12 @@ EOF
 }
 
 # =========================================================
-# 核心清理模块 (针对 Alpine 健壮性优化)
+# 核心清理模块
 # =========================================================
 clean_logs() {
     echo -e "${YELLOW}正在清理系统历史日志 /var/log...${RESET}"
-    find /var/log -type f -name "*.log" -mtime +7 -delete 2>/dev/null
     find /var/log -type f -name "*.log" -exec truncate -s 0 {} \; 2>/dev/null
+    find /var/log -type f \( -name "*.log.*" -o -name "*.gz" \) -mtime +7 -delete 2>/dev/null
 }
 
 clean_journal() {
@@ -114,7 +113,7 @@ clean_tmp() {
 clean_cache() {
     echo -e "${YELLOW}正在清理系统包管理器缓存...${RESET}"
     if command -v apt >/dev/null 2>&1; then
-        apt clean
+        apt-get clean
     elif command -v apk >/dev/null 2>&1; then
         apk cache clean >/dev/null 2>&1
         rm -rf /var/cache/apk/*
@@ -133,7 +132,7 @@ run_all() {
 }
 
 # =========================================================
-# 定时任务管理模块 (适配 Alpine BusyBox)
+# 定时任务管理模块
 # =========================================================
 enable_cron() {
     echo -e "${GREEN}=== 设置定时自动清理频率 ===${RESET}"
@@ -144,7 +143,6 @@ enable_cron() {
     echo -e "${GREEN} 5) 自定义 Cron 表达式${RESET}"
     read -p " 请选择频率: " c
 
-    # 先导出当前的 crontab (过滤掉已有清理任务)
     crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH --auto" > /tmp/cron.tmp || true
 
     case $c in
@@ -161,7 +159,7 @@ enable_cron() {
                 echo -e "${RED}输入为空，取消操作${RESET}"
                 rm -f /tmp/cron.tmp
                 return
-            fi
+            fi  
             ;;
         *)
             echo -e "${RED}无效选项，操作取消${RESET}"
@@ -170,11 +168,9 @@ enable_cron() {
             ;;
     esac
 
-    # 导入回 crontab 并兼容 BusyBox
     crontab /tmp/cron.tmp
     rm -f /tmp/cron.tmp
     
-    # 在 Alpine 下尝试自动启动 crond 服务
     if command -v rc-service >/dev/null 2>&1; then
         rc-service crond start >/dev/null 2>&1 || true
         rc-update add crond default >/dev/null 2>&1 || true
@@ -190,17 +186,12 @@ disable_cron() {
 }
 
 install_script() {
-    # 动态获取当前正在执行的脚本名/路径
     local current_run="$0"
-
-    # 创建本地目标目录
     mkdir -p "$(dirname "$SCRIPT_PATH")"
     
-    # 检查当前执行的是否是有效的实体脚本文件（本地运行），还是通过管道喂给 bash 的（远程运行）
     if [ -f "$current_run" ] && [ "$(basename "$current_run")" = "clean-server.sh" ]; then
         cp "$current_run" "$SCRIPT_PATH"
     else
-        # 远程运行或找不到本地源文件时，走网络下载
         if command -v curl >/dev/null 2>&1; then
             curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
         elif command -v wget >/dev/null 2>&1; then
@@ -211,22 +202,26 @@ install_script() {
         fi
     fi
 
-    # 【核心修复】安全校验：确保文件确实存在且大小大于 0 字节
     if [ -s "$SCRIPT_PATH" ]; then
         chmod +x "$SCRIPT_PATH"
         sleep 1
     else
-        echo -e "${RED}错误: 脚本未能成功写入到 $SCRIPT_PATH，请检查网络或 URL 权限！${RESET}"
-        # 如果是第一次下载失败，由于没有生成可用脚本，建议直接退出，防止后面的菜单报错
+        echo -e "${RED}错误: 未能成功写入到 $SCRIPT_PATH${RESET}"
         exit 1
     fi
 }
 
 update_script() {
     echo -e "${YELLOW}正在从远程获取最新版本...${RESET}"
-    curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-    chmod +x "$SCRIPT_PATH"
-    echo -e "${GREEN}脚本升级更新完成！${RESET}"
+    local tmp_update="/tmp/clean-server-update.sh"
+    if curl -sL "$SCRIPT_URL" -o "$tmp_update" && [ -s "$tmp_update" ]; then
+        mv "$tmp_update" "$SCRIPT_PATH"
+        chmod +x "$SCRIPT_PATH"
+        echo -e "${GREEN}脚本升级更新完成！${RESET}"
+    else
+        echo -e "${RED}更新失败：无法下载新脚本。${RESET}"
+        rm -f "$tmp_update"
+    fi
 }
 
 uninstall_script() {
@@ -238,15 +233,11 @@ uninstall_script() {
     exit 0
 }
 
-# =========================================================
-# 自动化静默执行入口 (由 Cron 触发)
-# =========================================================
 if [ "$1" = "--auto" ]; then
     run_all
     exit 0
 fi
 
-# 【修复核心】只有当本地找不到有效的实体脚本时，才触发安装/下载逻辑
 if [ ! -s "$SCRIPT_PATH" ]; then
     install_script
 fi
@@ -256,12 +247,10 @@ fi
 # =========================================================
 auto_clean_menu() {
     while true; do
-        # 刷新当前状态
         get_system_status
 
-    
         echo -e "${GREEN}=======================================${RESET}"
-        echo -e "${GREEN}     ◈   服务器自动化清理面板   ◈      ${RESET}"
+        echo -e "${GREEN}     ◈   服务器自动化清理面板   ◈      ${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         echo -e "${GREEN} 定时清理状态 : ${CRON_STATUS}"
         echo -e "${GREEN} Cron服务监控 : ${CRON_SERVICE}"
@@ -272,13 +261,13 @@ auto_clean_menu() {
         echo -e "${GREEN}  3. 仅清理 Docker (资源与容器日志)${RESET}"
         echo -e "${GREEN}  4. 仅清理 /tmp 历史临时文件${RESET}"
         echo -e "${GREEN}  5. 仅清理系统包管理器缓存${RESET}"
-        echo -e "${GREEN} ------------------------------------- ${RESET}"
-        echo -e "${GREEN}  6. 一键手动全面清理${RESET}"
+        echo -e "${GREEN}---------------------------------------${RESET}"
+        echo -e "${GREEN}  6. 一键全面清理${RESET}"
         echo -e "${GREEN}  7. 开启/修改 定时自动清理任务${RESET}"
         echo -e "${GREEN}  8. 关闭定时自动清理任务${RESET}"
         echo -e "${GREEN}  9. 设置/调整 Telegram 消息通知${RESET}"
-        echo -e "${GREEN} 10. 更新脚本${RESET}"
-        echo -e "${GREEN} 11. 卸载脚本${RESET}"
+        echo -e "${GREEN} 10. 更新${RESET}"
+        echo -e "${GREEN} 11. 卸载${RESET}"
         echo -e "${GREEN}  0. 退出${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         echo -ne "${GREEN} 请选择操作: ${RESET}"
@@ -306,5 +295,4 @@ auto_clean_menu() {
     done
 }
 
-# 运行菜单
 auto_clean_menu
