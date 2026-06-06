@@ -24,7 +24,6 @@ fetch_and_run() {
     # 尝试直连，如果失败（返回非0状态码）则通过代理重试，若再失败则报错退出
     bash <(curl -fsSL "$script_url") || \
     bash <(curl -fsSL "${PROXY}${script_url}") || {
-        echo -e "${RED}错误：直连与代理均失败，请检查网络设置。${RESET}"
         exit 1
     }
 }
