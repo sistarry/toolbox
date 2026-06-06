@@ -5,6 +5,7 @@ GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[0;33m"
 NC="\033[0m"
+RESET="\033[0m"
 GREEN_ground="\033[42;37m" # 全局绿色
 RED_ground="\033[41;37m"   # 全局红色
 Info="${GREEN}[信息]${NC}"
@@ -12,11 +13,10 @@ Error="${RED}[错误]${NC}"
 Tip="${YELLOW}[提示]${NC}"
 
 cop_info(){
-clear
-echo -e "${GREEN}######################################
-      DDNS 管理(快捷指令:ddns)        
-######################################${NC}"
-echo
+    clear
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -e "${GREEN}◈  DDNS 自动化管理面板(快捷指令ddns)  ◈ ${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
 }
 
 # 检查系统是否为 Debian、Ubuntu 或 Alpine
@@ -71,7 +71,7 @@ back_to_menu() {
 # 开始安装DDNS
 install_ddns(){
     if [ ! -f "/usr/bin/ddns" ]; then
-        curl -o /usr/bin/ddns https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DDNS.sh && chmod +x /usr/bin/ddns
+        curl -o /usr/bin/ddns  https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DDNS.sh && chmod +x /usr/bin/ddns
     fi
     mkdir -p /etc/DDNS
     cat <<'EOF' > /etc/DDNS/DDNS
@@ -228,7 +228,7 @@ if grep -qiE "debian|ubuntu" /etc/os-release; then
         fi
         if [[ -n "$ipv4" && "$ipv4" =~ $ipv4Regex ]]; then
             Public_IPv4="$ipv4"
-            break # 修复 Bug：获取到有效 IP 后直接跳出，防止被后续空接口覆盖
+            break 
         fi
     done
 
@@ -240,7 +240,7 @@ if grep -qiE "debian|ubuntu" /etc/os-release; then
             fi
             if [[ -n "$ipv6" && "$ipv6" =~ $ipv6Regex ]]; then
                 Public_IPv6="$ipv6"
-                break # 同上
+                break 
             fi
         fi
     done
@@ -291,37 +291,81 @@ check_ddns_status() {
     fi
 }
 
+# 新增获取面板所需系统状态信息的函数
+get_system_status() {
+    if [ ! -f "/etc/DDNS/.config" ]; then
+        DDNS_STATUS="${RED}未安装${RESET}"
+        TG_STATUS="${RED}未绑定${RESET}"
+        SHOW_V4_DOMAINS="${YELLOW}无${RESET}"
+        SHOW_V6_DOMAINS="${YELLOW}无${RESET}"
+        return
+    fi
+
+    # 载入配置
+    source /etc/DDNS/.config
+
+    # 判断调度状态
+    check_ddns_status
+    if [[ "$ddns_status" == "running" ]]; then
+        DDNS_STATUS="${YELLOW}运行中${RESET}"
+    else
+        DDNS_STATUS="${RED}已停止${RESET}"
+    fi
+
+    # 判断TG状态
+    if [[ -n "$Telegram_Bot_Token" && -n "$Telegram_Chat_ID" ]]; then
+        TG_STATUS="${YELLOW}已绑定${RESET}"
+    else
+        TG_STATUS="${RED}未绑定${RESET}"
+    fi
+
+    # 格式化显示域名信息
+    if [[ ${#Domains[@]} -gt 0 ]]; then
+        SHOW_V4_DOMAINS="${YELLOW}${Domains[*]}${RESET}"
+    else
+        SHOW_V4_DOMAINS="${YELLOW}未配置${RESET}"
+    fi
+
+    if [[ "$ipv6_set" == "true" && ${#Domainsv6[@]} -gt 0 ]]; then
+        SHOW_V6_DOMAINS="${YELLOW}${Domainsv6[*]}${RESET}"
+    else
+        SHOW_V6_DOMAINS="${RED}未配置${RESET}"
+    fi
+}
+
 # 后续操作菜单循环
 go_ahead(){
     while true; do
         cop_info
-        check_ddns_status
-        if [[ "$ddns_status" == "running" ]]; then
-            echo -e "${Info}DDNS状态：${GREEN}已安装${NC} 并 ${GREEN}已启动${NC}"
-        else
-            echo -e "${Tip}DDNS状态：${GREEN}已安装${NC} 但 ${RED}未启动${NC}"
-        fi
-        echo
-        echo -e "${Tip}选择一个选项：
-  ${GREEN}1${NC}：重启 DDNS
-  ${GREEN}2${NC}：停止 DDNS
-  ${GREEN}3${NC}：卸载 DDNS
-  ${GREEN}4${NC}：修改要解析的域名
-  ${GREEN}5${NC}：修改 Cloudflare Api
-  ${GREEN}6${NC}：配置 Telegram 通知
-  ${GREEN}7${NC}：更改 DDNS 运行时间
-  ${GREEN}8${NC}：查看服务运行状态
-  ${GREEN}9${NC}：测试 Telegram 通知
-  ${GREEN}0${NC}：退出" 
-        echo
-        read -p "选项: " option
-        if [[ ! "$option" =~ ^[0-9]$ ]]; then
+        get_system_status
+        echo -e "${GREEN} 策略调度状态 : ${DDNS_STATUS}"
+        echo -e "${GREEN} TG 通知绑定  : ${TG_STATUS}"
+        echo -e "${GREEN} IPv4 解析域名: ${SHOW_V4_DOMAINS}"
+        echo -e "${GREEN} IPv6 解析域名: ${SHOW_V6_DOMAINS}"
+        echo -e "${GREEN}=======================================${RESET}"
+        echo -e "${GREEN}  1. 重启 DDNS ${RESET}"
+        echo -e "${GREEN}  2. 停止 DDNS ${RESET}"
+        echo -e "${GREEN}  3. 卸载 DDNS ${RESET}"
+        echo -e "${GREEN} ------------------------------------- ${RESET}"
+        echo -e "${GREEN}  4. 调整域名${RESET}"
+        echo -e "${GREEN}  5. 调整CloudflareAPI${RESET}"
+        echo -e "${GREEN}  6. 调整Telegram通知参数${RESET}"
+        echo -e "${GREEN}  7. 调整定时循环轮询周期${RESET}"
+        echo -e "${GREEN}  8. 查看服务运行状态${RESET}"
+        echo -e "${GREEN}  9. 测试Telegram通知${RESET}"
+        echo -e "${GREEN}  0. 退出${RESET}"
+        echo -e "${GREEN}=======================================${RESET}"
+        echo -ne "${GREEN} 请输入操作编号: ${RESET}"
+        
+        read -r choice
+        
+        if [[ ! "$choice" =~ ^[0-9]$ ]]; then
             echo -e "${Error}请输入正确的数字 [0-9]"
             sleep 1
             continue
         fi
         
-        case "$option" in
+        case "$choice" in
             0)
                 exit 0
             ;;
@@ -399,7 +443,6 @@ set_cloudflare_api(){
     sed -i "s|^Api_key=.*|Api_key=\"${Api_Key}\"|g" /etc/DDNS/.config
 }
 
-
 # 设置解析的域名
 set_domain() {
     ipv4_check=$(curl -s -4 ip.sb || true)
@@ -409,7 +452,6 @@ set_domain() {
         if [ -n "$Domain_input" ]; then
             Domain_input="${Domain_input//，/,}"
             IFS=',' read -ra Domains_arr <<< "$Domain_input"
-            # 格式化写回配置数组
             local formatted_domains=""
             for d in "${Domains_arr[@]}"; do formatted_domains+="\"$d\" "; done
             sed -i "s|^Domains=.*|Domains=($formatted_domains)|" /etc/DDNS/.config
@@ -437,6 +479,7 @@ set_domain() {
         fi
     fi
 }
+
 # 设置Telegram参数
 set_telegram_settings(){
     echo -e "${Info}开始配置Telegram通知设置..."
@@ -558,7 +601,6 @@ show_service_detail() {
             echo -e "${RED}已停止${NC}"
         fi
     fi
-    echo
 }
 
 test_tg_notification() {
