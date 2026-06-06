@@ -50,7 +50,6 @@ get_firewall_type() {
 
 get_banned_ip_count() {
     local count4 count6 total
-    # 使用 -S 精准统计纯 IP 封禁条目
     count4=$(iptables -S INPUT 2>/dev/null | grep " -j DROP" | grep -vE "dport|sport" | wc -l || echo 0)
     count6=$(ip6tables -S INPUT 2>/dev/null | grep " -j DROP" | grep -vE "dport|sport" | wc -l || echo 0)
     total=$((count4 + count6))
@@ -77,15 +76,12 @@ init_rules() {
     local ssh_port
     ssh_port=$(get_ssh_port)
     for proto in iptables ip6tables; do
-        # 【Docker 兼容】：绝对不执行全局清空(-F)，只精准清空 INPUT 链
         $proto -F INPUT
         
-        # 核心策略：入站默认拦截，转发和出站保持 ACCEPT（Docker 严重依赖 FORWARD）
         $proto -P INPUT DROP
         $proto -P FORWARD ACCEPT
         $proto -P OUTPUT ACCEPT
         
-        # 基础放行规则（用 -A 追加，确保后续用户使用 -I 1 插入的白名单拥有最高优先级）
         $proto -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
         $proto -A INPUT -i lo -j ACCEPT
         $proto -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
@@ -161,17 +157,14 @@ ip_action() {
 
     case $action in
         accept) 
-            # 显式指定插入到第 1 行，确保拥有最高匹配优先级
             if ! $proto -C INPUT -s "$ip" -j ACCEPT 2>/dev/null; then
                 $proto -I INPUT 1 -s "$ip" -j ACCEPT 
             fi
             ;;
         drop)   
-            # 黑名单同样置顶
             if ! $proto -C INPUT -s "$ip" -j DROP 2>/dev/null; then
                 $proto -I INPUT 1 -s "$ip" -j DROP 
             fi
-            # 【Docker 兼容改造】：如果存在 DOCKER-USER 链，将黑名单同步封禁在 Docker 顶端 (位置 1)
             if [ "$proto" = "iptables" ] && iptables -L DOCKER-USER -n &>/dev/null; then
                 if ! iptables -C DOCKER-USER -s "$ip" -j DROP 2>/dev/null; then
                     iptables -I DOCKER-USER 1 -s "$ip" -j DROP
@@ -188,61 +181,40 @@ ip_action() {
     esac
 }
 
+# ==================================================
+# 核心修复：重写 PING 管理函数，采用精准清理机制
+# ==================================================
 ping_action() {
     local action=$1
     
-    while iptables -C INPUT -p icmp -j DROP 2>/dev/null; do iptables -D INPUT -p icmp -j DROP; done
-    while iptables -C OUTPUT -p icmp -j DROP 2>/dev/null; do iptables -D OUTPUT -p icmp -j DROP; done
+    # 彻底清理旧的 IPv4 ICMP 相关规则（无论当初是以 ACCEPT 还是 DROP 方式插入）
     while iptables -C INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null; do iptables -D INPUT -p icmp --icmp-type echo-request -j ACCEPT; done
     while iptables -C OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT 2>/dev/null; do iptables -D OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT; done
-    
-    while ip6tables -C INPUT -p icmpv6 -j DROP 2>/dev/null; do ip6tables -D INPUT -p icmpv6 -j DROP; done
-    while ip6tables -C OUTPUT -p icmpv6 -j DROP 2>/dev/null; do ip6tables -D OUTPUT -p icmpv6 -j DROP; done
+    while iptables -C INPUT -p icmp --icmp-type echo-request -j DROP 2>/dev/null; do iptables -D INPUT -p icmp --icmp-type echo-request -j DROP; done
+    while iptables -C OUTPUT -p icmp --icmp-type echo-reply -j DROP 2>/dev/null; do iptables -D OUTPUT -p icmp --icmp-type echo-reply -j DROP; done
+    while iptables -C INPUT -p icmp -j DROP 2>/dev/null; do iptables -D INPUT -p icmp -j DROP; done
+    while iptables -C OUTPUT -p icmp -j DROP 2>/dev/null; do iptables -D OUTPUT -p icmp -j DROP; done
+
+    # 彻底清理旧的 IPv6 ICMP 相关规则
     while ip6tables -C INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 2>/dev/null; do ip6tables -D INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT; done
     while ip6tables -C OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT 2>/dev/null; do ip6tables -D OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT; done
+    while ip6tables -C INPUT -p icmpv6 --icmpv6-type echo-request -j DROP 2>/dev/null; do ip6tables -D INPUT -p icmpv6 --icmpv6-type echo-request -j DROP; done
+    while ip6tables -C OUTPUT -p icmpv6 --icmpv6-type echo-reply -j DROP 2>/dev/null; do ip6tables -D OUTPUT -p icmpv6 --icmpv6-type echo-reply -j DROP; done
+    while ip6tables -C INPUT -p icmpv6 -j DROP 2>/dev/null; do ip6tables -D INPUT -p icmpv6 -j DROP; done
+    while ip6tables -C OUTPUT -p icmpv6 -j DROP 2>/dev/null; do ip6tables -D OUTPUT -p icmpv6 -j DROP; done
 
+    # 根据传入参数置顶插入新规则
     if [ "$action" = "allow" ]; then
-        iptables -I INPUT -p icmp --icmp-type echo-request -j ACCEPT
-        iptables -I OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
-        ip6tables -I INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT
-        ip6tables -I OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT
+        iptables -I INPUT 1 -p icmp --icmp-type echo-request -j ACCEPT
+        iptables -I OUTPUT 1 -p icmp --icmp-type echo-reply -j ACCEPT
+        ip6tables -I INPUT 1 -p icmpv6 --icmpv6-type echo-request -j ACCEPT
+        ip6tables -I OUTPUT 1 -p icmpv6 --icmpv6-type echo-reply -j ACCEPT
     else
-        iptables -I INPUT -p icmp --icmp-type echo-request -j DROP
-        iptables -I OUTPUT -p icmp --icmp-type echo-reply -j DROP
-        ip6tables -I INPUT -p icmpv6 --icmpv6-type echo-request -j DROP
-        ip6tables -I OUTPUT -p icmpv6 --icmpv6-type echo-reply -j DROP
+        iptables -I INPUT 1 -p icmp --icmp-type echo-request -j DROP
+        iptables -I OUTPUT 1 -p icmp --icmp-type echo-reply -j DROP
+        ip6tables -I INPUT 1 -p icmpv6 --icmpv6-type echo-request -j DROP
+        ip6tables -I OUTPUT 1 -p icmpv6 --icmpv6-type echo-reply -j DROP
     fi
-}
-
-uninstall_firewall() {
-    clear
-    echo -e "${YELLOW}警告：该操作将清空所有宿主机入站规则并卸载防火墙组件，恢复网络全放行状态！${RESET}"
-    read -p "确定要彻底卸载吗？(y/n): " confirm
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        echo "已取消卸载。"
-        read -p "按回车继续..."
-        return
-    fi
-
-    echo -e "${YELLOW}正在清理宿主机 INPUT 规则并修改策略...${RESET}"
-    for proto in iptables ip6tables; do
-        $proto -F INPUT
-        $proto -P INPUT ACCEPT
-        $proto -P FORWARD ACCEPT
-        $proto -P OUTPUT ACCEPT
-    done
-    if iptables -L DOCKER-USER -n &>/dev/null; then
-        iptables -F DOCKER-USER
-    fi
-
-    echo -e "${YELLOW}正在停止并卸载守护服务...${RESET}"
-    systemctl stop netfilter-persistent 2>/dev/null || true
-    systemctl disable netfilter-persistent 2>/dev/null || true
-    apt purge -y iptables-persistent netfilter-persistent || true
-    apt autoremove -y
-
-    echo -e "${GREEN}✅ 防火墙已彻底卸载，Docker 及系统核心流量未受干扰。${RESET}"
-    exit 0
 }
 
 view_visual_rules() {
@@ -284,7 +256,6 @@ view_visual_rules() {
     echo -e "${CYAN}--------------------------------------------------${RESET}"
 
     echo -e " ⚪ ${BLUE}IP 白名单规则 (放行特定源 IP)：${RESET}"
-    # 完美正则提取：不仅抓纯IP，也能完美抓取带掩码格式（如 1.2.3.4/32）的源IP
     local whitelist=$(iptables -S INPUT 2>/dev/null | grep " -j ACCEPT" | grep -E " -s [0-9]" | grep -vE "dport|sport|lo|state" | grep -oP " -s \K[^ ]+" || true)
     local whitelist6=$(ip6tables -S INPUT 2>/dev/null | grep " -j ACCEPT" | grep -E " -s [0-9a-fA-F:]" | grep -vE "dport|sport|lo|state" | grep -oP " -s \K[^ ]+" || true)
     
@@ -310,9 +281,37 @@ view_visual_rules() {
     read -r -p "按回车返回主菜单..." || true
 }
 
-# ===============================
-# 管理菜单
-# ===============================
+uninstall_firewall() {
+    clear
+    echo -e "${YELLOW}警告：该操作将清空所有宿主机入站规则并卸载防火墙组件，恢复网络全放行状态！${RESET}"
+    read -p "确定要彻底卸载吗？(y/n): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "已取消卸载。"
+        read -p "按回车继续..."
+        return
+    fi
+
+    echo -e "${YELLOW}正在清理宿主机 INPUT 规则并修改策略...${RESET}"
+    for proto in iptables ip6tables; do
+        $proto -F INPUT
+        $proto -P INPUT ACCEPT
+        $proto -P FORWARD ACCEPT
+        $proto -P OUTPUT ACCEPT
+    done
+    if iptables -L DOCKER-USER -n &>/dev/null; then
+        iptables -F DOCKER-USER
+    fi
+
+    echo -e "${YELLOW}正在停止并卸载守护服务...${RESET}"
+    systemctl stop netfilter-persistent 2>/dev/null || true
+    systemctl disable netfilter-persistent 2>/dev/null || true
+    apt purge -y iptables-persistent netfilter-persistent || true
+    apt autoremove -y
+
+    echo -e "${GREEN}✅ 防火墙已彻底卸载，Docker 及系统核心流量未受干扰。${RESET}"
+    exit 0
+}
+
 menu() {
     while true; do
         STATUS=$(get_firewall_status)
