@@ -14,13 +14,12 @@ RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-echo -e "${YELLOW}警告: 此操作将会完全重装系统为 fNOS，磁盘上所有数据将丢失！${RESET}"
+echo -e "${YELLOW}警告: 此操作将会完全重装系统为 fnos，磁盘上所有数据将丢失！${RESET}"
 echo -e "${YELLOW}请确保已备份重要数据！${RESET}"
 
 # 用户确认
 read -p $'\033[31m你确定要继续吗？(y/n): \033[0m' CONFIRM
 if [[ "$CONFIRM" != "y" ]]; then
-    echo -e "${RED}已取消操作${RESET}"
     exit 1
 fi
 
