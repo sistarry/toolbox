@@ -27,17 +27,37 @@ else
 fi
 
 # 获取系统 codename 或版本标识
+# ================= 优化后的系统信息获取 =================
+if [ -f /etc/os-release ]; then
+    . /etc/os-release  # 使用 . 代替 source，完美兼容所有 Shell
+    OS_ID="${NAME} ${VERSION_ID}"
+else
+    OS_ID="Unknown Linux"
+    ID="unknown"
+fi
+
+# 获取系统 codename 或版本标识
 get_codename() {
     if command -v lsb_release >/dev/null 2>&1; then
         codename=$(lsb_release -cs)
     elif [ -n "$VERSION_CODENAME" ]; then
         codename=$VERSION_CODENAME
     elif [ "$ID" = "alpine" ]; then
-        # Alpine 使用 v3.18, v3.19 这样的格式，如果是 edge 分支则为 edge
-        if [[ "$VERSION_ID" == *"_alpha"* || "$VERSION_ID" == *"_beta"* ]]; then
+        # 【健壮性增强】如果 VERSION_ID 为空，尝试从 /etc/alpine-release 直接读取
+        if [ -z "$VERSION_ID" ] && [ -f /etc/alpine-release ]; then
+            VERSION_ID=$(cat /etc/alpine-release)
+        fi
+
+        # 判断是否为开发版/快照版/边缘版
+        if [[ "$VERSION_ID" == *"_alpha"* || "$VERSION_ID" == *"_beta"* || "$VERSION_ID" == *"_rc"* || "$VERSION_ID" == "edge" ]]; then
             codename="edge"
+        elif [ -n "$VERSION_ID" ]; then
+            # 提取主版本号，例如从 3.20.1 提取出 v3.20
+            local major_version=$(echo "$VERSION_ID" | cut -d. -f1-2)
+            codename="v${major_version}"
         else
-            codename="v${VERSION_ID%.*}" # 提取主版本号如 v3.19
+            # 【终极保底】如果什么都没捞到，Alpine 环境下切到 edge 是最安全的
+            codename="edge"
         fi
     elif [ -n "$VERSION_ID" ]; then
         case "$ID" in
@@ -65,6 +85,15 @@ get_codename() {
         esac
     else
         codename="stable"
+    fi
+
+    # 【防止 n/a 出现】如果因为某种意外导致 codename 变为了空或 n/a，强制赋予保底值
+    if [ -z "$codename" ] || [ "$codename" = "n/a" ]; then
+        if [ "$ID" = "alpine" ]; then
+            codename="edge"
+        else
+            codename="stable"
+        fi
     fi
 }
 get_codename
