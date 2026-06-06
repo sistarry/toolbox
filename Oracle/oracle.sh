@@ -33,32 +33,26 @@ menu() {
     echo -e "${ORANGE}╔═════════════════════════════╗${RESET}"
     echo -e "${ORANGE}   甲骨文工具箱(快捷指令:O/o)   ${RESET}"
     echo -e "${ORANGE}╚═════════════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] 开启ROOT登录${RESET}"
-    echo -e "${YELLOW}[02] 重装系统${RESET}"
-    echo -e "${YELLOW}[03] 恢复IPv6${RESET}"
-    echo -e "${YELLOW}[04] 安装保活Oracle${RESET}"
-    echo -e "${YELLOW}[05] 安装lookbusy保活${RESET}"
-    echo -e "${YELLOW}[06] 安装Y探长${RESET}"
-    echo -e "${YELLOW}[07] 安装oci-start${RESET}"
-    echo -e "${YELLOW}[08] 安装R探长${RESET}"
-    echo -e "${YELLOW}[09] Cloud-Manager${RESET}"
-    echo -e "${YELLOW}[10] OCIPingCLI${RESET}"
+    echo -e "${YELLOW}[01] 安装保活Oracle${RESET}"
+    echo -e "${YELLOW}[02] 安装lookbusy保活${RESET}"
+    echo -e "${YELLOW}[03] 安装Y探长${RESET}"
+    echo -e "${YELLOW}[04] 安装oci-start${RESET}"
+    echo -e "${YELLOW}[05] 安装R探长${RESET}"
+    echo -e "${YELLOW}[06] Cloud-Manager${RESET}"
+    echo -e "${YELLOW}[07] OCIPingCLI${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
     echo -ne "${RED}请选择: ${RESET}"
     read choice
     case $choice in
-        1)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/xgroot.sh) && pause ;;
-        2)  bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/VPSDD.sh) && pause ;;
-        3)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/ipv6.sh) && pause ;;
-        4)  bash <(wget -qO- --no-check-certificate https://gitlab.com/spiritysdx/Oracle-server-keep-alive-script/-/raw/main/oalive.sh) && pause ;;
-        5)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/lookbusy.sh) && pause ;;
-        6)  bash <(wget -qO- https://github.com/Yohann0617/oci-helper/releases/latest/download/sh_oci-helper_install.sh) && pause ;;
-        7)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oci-start.sh) && pause ;;
-        8)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/RBot.sh) && pause ;;
-        9)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/CloudManager.sh) && pause ;;
-        10)  bash <(curl -sL https://ghfast.top/raw.githubusercontent.com/mark-floyd/oci-ping/main/oci-ping.sh) && pause ;;
+        1)  bash <(wget -qO- --no-check-certificate https://gitlab.com/spiritysdx/Oracle-server-keep-alive-script/-/raw/main/oalive.sh) && pause ;;
+        2)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/lookbusy.sh) && pause ;;
+        3)  bash <(wget -qO- https://github.com/Yohann0617/oci-helper/releases/latest/download/sh_oci-helper_install.sh) && pause ;;
+        4)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oci-start.sh) && pause ;;
+        5)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/RBot.sh) && pause ;;
+        6)  bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/CloudManager.sh) && pause ;;
+        7)  bash <(curl -sL https://ghfast.top/raw.githubusercontent.com/mark-floyd/oci-ping/main/oci-ping.sh) && pause ;;
         88)
             echo -e "${YELLOW}🔄 正在更新脚本...${RESET}"
             curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
