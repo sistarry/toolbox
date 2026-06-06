@@ -4,12 +4,14 @@ set -e
 #################################
 # 基础路径
 #################################
+
+GH_PROXY="https://v6.gh-proxy.org/"
 ROOT="/root"
-SCRIPT_PATH="$ROOT/toolupdate.sh"
+SCRIPT_PATH="$ROOT/toolboxupdate.sh"
 SCRIPT_URL="https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolupdate.sh"
-CONF="/etc/tool-update.conf"
-LOG_FILE="/var/log/tool-update.log"
-CRON_TAG="# tool-auto-update"
+CONF="/etc/toolbox-update.conf"
+LOG_FILE="/var/log/toolbox-update.log"
+CRON_TAG="# toolbox-auto-update"
 
 #################################
 # 颜色
@@ -23,13 +25,10 @@ RESET='\033[0m'
 # 自动下载安装管理器
 #################################
 if [ ! -f "$SCRIPT_PATH" ]; then
-    if ! curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
-        echo -e "${YELLOW}首次下载失败，正在重试一次...${RESET}"
-        sleep 2
-        if ! curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
-            echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
-            exit 1
-        fi
+    curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
+        exit 1
     fi
     chmod +x "$SCRIPT_PATH"
 fi
@@ -72,8 +71,6 @@ update_one() {
 
     echo -e "${GREEN}运行 $NAME ...${RESET}"
 
-    # 先删除旧脚本，再下载
-    rm -f "$ROOT/$FILE"
     TMP=$(mktemp)
 
     # 第一次下载
@@ -92,12 +89,12 @@ update_one() {
     chmod +x "$TMP"
 
     if printf "0\n" | bash "$TMP" >/dev/null 2>&1; then
+        mv "$TMP" "$ROOT/$FILE"
         UPDATED_LIST+=("$NAME")
     else
         echo -e "${RED}$NAME 更新脚本执行失败${RESET}"
+        rm -f "$TMP"
     fi
-
-    rm -f "$TMP"
 }
 
 run_update() {
@@ -105,8 +102,23 @@ run_update() {
     UPDATED_LIST=()
 
     # 更新各脚本
-    update_one "toolbox" "toolbox.sh" \
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/CN/toolinstall.sh"
+    update_one "vps-toolbox" "vps-toolbox.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/tool/vps-toolbox.sh"
+
+    update_one "proxy" "proxy.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh"
+
+    update_one "oracle" "oracle.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oracle.sh"
+
+    update_one "store" "store.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
+
+    update_one "panel" "panel.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh"
+
+    update_one "nat" "nat.sh" \
+    "${GH_PROXY}https://raw.githubusercontent.com/sistarry/toolbox/main/toy/NAT.sh"
 
     if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
         MSG="🚀 脚本已更新
@@ -236,7 +248,7 @@ self_update() {
 
     MSG="🚀 管理器已更新
 服务器: ${SERVER_NAME}
-文件: toolupdate.sh"
+文件: toolboxupdate.sh"
 
     tg_send "$MSG"
 
@@ -271,9 +283,10 @@ while true; do
     echo -e "${GREEN}2) 开启自动更新${RESET}"
     echo -e "${GREEN}3) 关闭自动更新${RESET}"
     echo -e "${GREEN}4) 查看定时任务${RESET}"
-    echo -e "${GREEN}5) 删除日志${RESET}"
-    echo -e "${GREEN}6) 更新管理器${RESET}"
-    echo -e "${GREEN}7) 卸载管理器${RESET}"
+    echo -e "${GREEN}5) 设置 Telegram & 服务器名称(可选)${RESET}"
+    echo -e "${GREEN}6) 删除日志${RESET}"
+    echo -e "${GREEN}7) 更新管理器${RESET}"
+    echo -e "${GREEN}8) 卸载管理器${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
 
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
@@ -283,9 +296,10 @@ while true; do
         2) enable_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
         3) disable_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
         4) list_cron; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        5) delete_log; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
-        6) self_update ;;
-        7) uninstall_manager ;;
+        5) tg_setup; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
+        6) delete_log; read -p "$(echo -e ${GREEN}回车继续...${RESET})" ;;
+        7) self_update ;;
+        8) uninstall_manager ;;
         0) exit ;;
     esac
 done
