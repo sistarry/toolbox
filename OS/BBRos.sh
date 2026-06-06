@@ -28,8 +28,6 @@ check_virt() {
         fi
     fi
 
-    echo -e "虚拟化架构: ${GREEN}$VIRT${RESET}"
-
     if [ "$VIRT" == "lxc" ] || [ "$VIRT" == "openvz" ]; then
         echo -e "${YELLOW}❌ 警告: 您的系统处于 $VIRT 容器环境下。${RESET}"
         echo -e "${YELLOW}容器环境无法自主修改内核模块，请联系宿主机提供商在母鸡开启 BBR。${RESET}"
