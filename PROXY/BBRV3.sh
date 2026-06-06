@@ -85,6 +85,23 @@ readonly IP_CHECK_V6_URLS=(
 # IP 信息查询
 readonly IP_INFO_URL="https://ipinfo.io"
 
+
+check_bbr_conf_status() {
+    # 如果文件根本不存在，直接返回不通过 (1)
+    if [ ! -f "$SYSCTL_CONF" ]; then
+        return 1
+    fi
+    
+    # 模糊验证：只要文件中包含这三段核心文本中的任意内容，即视为有效
+    if grep -q "BBR v3 Direct/Endpoint Configuration" "$SYSCTL_CONF" && \
+       grep -q "Generated on" "$SYSCTL_CONF" && \
+       grep -q "Bandwidth:" "$SYSCTL_CONF"; then
+        return 0  # 验证通过
+    else
+        return 1  # 验证失败
+    fi
+}
+
 #=============================================================================
 # 日志系统
 #=============================================================================
@@ -92,6 +109,7 @@ readonly IP_INFO_URL="https://ipinfo.io"
 readonly LOG_FILE="/var/log/bbr-xanmod.log"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"
 NETTCP_TEMP_DIRS=""
+
 
 # 统一日志函数
 log() {
@@ -2656,39 +2674,65 @@ run_speedtest() {
     done
 }
 
+
 # 主菜单
 #=============================================================================
 
 show_main_menu() {
     clear
 
-    local kernel_release current_cc bbr_line kernel_line
+    local kernel_release current_cc kernel_line bbr_line config_line
+    local conf_file="/etc/sysctl.d/99-bbr-xanmod.conf"
 
     kernel_release=$(uname -r 2>/dev/null || echo "未知")
     current_cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "未知")
 
+    # 1. 验证 XanMod 内核安装状态
+    # (假设你保留了原有的 check_bbr_status 函数来判断是否安装了 XanMod)
     check_bbr_status >/dev/null 2>&1
     local is_installed=$?
 
     if echo "$kernel_release" | grep -qi 'xanmod'; then
-        kernel_line="XanMod 运行中 "
+        kernel_line="运行中"
     elif [ $is_installed -eq 0 ]; then
-        kernel_line="XanMod 已安装 "
+        kernel_line="已安装"
     else
-        kernel_line="默认内核"
+        kernel_line="未安装"
     fi
 
+    # 2. 动态验证是否为 BBR v3（支持内置模块与独立模块的双重检测）
     if [ "$current_cc" = "bbr" ]; then
-        bbr_line="已启用"
+        # 终极一击：直接读取 modinfo 的版本号是否为 3
+        if modinfo tcp_bbr 2>/dev/null | grep -q "version:[[:space:]]*3"; then
+            bbr_line="已启用(BBR v3)"
+        # 降级备用方案 1：检查高版本 XanMod 内核
+        elif echo "$kernel_release" | grep -qi 'xanmod'; then
+            bbr_line="已启用(BBR v3)"
+        # 降级备用方案 2：检查 sysctl 的专属参数
+        elif sysctl -a 2>/dev/null | grep -q "net.ipv4.tcp_bbr_extra_acked_gain"; then
+            bbr_line="已启用(BBR v3)"
+        else
+            bbr_line="已启用(BBR v1/v2)"
+        fi
     else
         bbr_line="未启用"
     fi
 
+    # 3. 判定 99-bbr-xanmod.conf 配置文件内容 (调用之前的独立验证函数)
+    check_bbr_conf_status
+    if [ $? -eq 0 ]; then
+        config_line="已启用"
+    else
+        config_line="未配置"
+    fi
+
+
     echo -e "${COLOR_GREEN}================================${COLOR_RESET}"
     echo -e "${COLOR_GREEN}     BBR V3/ XanMod 网络调优     ${COLOR_RESET}"
     echo -e "${COLOR_GREEN}================================${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}内核   :${COLOR_RESET} ${COLOR_YELLOW}${kernel_line}${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}状态   :${COLOR_RESET} ${COLOR_YELLOW}${bbr_line}${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}XanMod :${COLOR_RESET} ${COLOR_YELLOW}${kernel_line}${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}BBR    :${COLOR_RESET} ${COLOR_YELLOW}${bbr_line}${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}配置   :${COLOR_RESET} ${COLOR_YELLOW}${config_line}${COLOR_RESET}"
     echo -e "${COLOR_GREEN}================================${COLOR_RESET}"
     echo -e "${COLOR_GREEN} 1. 安装/更新XanMod${COLOR_RESET}"
     echo -e "${COLOR_GREEN} 2. 开启网络优化${COLOR_RESET}"
