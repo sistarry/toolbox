@@ -148,17 +148,34 @@ manage_backups() {
 
 # --- 看板状态获取 ---
 get_status_text() {
-    local cc fq_check tfo_check
+    local cc fq_check bbr_status fq_status
     cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null | tr -d '[:space:]' || echo "未知")
     fq_check=$(sysctl -n net.core.default_qdisc 2>/dev/null | tr -d '[:space:]' || echo "未知")
-    
 
-    
-    # 1. 验证 BBR 状态
+    # 1. 验证 BBR 状态及版本
     if [ "$cc" == "bbr" ]; then
+        # 尝试获取 BBR 的具体版本号
+        bbr_version=$(modinfo tcp_bbr 2>/dev/null | grep -i 'version:' | awk '{print $2}' | tr -d '[:space:]')
+    
+        # 如果 modinfo 没查到，尝试从内核日志获取
+        if [ -z "$bbr_version" ]; then
+            bbr_version=$(dmesg 2>/dev/null | grep -i 'BBR' | grep -oE 'v[0-9](\.[0-9]+)*' | head -n 1)
+        fi
+    
+        # 如果还是空，默认显示为 v1 (大部分原生内核情况)
+        if [ -z "$bbr_version" ]; then
+            bbr_version="1"
+        fi
+
         BBR_STATUS="${YELLOW}已启用${NC}"
     else
         BBR_STATUS="${RED}未启用${NC}"
+    fi
+    # 2. 验证 FQ 状态
+    if [ "$fq_check" == "fq" ] || [ "$fq_check" == "fq_pie" ] || [ "$fq_check" == "fq_codel" ]; then
+        FQ_STATUS="${YELLOW}已启用${NC}"
+    else
+        FQ_STATUS="${RED}未启用${NC}"
     fi
 
     # 2. 验证配置文件是否【真正由本脚本应用】
@@ -306,8 +323,9 @@ menu() {
         echo -e "${GREEN}====================================${NC}"
         echo -e "${GREEN}      BBR+TCP智能调参综合优化        ${NC}"
         echo -e "${GREEN}====================================${NC}"
-        echo -e "${GREEN}  状态  : ${BBR_STATUS}"
-        echo -e "${GREEN}  配置  : ${CONF_STATUS}"
+        echo -e "${GREEN}  BBR  : ${BBR_STATUS}"
+        echo -e "${GREEN}  FQ   : ${FQ_STATUS}"
+        echo -e "${GREEN}  配置 : ${CONF_STATUS}"
         echo -e "${GREEN}====================================${NC}"
         echo -e "${GREEN}  1. 网络优化${NC}"
         echo -e "${GREEN}  2. 卸载优化${NC}"
