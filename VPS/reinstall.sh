@@ -102,7 +102,7 @@ systems=(
 "29|fnos飞牛公测版|其他Linux|bin456789|root|123@@@|22|bash reinstall.sh fnos"
 "30|windows11|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 11 -lang cn"
 "31|windows10|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 10 -lang cn"
-"32|windows7|Windows|bin456789|Administrator|123@@@|3389|bash reinstall.sh windows --iso=\"https://drive.massgrave.dev/cn_windows_7_professional_with_sp1_x64_dvd_u_677031.iso\" --image-name='Windows 7 PROFESSIONAL'"
+"32|windows7|Windows|bin456789|Administrator|123@@@|3389|bash reinstall.sh windows --iso=\"https://download.testip.xyz/windows/cn_windows_7_professional_with_sp1_vl_build_x64_dvd_u_677816.iso\" --image-name='Windows 7 PROFESSIONAL'"
 "33|windowsServer2025|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2025 -lang cn"
 "34|windowsServer2022|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2022 -lang cn"
 "35|windowsServer2019|Windows|MollyLau|Administrator|Teddysun.com|3389|bash InstallNET.sh -windows 2019 -lang cn"
@@ -236,7 +236,7 @@ while true; do
             echo -e "${GREEN}⚙️ 正在向内核注入重装指令参数...${RESET}"
             eval "$final_cmd"
 
-            echo -e "\n${GREEN}✔ 系统重装环境已完美灌注就绪！${RESET}"
+            echo -e "\n${GREEN}✔ 系统重装环境已就绪！${RESET}"
             read -r -p "按 [回车键] 将立即强制重启服务器进行底层安装 (此时断开连接属于正常现象)..." dummy
             
             echo -e "${GREEN}>>> 正在重启...${RESET}"
