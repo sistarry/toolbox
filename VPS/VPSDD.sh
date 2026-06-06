@@ -14,7 +14,7 @@ clear
 
 echo -e "${GREEN}"
 echo "======================================"
-echo "        一键重装系统工具"
+echo "         一键重装系统工具"
 echo "======================================"
 echo " 1. Windows 11 Enterprise LTSC 2024"
 echo " 2. Windows 10 Enterprise LTSC 2021"
@@ -32,124 +32,130 @@ echo -e "${RESET}"
 
 read -r -p $'\033[32m请选择系统 [0-10]: \033[0m' SYS_CHOICE
 
-if [[ "$SYS_CHOICE" == "0" ]]; then
-    echo -e "${YELLOW}已退出${RESET}"
+if [[ "$SYS_CHOICE" == "0" || -z "$SYS_CHOICE" ]]; then
     exit 0
 fi
 
-read -p "请输入 root/Administrator 密码 (用于重装系统): " SYS_PASS
-
-if [[ -z "$SYS_PASS" ]]; then
-    echo -e "${RED}密码不能为空${RESET}"
-    exit 1
+# 1. 预先判断系统类型
+IS_WINDOWS=false
+if [[ "$SYS_CHOICE" =~ ^[1-3]$ ]]; then
+    IS_WINDOWS=true
 fi
 
-read -p "请输入 SSH 端口 (默认 22): " SSH_PORT
-SSH_PORT=${SSH_PORT:-22}
+# 2. 根据系统类型进行条件输入
+if [ "$IS_WINDOWS" = true ]; then
+    read -r -p "请输入 Windows 系统密码 (不能留空): " SYS_PASS
+    if [[ -z "$SYS_PASS" ]]; then
+        echo -e "${RED}错误：Windows 系统必须设置密码！${RESET}"
+        exit 1
+    fi
+    read -r -p "请输入 RDP 端口 (默认 3389): " RDP_PORT
+    RDP_PORT=${RDP_PORT:-3389}
+else
+    read -r -p "请输入自定义用户名 (默认 root): " CUSTOM_USER
+    CUSTOM_USER=${CUSTOM_USER:-root}
 
-read -p "请输入 RDP 端口 (默认 3389): " RDP_PORT
-RDP_PORT=${RDP_PORT:-3389}
+    read -r -p "请输入系统密码 (若使用SSH公钥登录，此处可直接回车): " SYS_PASS
+    read -r -p "请输入 SSH 公钥 (留空则不配置): " SSH_KEY
 
+    # 核心逻辑：Linux 密码与公钥二选一校验
+    if [[ -z "$SYS_PASS" && -z "$SSH_KEY" ]]; then
+        echo -e "${RED}错误：Linux 系统的密码和 SSH 公钥不能同时为空！${RESET}"
+        exit 1
+    fi
+
+    read -r -p "请输入 SSH 端口 (默认 22): " SSH_PORT
+    SSH_PORT=${SSH_PORT:-22}
+fi
+
+# 3. 动态构建 Linux 的附加参数（修复数组传递问题）
+EXTRA_ARGS=()
+if [ "$IS_WINDOWS" = false ]; then
+    if [[ -n "$CUSTOM_USER" ]]; then
+        EXTRA_ARGS+=("--username" "$CUSTOM_USER")
+    fi
+    if [[ -n "$SSH_KEY" ]]; then
+        EXTRA_ARGS+=("--ssh-key" "$SSH_KEY")
+    fi
+    if [[ -n "$SYS_PASS" ]]; then
+        EXTRA_ARGS+=("--password" "$SYS_PASS")
+    fi
+fi
+
+# 4. 确认安装信息
 echo
-echo -e "${YELLOW}安装配置:${RESET}"
-echo "Windows用户名: Administrator"
-echo "SSH用户名: root"
-echo "系统密码: $SYS_PASS"
-echo "SSH端口: $SSH_PORT"
-echo "RDP端口: $RDP_PORT"
+echo -e "${YELLOW}安装配置确认:${RESET}"
+if [ "$IS_WINDOWS" = true ]; then
+    echo "系统类型: Windows"
+    echo "用户名:   Administrator (Windows 默认)"
+    echo "系统密码: $SYS_PASS"
+    echo "RDP 端口: $RDP_PORT"
+else
+    echo "系统类型: Linux"
+    echo "用户名:   $CUSTOM_USER"
+    echo "系统密码: ${SYS_PASS:-（未设置，将使用公钥登录）}"
+    echo "SSH 端口: $SSH_PORT"
+    if [[ -n "$SSH_KEY" ]]; then
+        echo "SSH 公钥: ${SSH_KEY:0:30}..."
+    else
+        echo "SSH 公钥: 未配置"
+    fi
+fi
 echo
 
-read -p "确认开始重装系统？(y/N): " CONFIRM
+read -r -p "确认开始重装系统？(y/N): " CONFIRM
 
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     echo -e "${RED}操作已取消${RESET}"
     exit 0
 fi
 
-echo -e "${GREEN}下载重装脚本...${RESET}"
-
+echo -e "${GREEN}下载重装...${RESET}"
 wget -qO reinstall.sh "$SCRIPT_URL"
 
 if [[ ! -f reinstall.sh ]]; then
-    echo -e "${RED}下载失败${RESET}"
+    echo -e "${RED}下载失败，请检查网络或 URL 是否有效${RESET}"
     exit 1
 fi
 
 chmod +x reinstall.sh
 
+# 5. 执行重装逻辑
 case $SYS_CHOICE in
-
-1)
-bash reinstall.sh windows \
---image-name "Windows 11 Enterprise LTSC 2024" \
---lang zh-cn \
---password "$SYS_PASS" \
---rdp-port "$RDP_PORT"
-;;
-
-2)
-bash reinstall.sh windows \
---image-name "Windows 10 Enterprise LTSC 2021" \
---lang zh-cn \
---password "$SYS_PASS" \
---rdp-port "$RDP_PORT"
-;;
-
-3)
-bash reinstall.sh windows \
---image-name "Windows Server 2022" \
---lang zh-cn \
---password "$SYS_PASS" \
---rdp-port "$RDP_PORT"
-;;
-
-4)
-bash reinstall.sh debian 11 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-5)
-bash reinstall.sh debian 12 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-6)
-bash reinstall.sh debian 13 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-7)
-bash reinstall.sh ubuntu 22.04 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-8)
-bash reinstall.sh ubuntu 24.04 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-9)
-bash reinstall.sh ubuntu 26.04 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-10)
-bash reinstall.sh alpine 3.23 \
---password "$SYS_PASS" \
---ssh-port "$SSH_PORT"
-;;
-
-*)
-echo -e "${RED}无效选项${RESET}"
-exit 1
-;;
-
+    1)
+        bash reinstall.sh windows --image-name "Windows 11 Enterprise LTSC 2024" --lang zh-cn --password "$SYS_PASS" --rdp-port "$RDP_PORT"
+        ;;
+    2)
+        bash reinstall.sh windows --image-name "Windows 10 Enterprise LTSC 2021" --lang zh-cn --password "$SYS_PASS" --rdp-port "$RDP_PORT"
+        ;;
+    3)
+        bash reinstall.sh windows --image-name "Windows Server 2022" --lang zh-cn --password "$SYS_PASS" --rdp-port "$RDP_PORT"
+        ;;
+    4)
+        bash reinstall.sh debian 11 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    5)
+        bash reinstall.sh debian 12 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    6)
+        bash reinstall.sh debian 13 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    7)
+        bash reinstall.sh ubuntu 22.04 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    8)
+        bash reinstall.sh ubuntu 24.04 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    9)
+        bash reinstall.sh ubuntu 26.04 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    10)
+        bash reinstall.sh alpine 3.23 --ssh-port "$SSH_PORT" "${EXTRA_ARGS[@]}"
+        ;;
+    *)
+        echo -e "${RED}无效选项${RESET}"
+        exit 1
+        ;;
 esac
 
 echo
