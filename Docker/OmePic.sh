@@ -91,10 +91,7 @@ install_app() {
 
     echo
 
-    read -p "请输入端口 [默认8080]: " input_port
-    APP_PORT=${input_port:-8080}
 
-    read -p "请输入管理员密码: " ADMIN_PASSWORD
     read -p "请输入公网域名(如 https://img.xxx.com): " PUBLIC_BASE_URL
 
     JWT_SECRET=$(generate_secret)
@@ -108,7 +105,6 @@ install_app() {
     cd "$APP_DIR" || exit
 
     cat > .env <<EOF
-ADMIN_PASSWORD=${ADMIN_PASSWORD}
 JWT_SECRET=${JWT_SECRET}
 UID_ENCRYPTION_KEY=${UID_ENCRYPTION_KEY}
 SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
@@ -124,9 +120,9 @@ EOF
 
     echo
     echo -e "${GREEN}✅ OmePic 已启动${RESET}"
-    echo -e "${YELLOW}🌐 访问地址: http://${SERVER_IP}:${APP_PORT}/admin${RESET}"
+    echo -e "${YELLOW}🌐 访问地址: http://127.0.0.1:8080/admin${RESET}"
     echo -e "${YELLOW}🌐 访问地址: http://${PUBLIC_BASE_URL}/admin${RESET}"
-    echo -e "${YELLOW}🔑 密码: ${ADMIN_PASSWORD}${RESET}"
+    echo -e "${YELLOW}🔑 密码: admin123${RESET}"
     echo -e "${YELLOW}🔑 JWT_SECRET: ${JWT_SECRET}${RESET}"
     echo -e "${YELLOW}📂 安装目录: ${APP_DIR}${RESET}"
 
