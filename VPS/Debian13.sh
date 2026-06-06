@@ -19,7 +19,6 @@ echo -e "${YELLOW}请确保已备份重要数据！${RESET}"
 # 用户确认
 read -p $'\033[31m你确定要继续吗？(y/n): \033[0m' CONFIRM
 if [[ "$CONFIRM" != "y" ]]; then
-    echo -e "${RED}已取消操作${RESET}"
     exit 1
 fi
 
