@@ -46,7 +46,7 @@ menu() {
     echo -e "${YELLOW}[04] 系统重启${RESET}"
     echo -e "${YELLOW}[05] 修改SSH端口${RESET}"
     echo -e "${YELLOW}[06] 修改root密码${RESET}"
-    echo -e "${YELLOW}[07] SSH密钥登录${RESET}"
+    echo -e "${YELLOW}[07] root登录管理${RESET}"
     echo -e "${YELLOW}[08] 防火墙管理${RESET}"
     echo -e "${YELLOW}[09] Fail2Ban${RESET}"
     echo -e "${YELLOW}[10] 更换系统源${RESET}"
@@ -56,68 +56,88 @@ menu() {
     echo -e "${YELLOW}[14] Docker管理${RESET}"
     echo -e "${YELLOW}[15] 反向代理${RESET}"
     echo -e "${YELLOW}[16] Shadowsocks${RESET}"
-    echo -e "${YELLOW}[17] Reality${RESET}"
-    echo -e "${YELLOW}[18] Hysteria2${RESET}"
-    echo -e "${YELLOW}[19] Anytls${RESET}"
-    echo -e "${YELLOW}[20] Anytls+Reality${RESET}"
-    echo -e "${YELLOW}[21] Tuicv5${RESET}"
-    echo -e "${YELLOW}[22] MTProto${RESET}"
-    echo -e "${YELLOW}[23] Socks5${RESET}"
-    echo -e "${YELLOW}[24] NaïveProxy${RESET}"
-    echo -e "${YELLOW}[25] Xray-Argo${RESET}"
-    echo -e "${YELLOW}[26] Vmess-ws${RESET}"
-    echo -e "${YELLOW}[27] Vless-httpupgrade${RESET}"
-    echo -e "${YELLOW}[28] Vless-Reality-xhttp${RESET}"
-    echo -e "${YELLOW}[29] Vless-Encryption${RESET}"
-    echo -e "${YELLOW}[30] Vless-Encryption-Reality${RESET}"
-    echo -e "${YELLOW}[31] F佬Sing-box${RESET}"
-    echo -e "${YELLOW}[32] vless-all-in-one${RESET}"
-    echo -e "${YELLOW}[33] 3X-UI面板${RESET}"
-    echo -e "${YELLOW}[34] Realm-xwPF${RESET}"
-    echo -e "${YELLOW}[35] Emby反代${RESET}"
-    echo -e "${YELLOW}[36] 卸载探针${RESET}"
+    echo -e "${YELLOW}[17] SS+ShadowTLS${RESET}"
+    echo -e "${YELLOW}[18] Snell${RESET}"
+    echo -e "${YELLOW}[19] Snell+ShadowTLS${RESET}"
+    echo -e "${YELLOW}[20] Reality${RESET}"
+    echo -e "${YELLOW}[21] Hysteria2${RESET}"
+    echo -e "${YELLOW}[22] Anytls${RESET}"
+    echo -e "${YELLOW}[23] Anytls+Reality${RESET}"
+    echo -e "${YELLOW}[24] Tuicv5${RESET}"
+    echo -e "${YELLOW}[25] MTProto${RESET}"
+    echo -e "${YELLOW}[26] Socks5${RESET}"
+    echo -e "${YELLOW}[27] HTTP${RESET}"
+    echo -e "${YELLOW}[28] NaïveProxy${RESET}"
+    echo -e "${YELLOW}[29] Xray-Argo${RESET}"
+    echo -e "${YELLOW}[30] Vmess-ws${RESET}"
+    echo -e "${YELLOW}[31] Vless-httpupgrade${RESET}"
+    echo -e "${YELLOW}[32] Vless-ws-tls${RESET}"
+    echo -e "${YELLOW}[33] Vless-Reality-xhttp${RESET}"
+    echo -e "${YELLOW}[34] Vless-Encryption${RESET}"
+    echo -e "${YELLOW}[35] Vless-Encryption-Reality${RESET}"
+    echo -e "${YELLOW}[36] F佬Sing-box${RESET}"
+    echo -e "${YELLOW}[37] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[38] 3X-UI面板${RESET}"
+    echo -e "${YELLOW}[39] Realm-xwPF${RESET}"
+    echo -e "${YELLOW}[40] Nginx${RESET}"
+    echo -e "${YELLOW}[41] Caddy${RESET}"
+    echo -e "${YELLOW}[42] Acme${RESET}"
+    echo -e "${YELLOW}[43] 证书备份恢复${RESET}"
+    echo -e "${YELLOW}[44] DNS优化${RESET}"
+    echo -e "${YELLOW}[45] 流量日报${RESET}"
+    echo -e "${YELLOW}[46] 卸载探针${RESET}"
     echo -e "${GREEN}[88] 更新脚本${RESET}"
     echo -e "${GREEN}[99] 卸载脚本${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
     echo -ne "${RED}请输入操作编号: ${RESET}"
     read choice
     case "$choice" in
-        1) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/update.sh) ;;
+        1) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/update.sh) ;;
         2) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/vpsinfo.sh) ;;
-        3) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APClear.sh) ;;
+        3) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clear.sh) ;;
         4) sudo reboot ;;
-        5) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSSHDK.sh) ;;
+        5) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/sshdk.sh) ;;
         6) sudo passwd root ;;
-        7) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSSHKey.sh) ;;
+        7) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/SSHDLGL.sh) ;;
         8) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APfirewall.sh) ;;
         9) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APFail2Ban.sh) ;;
-        10) bash <(curl -sSL https://linuxmirrors.cn/main.sh) ;;
-        11) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APZT.sh) ;;
+        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/huanyuan.sh) ;;
+        11) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/xgyu.sh) ;;
         12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/home.sh) ;;
         13) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APDNS.sh) ;;
         14) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APDocker.sh) ;;
         15) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APFD.sh) ;;
-        16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APShadowsocks-Rust.sh) ;;
-        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessRealityX.sh) ;;
-        18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APHy2S.sh) ;;
-        19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyTLSS.sh) ;;
-        20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyRealityS.sh) ;;
-        21) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APTuicv5S.sh) ;;
-        22) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APMTProto.sh) ;;
-        23) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSocks5X.sh) ;;
-        24) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APNaiveProxyS.sh) ;;
-        25) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/2go.sh) ;;
-        26) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVmesswsS.sh) ;;
-        27) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlesshttpupgradeX.sh) ;;
-        28) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessRealityxhttpX.sh) ;;
-        29) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessEncryptionX.sh) ;;
-        30) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessEncryptionRalityX.sh) ;;
-        31) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
-        32) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
-        33) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AP3X-UI.sh) ;;
-        34) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
-        35) curl -fsSL -o install.sh https://raw.githubusercontent.com/admintors/emby-proxy-alpine-lite/main/install.sh && bash install.sh ;;
-        36) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
+        16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSSRust.sh) ;;
+        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSShadowTLS.sh) ;;
+        18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSnell.sh) ;;
+        19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSnellShadowTLS.sh) ;;
+        20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessRealityX.sh) ;;
+        21) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APHy2S.sh) ;;
+        22) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyTLSS.sh) ;;
+        23) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAnyRealityS.sh) ;;
+        24) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APTuicv5S.sh) ;;
+        25) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APMTProto.sh) ;;
+        26) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSocks5X.sh) ;;
+        27) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APHTTPX.sh) ;;
+        28) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APNaiveProxyS.sh) ;;
+        29) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/2go.sh) ;;
+        30) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVmesswsS.sh) ;;
+        31) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlesshttpupgradeX.sh) ;;
+        32) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlesswstls.sh) ;;
+        33) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessRealityxhttpX.sh) ;;
+        34) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessEncryptionX.sh) ;;
+        35) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APVlessEncryptionRalityX.sh) ;;
+        36) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
+        37) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
+        38) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/AP3X-UI.sh) ;;
+        39) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ;;
+        40) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APNginx.sh) ;;
+        41) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APCaddy.sh) ;;
+        42) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APAcme.sh) ;;
+        43) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APSSLbackup.sh) ;;
+        44) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APMosdns-x.sh) ;;
+        45) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APvnstattg.sh) ;;
+        46) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/unagent.sh) ;;
         88)
             echo -e "${YELLOW}🔄 正在更新脚本...${RESET}"
             curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL" || {
