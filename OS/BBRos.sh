@@ -6,6 +6,9 @@ RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
+# 代理前缀
+PROXY="https://v6.gh-proxy.org/"
+
 # --------------------------
 # 架构检测函数
 # --------------------------
@@ -53,7 +56,9 @@ EOF
 
     if sysctl net.ipv4.tcp_congestion_control | grep -q "bbr"; then
         echo "tcp_bbr" >> /etc/modules 2>/dev/null || true
-        echo -e "${YELLOW}✅BBR+FQ 已成功开启！${RESET}"
+        echo -e "${YELLOW}================================${RESET}"
+        echo -e "${YELLOW}      ✅BBR+FQ 已成功开启！     ${RESET}"
+        echo -e "${YELLOW}================================${RESET}"
     else
         echo -e "${YELLOW}❌ BBR 开启失败。可能原因：内核版本过低或缺少内核模块包。${RESET}"
         echo -e "${YELLOW}提示: 尝试运行 'apk add linux-lts' 升级内核后重启再试。${RESET}"
@@ -75,15 +80,27 @@ else
     OS="unknown"
 fi
 
+# 核心下载与执行函数（含自动容灾代理）
+fetch_and_run() {
+    local script_url="$1"
+    
+    # 尝试直连，如果失败（返回非0状态码）则通过代理重试，若再失败则报错退出
+    bash <(curl -fsSL "$script_url") || \
+    bash <(curl -fsSL "${PROXY}${script_url}") || {
+        echo -e "${RED}错误：直连与代理均失败，请检查网络设置。${RESET}"
+        exit 1
+    }
+}
+
 case "$OS" in
     alpine)
         enable_bbr_alpine
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
 
-        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRV3.sh)
+        fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRV3.sh"
         ;;
     *)
-        bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRV3.sh)
+        fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRV3.sh"
         ;;
 esac
