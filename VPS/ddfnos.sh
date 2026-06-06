@@ -24,11 +24,12 @@ if [[ "$CONFIRM" != "y" ]]; then
 fi
 
 # 线路选择
-echo -e "请选择下载源线路:"
-echo -e " 1) 国内机专用镜像 (CNB)"
-echo -e " 2) GitHub 镜像代理"
-echo -e " 3) GitHub 直连"
-read -p "请输入编号 (默认 3): " LINE_CHOICE
+echo -e "  ${YELLOW}--------------------------------------${RESET}"
+echo -e "  ${GREEN}1) 国内机专用镜像${RESET}"
+echo -e "  ${GREEN}2) GitHub 镜像代理${RESET}"
+echo -e "  ${GREEN}3) GitHub 直连(默认)${RESET}"
+echo -e "${YELLOW}--------------------------------------${RESET}"
+read -p $'\033[36m👉 请输入编号: \033[0m' LINE_CHOICE
 LINE_CHOICE=${LINE_CHOICE:-3}
 
 # 根据选择下载脚本
