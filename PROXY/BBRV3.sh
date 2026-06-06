@@ -3146,9 +3146,7 @@ uninstall_all() {
 
 
 main() {
-    # 先解析参数
-    parse_args "$@"
-
+    
     # 检查 root 权限
     check_root
 
