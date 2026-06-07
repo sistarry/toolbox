@@ -284,17 +284,30 @@ EOF
 }
 
 # --- 功能 2：卸载优化恢复默认 ---
+# --- 功能 2：卸载高级优化，恢复至基础 BBR 配置 ---
 uninstall_optimizations() {
-    echo -e "\n${YELLOW}>>> 正在准备卸载优化配置...${NC}"
-    if [ -f "$CONF_FILE" ]; then
-        rm -f "$CONF_FILE"
-        echo -e "${GREEN}✅ 已删除优化配置文件: ${CONF_FILE}${NC}"
-        echo -e "${CYAN}>>> 重新校准并加载系统默认网络参数...${NC}"
-        sysctl --system >/dev/null 2>&1 || true
-        echo -e "${GREEN}✅ 卸载完成，系统控制流已恢复至全局默认状态。${NC}\n"
-    else
-        echo -e "${YELLOW}💡 提示: 未检测到生成的配置文件，无需卸载。${NC}\n"
-    fi
+    echo -e "\n${YELLOW}>>> 正在剥离高级调优参数，将其重置为基础规范 BBR 配置...${NC}"
+    
+    manage_backups
+    mkdir -p "$(dirname "$CONF_FILE")"
+
+    # 关键修改：卸载时不删文件，而是覆盖重写为用户指定的原生 FQ + BBR 配置
+    cat > "$CONF_FILE" << EOF
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+EOF
+
+    echo -e "${GREEN}✅ 配置文件已精简还原: ${CONF_FILE}${NC}"
+    echo -e "${CYAN}>>> 正在重载系统控制流并清空其他高级参数缓存...${NC}"
+    
+    # 1. 刷新系统内核加载树（使其他被删除的参数回滚到系统全局默认）
+    sysctl --system >/dev/null 2>&1 || true
+    
+    # 2. 手动强制刷新一次核心参数，确保实时生效
+    sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1 || true
+    sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1 || true
+    
+    echo -e "${GREEN}✅ 卸载恢复成功！其余优化已清除，基础 BBR + FQ 仍保持在底层稳健运行。${NC}\n"
     
     echo -ne "${GREEN}"
     read -r -p "按回车键返回主菜单..." _
