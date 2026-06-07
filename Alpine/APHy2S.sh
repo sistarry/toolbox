@@ -265,13 +265,13 @@ inst_cert() {
 
   echo "---------------------------------------------"
   echo -e "Hysteria 2 协议证书申请方式如下："
-  echo -e " 1) 必应自签证书 "
-  echo -e " 2) Acme自动申请(需放行80端口)${YELLOW}（默认）${RESET}"
+  echo -e " 1) 必应自签证书${YELLOW}（默认）${RESET} "
+  echo -e " 2) Acme自动申请(需放行80端口)"
   echo -e " 3) 自定义证书路径"
   echo "---------------------------------------------"
   local certInput
-  read -rp "请输入选项 [1-3] (直接回车默认Acme 脚本自动申请): " certInput
-  certInput=${certInput:-2}
+  read -rp "请输入选项 [1-3] (直接回车默认自签证书): " certInput
+  certInput=${certInput:-1}
 
   cert_path="$CONFIG_DIR/certs/cert.pem"
   key_path="$CONFIG_DIR/certs/key.pem"
