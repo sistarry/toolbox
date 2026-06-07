@@ -1,5 +1,4 @@
 #!/bin/bash
-clear
 
 # 颜色定义
 green='\033[0;32m'
