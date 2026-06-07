@@ -396,7 +396,7 @@ schedule_menu(){
         get_task_count
         
         echo -e "${GREEN}=======================================${RESET}"
-        echo -e "${GREEN}        ◈  Cron 定时任务管理面板  ◈      ${RESET}"
+        echo -e "${GREEN}      ◈  Cron 定时任务管理面板  ◈      ${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         echo -e "${GREEN} 当前系统环境 : ${YELLOW}${OS}${RESET}"
         echo -e "${GREEN} 活跃任务总数 : ${YELLOW}${TASK_COUNT} 条${RESET}"
@@ -463,7 +463,7 @@ while true; do
     get_backup_stats
     
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}       ◈  VPS 自动化备份管理系统  ◈    ${RESET}"
+    echo -e "${GREEN}       ◈  VPS 本地备份管理系统  ◈      ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 当前系统环境 : ${YELLOW}${OS}${RESET}"
     echo -e "${GREEN} 备份文件总数 : ${YELLOW}${FILE_COUNT} 个 (${DISK_USAGE})${RESET}"
