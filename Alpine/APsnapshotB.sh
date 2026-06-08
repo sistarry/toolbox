@@ -440,7 +440,7 @@ test_telegram() {
     local t_days=$(escape_markdown "${BACKUP_INTERVAL_DAYS:-5}")
     local t_time=$(escape_markdown "$(date '+%Y-%m-%d %H:%M:%S')")
 
-    local test_msg="🚀 *系统快照备份工具 Alpine 安装测试*
+    local test_msg="🚀 *系统快照备份工具安装测试*
 
 📱 如果您看到此消息，说明Telegram配置成功！
 🖥️ *本机名称*: \`$t_name\`  
