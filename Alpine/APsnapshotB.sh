@@ -142,7 +142,7 @@ run_backend_backup() {
             local e_ldir=$(escape_markdown "$BACKUP_DIR")
             local e_endtime=$(escape_markdown "$(date '+%Y-%m-%d %H:%M:%S')")
 
-            local success_msg="✅ *系统快照备份任务已圆满完成*
+            local success_msg="✅ *系统快照备份任务已完成*
 
 🖥️ *本机名称*: \`$t_name\`
 💾 *快照大小*: \`$e_size\`
