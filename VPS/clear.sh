@@ -165,7 +165,7 @@ system_clean_menu() {
         echo -e "${GREEN}=======================================${RESET}"
         echo -e "${GREEN}  1. 清理系统垃圾 (缓存/日志/旧包)${RESET}"
         echo -e "${GREEN}  2. 全面清理 (系统垃圾 + Docker)${RESET}"
-        echo -e "${GREEN}  3. 安装运行定时自动清理任务${RESET}"
+        echo -e "${GREEN}  3. 运行定时自动清理任务${RESET}"
         echo -e "${GREEN}  0. 退出${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         echo -ne "${GREEN} 请选择操作: ${RESET}"
