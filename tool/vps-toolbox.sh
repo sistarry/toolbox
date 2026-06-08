@@ -428,7 +428,7 @@ execute_choice() {
         60) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/OS/1Panelx.sh) ;;
         61) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/dujiao-next/community-projects/main/scripts/langge-dujiao-next-install/dujiao-next-install.sh) ;;
         62) bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)" ;;
-        63) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OS/qbittorrentos.sh) ;;
+        63) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/OS/qbittorrentos.sh) ;;
         64) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Nginxos.sh) ;;
         65) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Nginx6os.sh) ;;
         66) bash <(curl -fsSL ${PROXY_PREFIX}https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Caddyos.sh) ;;
