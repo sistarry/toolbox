@@ -14,7 +14,7 @@ BASE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS"
 # 基础工具函数：暂停等待
 pause() {
 
-    read -r -p $'\033[32m  按回车键返回菜单...\033[0m'
+    read -r -p $'\033[32m按回车键返回菜单...\033[0m'
 }
 
 # 核心下载与无痕执行函数（完美支持进程替换的容灾切换）
