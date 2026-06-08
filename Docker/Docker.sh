@@ -780,8 +780,8 @@ main_menu() {
         echo -e "${GREEN}10. 切换 iptables-legacy${RESET}"
         echo -e "${GREEN}11. 切换 iptables-nft${RESET}"
         echo -e "${GREEN}12. Docker 备份/恢复${RESET}"
-        echo -e "${GREEN}13. 卷管理 ${RESET}"
-        echo -e "${GREEN}14. 重启 Docker${RESET}"
+        echo -e "${GREEN}13. 重启 Docker${RESET}"
+        echo -e "${GREEN}14. 卷管理 ${RESET}"
         echo -e "${GREEN}15.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
         echo -e "${GREEN}16. Docker监控${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
@@ -799,8 +799,8 @@ main_menu() {
             10) switch_iptables_legacy ;;
             11) switch_iptables_nft ;;
             12) check_docker_running && docker_backup_menu ;;
-            13|13) check_docker_running && docker_volume ;;
-            14|14) check_docker_running && restart_docker ;;
+            13|13) check_docker_running && restart_docker ;;
+            14|14) check_docker_running && docker_volume ;;
             15|15) check_docker_running && docker_cleanup ;;
             16|16) monitor_docker_containers ;;
              00|0) exit 0 ;;
