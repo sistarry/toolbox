@@ -330,7 +330,7 @@ function project_menu() {
         echo -e "${GREEN} 3) 重启服务${RESET}"
         echo -e "${GREEN} 4) 查看日志${RESET}"
         echo -e "${GREEN} 5) 查看容器状态${RESET}"
-        echo -e "${GREEN} 6) 更新容器(pull & up)${RESET}"
+        echo -e "${GREEN} 6) 更新容器(pull&up)${RESET}"
         echo -e "${GREEN} 7) 进入容器${RESET}"
         echo -e "${GREEN} 8) 删除容器(含数据卷)${RESET}"
         echo -e "${GREEN} 9) 删除容器+镜像+数据卷${RESET}"
