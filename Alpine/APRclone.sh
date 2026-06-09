@@ -36,41 +36,41 @@ init_config
 
 # ================== 动态状态获取 ==================
 get_system_status() {
-    echo -e "${GREEN}=========== 系统实时状态面板 ==========${RESET}"
+    echo -e "${GREEN}=========== Rclone 管理菜单 ===========${RESET}"
     
     if command -v rclone &> /dev/null; then
         local rclone_ver=$(rclone version | head -n 1 | awk '{print $2}')
-        echo -e "Rclone 状态: ${GREEN}已安装 (${rclone_ver})${RESET}"
+        echo -e "${GREEN}Rclone 状态:${RESET} ${YELLOW}已安装 (${rclone_ver})${RESET}"
     else
-        echo -e "Rclone 状态: ${RED}未安装${RESET}"
+        echo -e "${GREEN}Rclone 状态:${RESET} ${RED}未安装${RESET}"
     fi
 
     if command -v rclone &> /dev/null; then
         local remote_count=$(rclone listremotes 2>/dev/null | wc -l)
-        echo -e "已配置网盘: ${CYAN}${remote_count} 个${RESET}"
+        echo -e "${GREEN}已配置网盘:${RESET} ${YELLOW}${remote_count} 个${RESET}"
     else
-        echo -e "已配置网盘: ${YELLOW}----${RESET}"
+        echo -e "${GREEN}已配置网盘:${RESET} ${YELLOW}----${RESET}"
     fi
 
     local active_mounts=$(mount | grep -i "rclone" | awk '{print $3}')
     if [ -n "$active_mounts" ]; then
-        echo -e "活跃挂载点: "
+        echo -e "${GREEN}活跃挂载点:${RESET} "
         echo "$active_mounts" | while read -r mnt; do
-            echo -e "  ${GREEN}●${RESET} $mnt (已开启开机自启)"
+            echo -e "  ${YELLOW}● $mnt (已开启开机自启)${RESET}"
         done
     else
-        echo -e "活跃挂载点: ${YELLOW}暂无活跃挂载${RESET}"
+        echo -e "${GREEN}活跃挂载点:${RESET} ${YELLOW}暂无活跃挂载${RESET}"
     fi
 
     local cron_count=$(crontab -l 2>/dev/null | grep "$CRON_PREFIX" | wc -l)
-    echo -e "同步定时任务: ${CYAN}${cron_count} 个活跃任务${RESET}"
+    echo -e "${GREEN}同步定时任务:${RESET} ${YELLOW}${cron_count} 个活跃任务${RESET}"
 
     if [[ "$TG_TOKEN" == "填入你的默认BotToken" || -z "$TG_TOKEN" ]]; then
-        echo -e "TG 通知状态: ${YELLOW}未配置 (部分功能将缺乏推送)${RESET}"
+        echo -e "${GREEN}TG 通知状态:${RESET} ${YELLOW}未配置${RESET}"
     else
-        echo -e "TG 通知状态: ${GREEN}已启用 (${VPS_NAME})${RESET}"
+        echo -e "${GREEN}TG 通知状态:${RESET} ${YELLOW}已启用(${VPS_NAME})${RESET}"
     fi
-    echo -e "${GREEN}======================================${RESET}"
+
 }
 
 # ================== 菜单 ==================
@@ -78,24 +78,25 @@ show_menu() {
     clear
     get_system_status
     
-    echo -e "${GREEN}=========== Rclone 管理菜单 ==========${RESET}"
-    echo -e "${CYAN} 1)${RESET} 安装 Rclone          ${CYAN} 2)${RESET} 更新 Rclone"
-    echo -e "${CYAN} 3)${RESET} 配置 Rclone (config) ${CYAN} 4)${RESET} 查看远程存储列表"
-    echo -e "${CYAN} 5)${RESET} 查看远程存储文件"
-    echo -e "----------------------------------------"
-    echo -e "${GREEN} [ 挂载管理 (自动配置开机自启 - OpenRC) ]${RESET}"
-    echo -e "${CYAN} 6)${RESET} 挂载网盘            ${CYAN}  7)${RESET} 查看已创建的资产清单"
-    echo -e "${CYAN} 8)${RESET} 卸载指定挂载点       ${CYAN} 9)${RESET} 卸载所有挂载点"
-    echo -e "${CYAN}10)${RESET} 查看挂载运行状态     ${CYAN}11)${RESET} 查看挂载实时日志"
-    echo -e "----------------------------------------"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN} [ Rclone 管理 ]${RESET}"
+    echo -e "${CYAN} 1) 安装 Rclone${RESET}         ${CYAN} 2) 更新 Rclone${RESET}"
+    echo -e "${CYAN} 3) 配置 Rclone (config)${RESET}${CYAN} 4) 查看远程存储列表${RESET}"
+    echo -e "${CYAN} 5) 查看远程存储文件${RESET}"
+    echo -e "${GREEN}----------------------------------------${RESET}"
+    echo -e "${GREEN} [ 挂载管理 (配置开机自启) ]${RESET}"
+    echo -e "${CYAN} 6) 挂载网盘 ${RESET}           ${CYAN} 7) 查看已创建的资产清单${RESET}"
+    echo -e "${CYAN} 8) 卸载指定挂载点${RESET}      ${CYAN} 9) 卸载所有挂载点${RESET}"
+    echo -e "${CYAN}10) 查看挂载运行状态${RESET}    ${CYAN}11) 查看挂载实时日志${RESET}"
+    echo -e "${GREEN}----------------------------------------${RESET}"
     echo -e "${GREEN} [ 数据同步与任务 ]${RESET}"
-    echo -e "${CYAN}12)${RESET} 手动同步 本地 → 远程 ${CYAN}13)${RESET} 手动同步 远程 → 本地"
-    echo -e "${CYAN}14)${RESET} 定时任务管理 (Cron)"
-    echo -e "----------------------------------------"
+    echo -e "${CYAN}12) 同步 本地 → 远程${RESET}    ${CYAN}13) 同步 远程 → 本地${RESET}"
+    echo -e "${CYAN}14) 定时任务管理 (Cron)${RESET}"
+    echo -e "${GREEN}----------------------------------------${RESET}"
     echo -e "${GREEN} [ 全局设置与常规 ]${RESET}"
-    echo -e "${CYAN}15)${RESET} 修改 TG 通知参数     ${CYAN}16)${RESET} 卸载 Rclone"
-    echo -e "${CYAN} 0)${RESET} 退出"
-    echo -e "${GREEN}======================================${RESET}"
+    echo -e "${CYAN}15) 修改 TG 通知参数${RESET}    ${CYAN}16) 卸载 Rclone${RESET}"
+    echo -e "${CYAN} 0) 退出${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
 }
 
 # ================== 基础操作 ==================
