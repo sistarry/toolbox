@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =========================================================
-# Xray VLESS-Reality 管理脚本(Alpine Linux )
+# Xray VLESS-Reality 管理脚本 (Alpine Linux)
 # =========================================================
 
 set -Eeuo pipefail
@@ -14,9 +14,7 @@ BLUE="\033[34m"
 RESET="\033[0m"
 
 # ================== 路径与日志 ==================
-# 隔离服务名称，防止冲突
 readonly SERV_NAME="xray-reality"
-
 readonly X_DIR="/etc/${SERV_NAME}"
 readonly X_CONFIG="${X_DIR}/config.json"
 readonly X_BIN="/usr/local/bin/${SERV_NAME}"
@@ -25,13 +23,22 @@ readonly X_LINK="/root/proxynode/Reality/${SERV_NAME}_vless_reality.txt"
 readonly X_LOG="/var/log/${SERV_NAME}.log"
 readonly INIT_FILE="/etc/init.d/${SERV_NAME}"
 
+# ================== GITHUB 代理加速池 ==================
+readonly GITHUB_PROXY=(
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+    '' # 留空代表直连，作为兜底保底
+)
+
 # ================== 核心工具 ==================
 info() { echo -e "${GREEN}[信息] $*${RESET}"; }
 warn() { echo -e "${YELLOW}[警告] $*${RESET}"; }
 error() { echo -e "${RED}[错误] $*${RESET}"; }
 pause() { echo; echo -ne "${GREEN}按任意键返回菜单...${RESET}"; read -n 1 -s; echo; }
 
-# 校验端口是否合法
 is_valid_port() {
     local port=$1
     if [[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
@@ -41,7 +48,6 @@ is_valid_port() {
     fi
 }
 
-# 重启服务并检查结果
 restart_xray() {
     rc-service "$SERV_NAME" restart >/dev/null 2>&1 || true
     sleep 1
@@ -52,7 +58,6 @@ restart_xray() {
     fi
 }
 
-# 状态获取
 get_xray_status() {
     if rc-service "$SERV_NAME" status 2>/dev/null | grep -q "started"; then
         echo -e "${GREEN}● 运行中 ${RESET}"
@@ -69,20 +74,34 @@ get_xray_version() {
     fi
 }
 
-# 公网IP获取
+
+# ✨ 终极双栈/纯v6 智能 IP 获取引擎
 get_public_ip() {
-    local ip
-    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
-        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    local mode=${1:-"auto"} # auto: 自动, v4: 强制IPv4, v6: 强制IPv6
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
-    done
-    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
-        for url in "https://api64.ipify.org" "https://ip.sb"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
         done
-    done
-    error "无法获取公网 IP 地址。" && return 1
+    else
+        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+
+    error "无法获取公网 IP 地址，请检查网络或 DNS 设置！" && echo "127.0.0.1" && return 1
 }
 
 HOSTNAME=$(hostname -s | sed 's/ /_/g')
@@ -131,6 +150,7 @@ select_best_sni() {
 
     for sni in "${SNIS[@]}"; do
         start=$(date +%s%N)
+        # 兼容纯 v6 机器的解析，允许 openssl 自由选择最快的地址族
         if timeout 2 openssl s_client -connect ${sni}:443 -servername ${sni} -brief </dev/null >/dev/null 2>&1; then
             end=$(date +%s%N)
             cost=$(( (end - start) / 1000000 ))
@@ -227,7 +247,6 @@ modify_config() {
     local pub=$(cat "$X_PBK")
     local curr_outbound=$(jq -c '.outbounds[0]' "$X_CONFIG")
 
-    # 1. 修改端口
     local n_port
     while true; do
         read -p "请输入新端口 (回车保持 $curr_port): " n_port
@@ -235,11 +254,9 @@ modify_config() {
         is_valid_port "$n_port" && break || error "端口无效，请输入 1-65535 之间的数字。"
     done
 
-    # 2. 修改域名
     read -p "请输入新域名 (回车保持 $curr_domain): " n_domain
     n_domain=${n_domain:-$curr_domain}
     
-    # 3. 修改 UUID
     local n_uuid
     while true; do
         read -p "请输入新 UUID (回车保持 $curr_uuid): " n_uuid
@@ -247,11 +264,10 @@ modify_config() {
         if [[ "$n_uuid" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
             break
         else
-            error "UUID 格式不正确，请重新输入（标准36位连字符格式）。"
+            error "UUID 格式不正确，请重新输入。"
         fi
     done
 
-    # 4. 修改 ShortID
     local n_sid
     while true; do
         read -p "请输入新 ShortID (回车保持 $curr_sid): " n_sid
@@ -259,7 +275,7 @@ modify_config() {
         if [[ "$n_sid" =~ ^[0-9a-fA-F]+$ ]] && (( ${#n_sid} % 2 == 0 )) && (( ${#n_sid} >= 2 && ${#n_sid} <= 16 )); then
             break
         else
-            error "ShortID 格式不正确，必须是偶数长度的十六进制字符（2-16位，例：a1b2c3d4）。"
+            error "ShortID 格式不正确，必须是缩写至2-16位的偶数长度十六进制字符。"
         fi
     done
 
@@ -267,7 +283,6 @@ modify_config() {
     rc-service "$SERV_NAME" restart
     
     local ip=$(get_public_ip)
-    # ✨ 核心修复点 1：写入前确保目标目录链存在
     mkdir -p "$(dirname "$X_LINK")"
     echo "vless://$n_uuid@$ip:$n_port?flow=xtls-rprx-vision&encryption=none&type=tcp&security=reality&sni=$n_domain&fp=chrome&pbk=$pub&sid=$n_sid#$HOSTNAME-Reality" > "$X_LINK"
     info "配置已更新并成功重启服务！"
@@ -275,15 +290,50 @@ modify_config() {
 
 # ================== 安装与管理 ==================
 install_xray() {
-    info "正在安装依赖与内核..."
+    info "正在安装与检测系统依赖..."
     apk update && apk add curl unzip openssl jq uuidgen gcompat libc6-compat bc > /dev/null 2>&1
     mkdir -p "$X_DIR" && sync
     
     local arch=$(uname -m | sed 's/x86_64/64/;s/aarch64/arm64-v8a/')
-    local ver=$(curl -sL https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name)
+    local ver=""
     
-    info "下载 Xray $ver ($arch)..."
-    curl -L -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/$ver/Xray-linux-$arch.zip"
+    # ✨ 升级：结合代理池获取最新发布版本号
+    info "正在检索 Xray-core 官方最新发布版本..."
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local api_url="${proxy}https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+        info "尝试通过代理 [ ${proxy:-直连} ] 获取版本号..."
+        ver=$(wget -qO- --timeout=5 --no-check-certificate "$api_url" | jq -r .tag_name 2>/dev/null || echo "")
+        if [[ -n "$ver" && "$ver" != "null" ]]; then
+            info "成功获取最新版本: $ver"
+            break
+        fi
+    done
+
+    if [[ -z "$ver" || "$ver" == "null" ]]; then
+        ver="v26.3.27"
+        warn "所有代理池检索超时，将为您安装高稳定保障版本: $ver"
+    fi
+    
+    # ✨ 升级：结合代理池进行文件下载（多池轮询，死磕下载直至成功）
+    local download_success=false
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local dl_url="${proxy}https://github.com/XTLS/Xray-core/releases/download/$ver/Xray-linux-$arch.zip"
+        info "正在通过代理 [ ${proxy:-直连} ] 下载 Xray $ver ($arch)..."
+        
+        if wget --no-check-certificate --timeout=15 -O /tmp/xray.zip "$dl_url" 2>/dev/null; then
+            if [ -s /tmp/xray.zip ]; then
+                download_success=true
+                break
+            fi
+        fi
+        warn "当前代理下载失败，正在切换至下一款代理..."
+    done
+
+    if [ "$download_success" = false ]; then
+        error "所有代理池节点及直连模式均下载失败，请检查您的 VPS 的 IPv6/IPv4 DNS 是否配置正常！"
+        return 1
+    fi
+    
     unzip -o /tmp/xray.zip -d /tmp/xray_tmp > /dev/null
     mv -f /tmp/xray_tmp/xray "$X_BIN" && chmod +x "$X_BIN"
     rm -rf /tmp/xray*
@@ -292,7 +342,6 @@ install_xray() {
         echo -ne "${GREEN}请输入入站端口 (回车随机): ${RESET}"; read port; [[ -z "$port" ]] && port=$((RANDOM % 45535 + 10000))
         echo -ne "${GREEN}请输入伪装域名 (回车 www.amazon.com): ${RESET}"; read domain; [[ -z "$domain" ]] && domain="www.amazon.com"
         
-        # 1. 自定义或生成 UUID
         local uuid
         while true; do
             echo -ne "${GREEN}请输入自定义 UUID (回车随机生成): ${RESET}"; read input_uuid
@@ -309,10 +358,9 @@ install_xray() {
             fi
         done
 
-        # 2. 自定义或生成 ShortID
         local sid
         while true; do
-            echo -ne "${GREEN}请输入自定义 ShortID (回车随机生成, 必须是偶数长度的 2/4/6/8 字节十六进制): ${RESET}"; read input_sid
+            echo -ne "${GREEN}请输入自定义 ShortID (回车随机生成): ${RESET}"; read input_sid
             if [[ -z "$input_sid" ]]; then
                 sid=$(openssl rand -hex 4)
                 break
@@ -321,7 +369,7 @@ install_xray() {
                     sid="$input_sid"
                     break
                 else
-                    error "ShortID 格式不正确，必须是偶数长度的十六进制字符（例：a1b2c3d4）。"
+                    error "ShortID 格式不正确，必须是偶数长度的十六进制。"
                 fi
             fi
         done
@@ -333,7 +381,6 @@ install_xray() {
         echo "$pub" > "$X_PBK"
         write_config "$port" "$uuid" "$domain" "$pri" "$sid"
         
-        # 写入独立名称的 OpenRC 服务脚本
         cat << EOF > "$INIT_FILE"
 #!/sbin/openrc-run
 command="${X_BIN}"
@@ -357,9 +404,19 @@ EOF
     local pub=$(cat "$X_PBK" 2>/dev/null || echo "N/A")
     local sid=$(jq -r '.inbounds[0].streamSettings.realitySettings.shortIds[0]' "$X_CONFIG")
     
-    local link="vless://$uuid@$ip:$port?flow=xtls-rprx-vision&encryption=none&type=tcp&security=reality&sni=$domain&fp=chrome&pbk=$pub&sid=$sid#$HOSTNAME-vless-Reality"
+    local ip=$(get_public_ip "auto")
+
+    # ✨ 核心修复：如果是 IPv6 地址，自动为其包裹中括号 []，如果是 v4 则保持原样
+    if [[ "$ip" == *":"* ]]; then
+        info "检测到当前使用 IPv6 落地，已自动为您进行标准的 [方括号] 封装！"
+        local link_ip="[$ip]"
+    else
+        local link_ip="$ip"
+    fi
+
+    # 拼接标准节点链接
+    local link="vless://$uuid@${link_ip}:$port?flow=xtls-rprx-vision&encryption=none&type=tcp&security=reality&sni=$domain&fp=chrome&pbk=$pub&sid=$sid#$HOSTNAME-vless-Reality"
     
-    # ✨ 核心修复点 2：写入前确保目标目录链存在
     mkdir -p "$(dirname "$X_LINK")"
     echo "$link" > "$X_LINK"
 
@@ -392,10 +449,13 @@ show_current_config() {
     echo -e "${YELLOW}PublicKey   : ${public_key}${RESET}"
     echo -e "${YELLOW}ShortID     : ${shortid}${RESET}"
     echo -e "${YELLOW}出口模式    : ${outbound_mode}${RESET}"
-    echo -e "${YELLOW}📄 V6VPS 请自行替换分享链接中的 IP 地址为 V6 ★${RESET}"
+    
+    if [[ "$ip" == *":"* ]]; then
+        echo -e "${YELLOW}检测到当前落地为原生 IPv6，已为您在分享链接中进行标准的方括号标准化封装！${RESET}"
+    fi
     
     if [[ -f "$X_LINK" ]]; then
-        echo -e "${GREEN}====== 👉 v2rayN 分享链接 ======${RESET}"
+        echo -e "${GREEN}====== 👉 节点分享链接 ======${RESET}"
         cat "$X_LINK"
     fi
 }
