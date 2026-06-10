@@ -14,6 +14,7 @@ BLUE="\033[34m"
 RESET="\033[0m"
 
 # ================== 基础变量 ==================
+export REPO="shadowsocks/shadowsocks-rust"
 SS_DIR="/etc/ss-rust"
 SS_CONFIG="${SS_DIR}/config.json"
 SS_INIT_SCRIPT="/etc/init.d/ss-rust"
@@ -24,14 +25,54 @@ RUN_GROUP="ss-rust"
 METHOD="2022-blake3-aes-256-gcm"
 TMP_DIR=$(mktemp -d -t ss-rust.XXXXXX)
 
+# ── GITHUB 代理加速源（使用空格分隔） ──────────────────
+GITHUB_PROXIES="DIRECT https://v6.gh-proxy.org/ https://gh-proxy.com/ https://hub.glowp.xyz/ https://proxy.vvvv.ee/ https://ghproxy.lvedong.eu.org/"
+
 # ================== 工具函数 ==================
 info() { echo -e "${GREEN}[信息] $*${RESET}"; }
 error() { echo -e "${RED}[错误] $*${RESET}"; }
+warn() { echo -e "${YELLOW}[警告] $*${RESET}"; }
+ok()   { echo -e "${GREEN}[成功] $*${RESET}"; }
 pause() { echo; echo -ne "${GREEN}按任意键返回菜单...${RESET}"; read -n 1 -s; echo; }
 
-get_latest_version() {
-    curl -fsSL "https://api.github.com/repos/shadowsocks/shadowsocks-rust/releases/latest" | \
-    grep '"tag_name":' | head -n 1 | sed -E 's/.*"v?([^"]+)".*/\1/'
+# ── 💡 代理轮询核心函数：获取最新 Release 版本号与可用代理 ──────────────────
+fetch_latest_version() {
+    info "正在通过代理列表轮询获取最新 Release 版本号..."
+    VERSION=""
+    SELECTED_PROXY=""
+
+    for proxy in $GITHUB_PROXIES; do
+        if [ "$proxy" = "DIRECT" ]; then
+            current_proxy=""
+            info "尝试直连请求 GitHub API..."
+        else
+            current_proxy="$proxy"
+            info "尝试使用代理: ${YELLOW}${current_proxy}${RESET}"
+        fi
+
+        api_url="${current_proxy}https://api.github.com/repos/${REPO}/releases/latest"
+        
+        # 使用 wget 获取原始数据，增加超时和免证书校验防御
+        resp=$(wget -qO- --timeout=5 --tries=1 --no-check-certificate "$api_url" 2>/dev/null) || continue
+        tmp_ver=$(echo "$resp" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n 1 | sed -E 's/^v//')
+
+        if [ -n "$tmp_ver" ] && [ "$tmp_ver" != "null" ]; then
+            VERSION="$tmp_ver"
+            SELECTED_PROXY="$current_proxy"
+            ok "成功获取到最新版本: ${GREEN}v${VERSION}${RESET}"
+            break
+        fi
+    done
+
+    if [ -z "$VERSION" ]; then
+        # 兜底稳定版本
+        VERSION="1.18.4"
+        SELECTED_PROXY=""
+        warn "所有代理均未能获取到实时版本，降级采用默认版本: v${VERSION}"
+    fi
+
+    export VERSION
+    export SELECTED_PROXY
 }
 
 detect_arch() {
@@ -47,20 +88,34 @@ get_vps_dns() {
     echo "${dns_list:-"1.1.1.1,8.8.8.8"}"
 }
 
-# 公网IP获取
+# 公网IP获取（全面使用 wget 防御 TLS 握手失败）
 get_public_ip() {
-    local ip
-    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
-        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    local mode=${1:-"v4"} # auto: 自动, v4: 强制IPv4, v6: 强制IPv6
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
-    done
-    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
-        for url in "https://api64.ipify.org" "https://ip.sb"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
         done
-    done
-    error "无法获取公网 IP 地址。" && return 1
+    else
+        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+
+    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
+    echo "127.0.0.1" && return 0
 }
 
 # ================== 核心：写入配置 ==================
@@ -89,7 +144,7 @@ EOF
     chown "${RUN_USER}:${RUN_GROUP}" "$SS_CONFIG"
     chmod 600 "$SS_CONFIG"
 
-    local ip=$(get_public_ip)
+    local ip=$(get_public_ip || echo "127.0.0.1")
     [[ "$ip" =~ : ]] && ip="[$ip]"
     local encoded=$(echo -n "${METHOD}:${pass}" | base64 | tr -d '\n')
     echo "ss://${encoded}@${ip}:${port}#$(hostname)-SS2022" > "${SS_DIR}/ss.txt"
@@ -100,14 +155,14 @@ show_node_info() {
     if [[ -f "${SS_CONFIG}" ]]; then
         local ip port pass
 
-        ip=$(get_public_ip)
+        ip=$(get_public_ip || echo "127.0.0.1")
         port=$(grep -E '"server_port":' "$SS_CONFIG" | grep -oE '[0-9]+' | head -n1)
         pass=$(grep -E '"password":' "$SS_CONFIG" | cut -d '"' -f4 | head -n1)
 
         [[ "$ip" =~ : ]] && ip="[$ip]"
 
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${YELLOW}       Shadowsocks 节点信息      ${RESET}"
+        echo -e "${YELLOW}        Shadowsocks 节点信息      ${RESET}"
         echo -e "${GREEN}================================${RESET}"
 
         echo -e "${YELLOW} IP地址        : ${ip}${RESET}"
@@ -135,23 +190,29 @@ show_node_info() {
 # ================== 功能：安装 ==================
 install_ss() {
     info "正在准备安装环境..."
-    apk add curl wget tar xz openssl iproute2 coreutils gcompat >/dev/null 2>&1
+    # 移除了不需要的 curl，保留 wget 和必要核心组件
+    apk add wget tar xz openssl iproute2 coreutils gcompat >/dev/null 2>&1
     
     getent group "$RUN_GROUP" >/dev/null || addgroup -S "$RUN_GROUP"
     getent passwd "$RUN_USER" >/dev/null || adduser -S -D -H -G "$RUN_GROUP" -s /sbin/nologin "$RUN_USER"
 
-    local ver=$(get_latest_version)
+    # 引入代理机制获取最新版本号
+    fetch_latest_version
     local arch=$(detect_arch)
-    local url="https://github.com/shadowsocks/shadowsocks-rust/releases/download/v${ver}/shadowsocks-v${ver}.${arch}.tar.xz"
+    local url="${SELECTED_PROXY}https://github.com/${REPO}/releases/download/v${VERSION}/shadowsocks-v${VERSION}.${arch}.tar.xz"
 
-    info "正在下载 Shadowsocks-Rust v$ver..."
+    info "正在下载 Shadowsocks-Rust v$VERSION..."
+    info "下载地址: ${BLUE}${url}${RESET}"
     cd "$TMP_DIR"
-    wget -q --show-progress -O ss.tar.xz "$url"
+    
+    # 核心下载修改：使用 wget 并跳过证书校验防御 TLS Handshake 阻断
+    wget --timeout=15 --tries=3 --no-check-certificate -O ss.tar.xz "$url" || { error "下载资产包失败！"; return 1; }
+    
     tar -xf ss.tar.xz
     install -m 755 ssserver "$BINARY_PATH"
     
     mkdir -p "$SS_DIR"
-    echo "$ver" > "${SS_DIR}/version.txt"
+    echo "$VERSION" > "${SS_DIR}/version.txt"
     touch "$LOG_FILE"
     chown "${RUN_USER}:${RUN_GROUP}" "$LOG_FILE"
 
@@ -196,25 +257,30 @@ update_ss() {
     fi
 
     local current_ver=$(cat "${SS_DIR}/version.txt" 2>/dev/null || echo "未知")
-    local latest_ver=$(get_latest_version)
+    
+    # 引入代理机制获取最新版本号
+    fetch_latest_version
 
-    info "当前版本: $current_ver | 最新版本: v$latest_ver"
+    info "当前版本: v$current_ver | 最新版本: v$VERSION"
 
-    if [[ "$current_ver" == "$latest_ver" ]]; then
+    if [[ "$current_ver" == "$VERSION" ]]; then
         info "当前已是最新版本，无需更新。"
         return 0
     fi
 
     info "发现新版本，正在下载升级..."
     local arch=$(detect_arch)
-    local url="https://github.com/shadowsocks/shadowsocks-rust/releases/download/v${latest_ver}/shadowsocks-v${latest_ver}.${arch}.tar.xz"
+    local url="${SELECTED_PROXY}https://github.com/${REPO}/releases/download/v${VERSION}/shadowsocks-v${VERSION}.${arch}.tar.xz"
     
+    info "下载地址: ${BLUE}${url}${RESET}"
     cd "$TMP_DIR"
-    if wget -q --show-progress -O ss.tar.xz "$url"; then
+    
+    # 核心下载修改：使用 wget 绕过
+    if wget --timeout=15 --tries=3 --no-check-certificate -O ss.tar.xz "$url"; then
         tar -xf ss.tar.xz
         rc-service ss-rust stop || true
         install -m 755 ssserver "$BINARY_PATH"
-        echo "$latest_ver" > "${SS_DIR}/version.txt"
+        echo "$VERSION" > "${SS_DIR}/version.txt"
         rc-service ss-rust start
         info "更新成功！配置已保留。"
     else
@@ -232,7 +298,6 @@ modify_ss() {
     local old_port=$(grep -E '"server_port":' "$SS_CONFIG" | head -n 1 | grep -oE '[0-9]+')
     local old_pass=$(grep -E '"password":' "$SS_CONFIG" | head -n 1 | cut -d '"' -f4)
     
-    # 🛠 改进的 DNS 提取逻辑：直接匹配 nameserver 数组内的内容
     local old_dns=$(grep -A 5 '"nameserver":' "$SS_CONFIG" | grep -v '"nameserver":' | tr -d ' "[]\n\r\t' | sed 's/,$//' | grep -v '}')
     
     if [[ -z "$old_dns" || "$old_dns" == *"{"* ]]; then
@@ -299,8 +364,14 @@ while true; do
         6) rc-service ss-rust stop; pause ;;
         7) rc-service ss-rust restart; pause ;;
         8) 
-            info "实时日志 (Ctrl+C 退出):"
-            [[ -f "$LOG_FILE" ]] && tail -f "$LOG_FILE" || error "无日志文件"; pause ;;
+            info "实时日志 (Ctrl+C 返回):"
+            # 💡 修复潜在死锁：使用括号开启子 Shell 捕获 INT 信号，防止 Ctrl+C 击穿退出整个面板进程
+            if [[ -f "$LOG_FILE" ]]; then
+                (trap 'exit 0' INT; tail -f "$LOG_FILE")
+            else
+                error "无日志文件"
+            fi
+            pause ;;
         9) show_node_info; pause ;;
         0) exit 0 ;;
         *) sleep 0.5 ;;
