@@ -417,7 +417,7 @@ while true; do
     CRON_ACTIVE=$(cron_count)
     
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}      ◈  VPS Rsync同步管理系统  ◈      ${RESET}"
+    echo -e "${GREEN}   ◈ Rsync同步管理系统(快捷指令S/s) ◈  ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 当前系统环境 : ${YELLOW}${OS}${RESET}"
     echo -e "${GREEN} 活跃任务总数 : ${YELLOW}${FILE_COUNT} 个${RESET}"
@@ -440,7 +440,6 @@ while true; do
     echo -e "${GREEN}  9) 配置Telegram通知${RESET}"
     echo -e "${GREEN} 10) 更新${RESET}"
     echo -e "${GREEN} 11) 卸载${RESET}"
-    echo -e "${GREEN}---------------------------------------${RESET}"
     echo -e "${GREEN}  0) 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     
