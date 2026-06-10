@@ -25,12 +25,12 @@ readonly INIT_FILE="/etc/init.d/${SERV_NAME}"
 
 # ================== GITHUB 代理加速池 ==================
 readonly GITHUB_PROXY=(
+    '' 
     'https://v6.gh-proxy.org/'
     'https://gh-proxy.com/'
     'https://hub.glowp.xyz/'
     'https://proxy.vvvv.ee/'
     'https://ghproxy.lvedong.eu.org/'
-    '' # 留空代表直连，作为兜底保底
 )
 
 # ================== 核心工具 ==================
