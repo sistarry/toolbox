@@ -12,7 +12,9 @@ YELLOW="\033[33m"
 BLUE="\033[36m"
 RESET="\033[0m"
 
-echo -e "${GREEN}====== VPS 解压工具 ======${RESET}"
+echo -e "${GREEN}========================================${RESET}"
+echo -e "${GREEN}        ◈  多目录安全解压工具  ◈         ${RESET}"
+echo -e "${GREEN}========================================${RESET}"
 
 # 必须 root
 if [ "$(id -u)" -ne 0 ]; then
@@ -21,13 +23,13 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # ===============================
-# 自动识别包管理器 (已加入 Alpine 支持)
+# 自动识别包管理器
 # ===============================
 detect_pm() {
     if command -v apk >/dev/null 2>&1; then
         PM="apk"
         INSTALL="apk add --no-cache"
-        UPDATE="true" # Alpine 安装时带 --no-cache 不需要单独 update
+        UPDATE="true"
     elif command -v apt-get >/dev/null 2>&1; then
         PM="apt-get"
         INSTALL="apt-get install -y"
@@ -55,7 +57,6 @@ install_pkg() {
     local cmd_name="$1"
     local pkg_name="$2"
     
-    # 如果没指定包名，默认包名和命令名一致
     [ -z "$pkg_name" ] && pkg_name="$cmd_name"
 
     if ! command -v "$cmd_name" >/dev/null 2>&1; then
@@ -71,7 +72,6 @@ detect_pm
 echo -ne "${GREEN}请输入要解压的文件路径：${RESET}"
 read -r FILE
 
-# 修复：改用 POSIX 标准语法检测文件是否存在，防止 Alpine 下 sh 环境闪退
 if [ ! -f "$FILE" ]; then
     echo -e "${RED}❌ 文件不存在！退出${RESET}"
     exit 1
@@ -84,6 +84,20 @@ DEST=${DEST:-$(pwd)}
 
 mkdir -p "$DEST"
 
+# --- 新增密码输入逻辑 ---
+# 提示：由于 sh 兼容性考虑，部分极度精简的 sh 环境不支持 read -s
+# 这里采用通用跨平台隐式输入，如果系统支持 stty 则隐藏输入，不支持则明文
+if command -v stty >/dev/null 2>&1; then
+    echo -ne "${YELLOW}输入解压密码 (若无密码请直接回车): ${RESET}"
+    stty -echo
+    read -r PASSWORD
+    stty echo
+    echo ""
+else
+    echo -ne "${YELLOW}输入解压密码 (当前环境不支持隐藏输入，将明文显示，若无密码直接回车): ${RESET}"
+    read -r PASSWORD
+fi
+
 FILENAME=$(basename "$FILE")
 LOWER_NAME=$(echo "$FILENAME" | tr '[:upper:]' '[:lower:]')
 
@@ -94,7 +108,11 @@ case "$LOWER_NAME" in
     *.zip)
         install_pkg unzip
         echo -e "${GREEN}📦 正在解压 ZIP 文件...${RESET}"
-        unzip -o "$FILE" -d "$DEST"
+        if [ -n "$PASSWORD" ]; then
+            unzip -P "$PASSWORD" -o "$FILE" -d "$DEST"
+        else
+            unzip -o "$FILE" -d "$DEST"
+        fi
         ;;
 
     *.tar)
@@ -120,11 +138,14 @@ case "$LOWER_NAME" in
     *.rar)
         install_pkg unrar
         echo -e "${GREEN}📦 正在解压 RAR 文件...${RESET}"
-        unrar x -o+ "$FILE" "$DEST"
+        if [ -n "$PASSWORD" ]; then
+            unrar x -p"$PASSWORD" -o+ "$FILE" "$DEST"
+        else
+            unrar x -o+ "$FILE" "$DEST"
+        fi
         ;;
 
     *.7z)
-        # 针对不同包管理器的 7z 命名规则做智能转换
         if [ "$PM" = "apk" ]; then
             install_pkg 7z p7zip
         elif [ "$PM" = "apt-get" ]; then
@@ -133,7 +154,42 @@ case "$LOWER_NAME" in
             install_pkg 7z p7zip
         fi
         echo -e "${GREEN}📦 正在解压 7Z 文件...${RESET}"
-        7z x "$FILE" -o"$DEST" -y
+        if [ -n "$PASSWORD" ]; then
+            7z x "-p$PASSWORD" "$FILE" -o"$DEST" -y
+        else
+            7z x "$FILE" -o"$DEST" -y
+        fi
+        ;;
+
+    # --- 新增：支持 OpenSSL 强加密的 tar 包一键解压 (.enc 结尾) ---
+    *.tar.gz.enc|*.tgz.enc)
+        install_pkg openssl
+        if [ -z "$PASSWORD" ]; then
+            echo -e "${RED}❌ 该文件已被 OpenSSL 加密，必须输入密码才能解压！${RESET}"
+            exit 1
+        fi
+        echo -e "${GREEN}🔒 正在解密并解压加密的 TAR.GZ 文件...${RESET}"
+        openssl aes-256-cbc -d -salt -pbkdf2 -k "$PASSWORD" -in "$FILE" 2>/dev/null | tar -xvzf - -C "$DEST"
+        ;;
+
+    *.tar.xz.enc)
+        install_pkg openssl
+        if [ -z "$PASSWORD" ]; then
+            echo -e "${RED}❌ 该文件已被 OpenSSL 加密，必须输入密码才能解压！${RESET}"
+            exit 1
+        fi
+        echo -e "${GREEN}🔒 正在解密并解压加密的 TAR.XZ 文件...${RESET}"
+        openssl aes-256-cbc -d -salt -pbkdf2 -k "$PASSWORD" -in "$FILE" 2>/dev/null | tar -xvJf - -C "$DEST"
+        ;;
+
+    *.tar.bz2.enc)
+        install_pkg openssl
+        if [ -z "$PASSWORD" ]; then
+            echo -e "${RED}❌ 该文件已被 OpenSSL 加密，必须输入密码才能解压！${RESET}"
+            exit 1
+        fi
+        echo -e "${GREEN}🔒 正在解密并解压加密的 TAR.BZ2 文件...${RESET}"
+        openssl aes-256-cbc -d -salt -pbkdf2 -k "$PASSWORD" -in "$FILE" 2>/dev/null | tar -xvjf - -C "$DEST"
         ;;
 
     *)
