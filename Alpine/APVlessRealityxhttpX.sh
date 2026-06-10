@@ -292,7 +292,7 @@ modify_config() {
 # ================== 安装与管理 ==================
 install_xray() {
     info "正在安装依赖与内核..."
-    apk update && apk add curl unzip openssl jq uuidgen gcompat libc6-compat bc > /dev/null 2>&1
+    apk add curl unzip openssl jq uuidgen gcompat libc6-compat bc > /dev/null 2>&1
     mkdir -p "$X_DIR" && sync
     
     local arch=$(uname -m | sed 's/x86_64/64/;s/aarch64/arm64-v8a/')
