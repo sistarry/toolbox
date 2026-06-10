@@ -13,6 +13,16 @@ YELLOW="\033[33m"
 BLUE="\033[34m"
 RESET="\033[0m"
 
+# ================== GITHUB 代理加速池 ==================
+readonly GITHUB_PROXY=(
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+    '' # 留空代表直连，作为兜底保底
+)
+
 # ================== 🚀 服务自定义重命名 ==================
 readonly SERV_NAME="xray-httpupgrade"
 
@@ -69,13 +79,33 @@ get_xray_version() {
 }
 
 get_public_ip() {
-    local ip
-    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
-        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    # 修复：默认改为 auto 自动识别，纯 v6 机器也能正常获取 v6 IP
+    local mode=${1:-"auto"} 
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
-    done
-    error "无法获取公网 IP 地址。" && return 1
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
+        done
+    else
+        # auto 模式：双栈环境优先获取 IPv4，纯 v6 环境自动 fallback 到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+
+    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
+    echo "127.0.0.1" && return 0
 }
 
 HOSTNAME=$(hostname -s | sed 's/ /_/g')
@@ -86,10 +116,12 @@ write_config() {
     local outbound=${5:-'{"protocol":"freedom","settings":{"domainStrategy":"UseIPv4v6"}}'}
     mkdir -p "$X_DIR" && chmod 755 "$X_DIR"
     
+    # 修复：显式加入 "listen": "::"，完美确保同时监听 IPv4 和 IPv6 端口
     cat > "$X_CONFIG" <<EOF
 {
     "log": { "loglevel": "warning" },
     "inbounds": [{
+        "listen": "::",
         "port": $port,
         "protocol": "vless",
         "settings": {
@@ -219,9 +251,14 @@ modify_config() {
     rc-service "$SERV_NAME" restart
     
     # 重新生成链接
-    local ip=$(get_public_ip || echo "127.0.0.1")
+    local ip=$(get_public_ip)
     local host_addr=$ip
-    [[ -n "$n_host" ]] && host_addr=$n_host
+    if [[ -n "$n_host" ]]; then
+        host_addr=$n_host
+    elif [[ "$host_addr" == *":"* ]]; then
+        # 修复：如果是 IPv6 地址，URL 中必须加方括号 []
+        host_addr="[$host_addr]"
+    fi
     
     mkdir -p "$X_LINK_DIR"
     echo "vless://$n_uuid@$host_addr:$n_port?encryption=none&type=httpupgrade&security=none&host=$(echo "$n_host" | jq -sRr @uri)&path=$(echo "$n_path" | jq -sRr @uri)#$HOSTNAME-${SERV_NAME}" > "$X_LINK"
@@ -231,14 +268,47 @@ modify_config() {
 # ================== 安装与管理 ==================
 install_xray() {
     info "正在安装依赖与内核..."
-    apk update && apk add curl unzip jq uuidgen gcompat libc6-compat bc > /dev/null 2>&1
+    apk add curl unzip jq uuidgen gcompat libc6-compat bc > /dev/null 2>&1
     mkdir -p "$X_DIR" && sync
     
     local arch=$(uname -m | sed 's/x86_64/64/;s/aarch64/arm64-v8a/')
-    local ver=$(curl -sL https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name)
-    
+    local ver=""
+
+    info "正在检索 Xray-core 官方最新发布版本..."
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local api_url="${proxy}https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+        ver=$(wget -qO- --timeout=5 --tries=1 --no-check-certificate "$api_url" | jq -r .tag_name 2>/dev/null || echo "")
+        if [[ -n "$ver" && "$ver" != "null" ]]; then
+            break
+        fi
+    done
+
+    if [[ -z "$ver" || "$ver" == "null" ]]; then
+        ver="v26.3.27"
+        warn "通过 API 获取版本号超时，已激活保底机制，将为您安装高稳定版本: $ver"
+    fi
+
     info "下载 Xray $ver ($arch)..."
-    curl -L -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/$ver/Xray-linux-$arch.zip"
+    
+    local download_success=false
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local dl_url="${proxy}https://github.com/XTLS/Xray-core/releases/download/$ver/Xray-linux-$arch.zip"
+        
+        if wget --no-check-certificate --timeout=15 --tries=1 -q -O /tmp/xray.zip "$dl_url" 2>/dev/null; then
+            if [ -s /tmp/xray.zip ]; then
+                download_success=true
+                break
+            fi
+        fi
+        warn "当前下载节点响应失败，正在为您自动切换下一个 GitHub 代理..."
+    done
+
+    if [ "$download_success" = false ]; then
+        error "严重错误：所有代理节点及直连模式均下载失败，请检查 VPS 的 DNS 设置！"
+        return 1
+    fi
+
+    # 解压与部署
     unzip -o /tmp/xray.zip -d /tmp/xray_tmp > /dev/null
     mv -f /tmp/xray_tmp/xray "$X_BIN" && chmod +x "$X_BIN"
     rm -rf /tmp/xray*
@@ -296,14 +366,19 @@ EOF
     rc-service "$SERV_NAME" restart
     
     # 读取配置生成分享链接
-    local ip=$(get_public_ip || echo "127.0.0.1")
+    local ip=$(get_public_ip)
     local uuid=$(jq -r '.inbounds[0].settings.clients[0].id' "$X_CONFIG")
     local port=$(jq -r '.inbounds[0].port' "$X_CONFIG")
     local path=$(jq -r '.inbounds[0].streamSettings.httpupgradeSettings.path // "/"' "$X_CONFIG")
     local host_name=$(jq -r '.inbounds[0].streamSettings.httpupgradeSettings.host // ""' "$X_CONFIG")
     
     local host_addr=$ip
-    [[ -n "$host_name" ]] && host_addr=$host_name
+    if [[ -n "$host_name" ]]; then
+        host_addr=$host_name
+    elif [[ "$host_addr" == *":"* ]]; then
+        # 修复：纯 IPv6 链接拼接，为 IP 加上 []
+        host_addr="[$host_addr]"
+    fi
     
     local link="vless://$uuid@$host_addr:$port?encryption=none&type=httpupgrade&security=none&host=$(echo "$host_name" | jq -sRr @uri)&path=$(echo "$path" | jq -sRr @uri)#$HOSTNAME-vless-httpupgrade"
     
@@ -321,7 +396,7 @@ show_current_config() {
     fi
 
     local ip uuid port host_name path outbound_mode
-    ip=$(get_public_ip || echo "未知")
+    ip=$(get_public_ip)
     uuid=$(jq -r '.inbounds[0].settings.clients[0].id' "$X_CONFIG" 2>/dev/null || echo "未知")
     port=$(jq -r '.inbounds[0].port' "$X_CONFIG" 2>/dev/null || echo "未知")
     path=$(jq -r '.inbounds[0].streamSettings.httpupgradeSettings.path // "/"' "$X_CONFIG" 2>/dev/null || echo "/")
@@ -339,7 +414,6 @@ show_current_config() {
     echo -e "${YELLOW}HTTPUpgrade Path : ${path}${RESET}"
     echo -e "${YELLOW}出口模式    : ${outbound_mode}${RESET}"
     echo -e "${YELLOW}分享存放路径: ${X_LINK}${RESET}"
-    echo -e "${YELLOW}📄 V6VPS 请自行替换分享链接中的 IP 地址为 V6 ★${RESET}"
     
     if [[ -f "$X_LINK" ]]; then
         echo -e "${GREEN}====== 👉 v2rayN 分享链接 ======${RESET}"
@@ -356,7 +430,7 @@ show_menu() {
     [[ -f "$X_CONFIG" ]] && port_show=$(jq -r '.inbounds[0].port' "$X_CONFIG" 2>/dev/null || echo "-")
 
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}  Xray Vless-httpupgrade 面板  ${RESET}"
+    echo -e "${GREEN}  Xray Vless-httpupgrade 面板   ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态   :${RESET} $status"
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
