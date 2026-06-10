@@ -463,7 +463,7 @@ while true; do
     get_backup_stats
     
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}       ◈  VPS 本地备份管理系统  ◈      ${RESET}"
+    echo -e "${GREEN}        ◈   本地备份管理系统   ◈       ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 当前系统环境 : ${YELLOW}${OS}${RESET}"
     echo -e "${GREEN} 备份文件总数 : ${YELLOW}${FILE_COUNT} 个 (${DISK_USAGE})${RESET}"
@@ -483,7 +483,6 @@ while true; do
     echo -e "${GREEN}  6) 修改历史备份保留天数${RESET}"
     echo -e "${GREEN}  7) 自定义本地备份保持目录${RESET}"
     echo -e "${GREEN}  8) 卸载本工具及定时任务${RESET}"
-    echo -e "${GREEN}---------------------------------------${RESET}"
     echo -e "${GREEN}  0) 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
 
