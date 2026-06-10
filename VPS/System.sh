@@ -51,8 +51,7 @@ menu() {
         echo -e "${GREEN} 6) 自启动服务管理${RESET}"
         echo -e "${GREEN} 7) 国家IP屏蔽${RESET}"
         echo -e "${GREEN} 8) 磁盘占用${RESET}"
-        echo -e "${GREEN} 9) 挂载磁盘${RESET}"
-        echo -e "${GREEN}10) 安全扫描${RESET}"
+        echo -e "${GREEN} 9) 安全扫描${RESET}"
         echo -e "${GREEN} 0) 退出${RESET}"
         echo -e "${GREEN}========================${RESET}"
         
@@ -99,11 +98,6 @@ menu() {
                 pause
                 ;;
             9)
-                echo -e "${GREEN}\n正在挂载磁盘...${RESET}"
-                fetch_and_run "DISKGL.sh"
-                pause
-                ;;
-            10)
                 echo -e "${GREEN}\n正在安全扫描...${RESET}"
                 fetch_and_run "Security.sh"
                 pause
