@@ -39,6 +39,15 @@ RESET="\033[0m"
 firstport=""
 endport=""
 
+# GITHUB 代理列表（最后一个空字符串代表直连，作为兜底）
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
 # =========================================================
 # 2. 官方原生底层工具函数
 # =========================================================
@@ -188,14 +197,27 @@ get_installed_version() {
 
 get_latest_version() {
   local _tmpfile=$(mktemp)
-  if ! curl -sS -H 'Accept: application/vnd.github.v3+json' "$API_BASE_URL/releases/latest" -o "$_tmpfile"; then
-    rm -f "$_tmpfile"
-    return
-  fi
-  local _tag_name=$(jq -r '.tag_name' "$_tmpfile" 2>/dev/null || echo "")
+  local _success=1
+  local _tag_name=""
+
+  # 遍历代理尝试获取最新版本号
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    # 拼接代理，如果是 API 请求，部分代理可能需要特殊处理，这里统一假设代理支持标准的 API 转发
+    # 如果代理只支持 releases/download，请确保 API_BASE_URL 本身是可以访问的
+    local _url="${proxy}${API_BASE_URL}/releases/latest"
+    
+    if curl -sS -H 'Accept: application/vnd.github.v3+json' "$_url" -o "$_tmpfile"; then
+      _tag_name=$(jq -r '.tag_name' "$_tmpfile" 2>/dev/null || echo "")
+      if [[ -n "$_tag_name" && "$_tag_name" != "null" ]]; then
+        _success=0
+        break
+      fi
+    fi
+  done
+
   rm -f "$_tmpfile"
-  
-  if [[ -n "$_tag_name" ]]; then
+
+  if [[ $_success -eq 0 ]]; then
     echo "${_tag_name##*\/}"
   else
     echo ""
@@ -205,21 +227,33 @@ get_latest_version() {
 download_hysteria() {
   local _version="$1"
   local _destination="$2"
-  local _download_url="$REPO_URL/releases/download/app/$_version/hysteria-$OPERATING_SYSTEM-$ARCHITECTURE"
   
   if [[ ! "$_version" =~ "v" ]]; then
      _version="v$_version"
   fi
-  
-  info "正在下载官方 Hysteria 核心组件: $_download_url ..."
-  if ! curl -R -H 'Cache-Control: no-cache' "$_download_url" -o "$_destination"; then
-    _download_url="$REPO_URL/releases/download/$_version/hysteria-$OPERATING_SYSTEM-$ARCHITECTURE"
-    if ! curl -R -H 'Cache-Control: no-cache' "$_download_url" -o "$_destination"; then
-      error "核心下载失败！请检查您的网络连接。"
-      return 11
+
+  # 遍历代理尝试下载
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    # 尝试路径 1: app/ 路径
+    local _download_url="${proxy}${REPO_URL}/releases/download/app/$_version/hysteria-$OPERATING_SYSTEM-$ARCHITECTURE"
+    info "正在通过代理 [${proxy:-直连}] 下载官方 Hysteria 核心组件 (尝试1) ..."
+    
+    if curl -R -H 'Cache-Control: no-cache' "$_download_url" -o "$_destination"; then
+      return 0
     fi
-  fi
-  return 0
+
+    # 尝试路径 2: 常见直接 releases/download 路径
+    _download_url="${proxy}${REPO_URL}/releases/download/$_version/hysteria-$OPERATING_SYSTEM-$ARCHITECTURE"
+    info "正在通过代理 [${proxy:-直连}] 下载官方 Hysteria 核心组件 (尝试2) ..."
+    
+    if curl -R -H 'Cache-Control: no-cache' "$_download_url" -o "$_destination"; then
+      return 0
+    fi
+  done
+
+  # 如果所有代理和直连都失败了
+  error "核心下载失败！所有代理及直连均无法访问，请检查您的网络连接。"
+  return 11
 }
 
 tpl_hysteria_server_service_base() {
