@@ -25,6 +25,16 @@ readonly BACKUP_VERSION="26.3.27"
 
 TMP_DIR=$(mktemp -d -t xray.XXXXXX)
 
+# ================== GITHUB 代理 ==================
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
+
 # ================== cleanup ==================
 cleanup() {
     [[ -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR"
@@ -52,44 +62,32 @@ pause() {
 
 # ================== 获取公网IP ==================
 get_public_ip() {
-    local ip
-
-    for cmd in \
-        "curl -4fsSL --max-time 5" \
-        "wget -4qO- --timeout=5"; do
-
-        for url in \
-            "https://api.ipify.org" \
-            "https://ip.sb" \
-            "https://checkip.amazonaws.com"; do
-
-            ip=$($cmd "$url" 2>/dev/null || true)
-
-            if [[ -n "${ip:-}" ]]; then
-                echo "$ip"
-                return 0
-            fi
+    local mode=${1:-"v4"} # auto: 自动, v4: 强制IPv4, v6: 强制IPv6
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
-    done
-
-    for cmd in \
-        "curl -6fsSL --max-time 5" \
-        "wget -6qO- --timeout=5"; do
-
-        for url in \
-            "https://api.ipify.org" \
-            "https://ipv6.ip.sb"; do
-
-            ip=$($cmd "$url" 2>/dev/null || true)
-
-            if [[ -n "${ip:-}" ]]; then
-                echo "$ip"
-                return 0
-            fi
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
         done
-    done
+    else
+        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
 
-    return 1
+    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
+    echo "127.0.0.1" && return 0
 }
 
 # ================== 检查端口占用 ==================
@@ -129,7 +127,6 @@ is_valid_uuid() {
 
 # ================== ShortID 验证 ==================
 is_valid_shortid() {
-    # Xray 要求必须是十六进制字符(0-9, a-f)，且长度必须是偶数(最长16位，即8字节)
     local len=${#1}
     if [[ "$1" =~ ^[0-9a-fA-F]+$ ]] && (( len % 2 == 0 )) && (( len <= 16 )); then
         return 0
@@ -156,23 +153,48 @@ get_arch() {
 
 # ================== 自动获取最新版本号 ==================
 get_latest_version() {
-    local latest_version
+    local latest_version=""
     info "正在获取 GitHub 最新 Xray 版本号..."
     
-    # 尝试通过 GitHub API 获取最新 Release Tag
-    latest_version=$(curl -fsSL --max-time 10 "https://api.github.com/repos/XTLS/Xray-core/releases/latest" 2>/dev/null \
+    # 优先尝试直连拉取 API
+    latest_version=$(curl -fsSL --max-time 5 "https://api.github.com/repos/XTLS/Xray-core/releases/latest" 2>/dev/null \
         | jq -r '.tag_name' 2>/dev/null || echo "")
         
-    # 去除可能存在的 'v' 前缀
+    # 如果直连获取失败，轮询代理进行 API 拉取
+    if [[ -z "$latest_version" || "$latest_version" == "null" ]]; then
+        for proxy in "${GITHUB_PROXY[@]}"; do
+            [[ -z "$proxy" ]] && continue
+            latest_version=$(curl -fsSL --max-time 5 "${proxy}https://api.github.com/repos/XTLS/Xray-core/releases/latest" 2>/dev/null \
+                | jq -r '.tag_name' 2>/dev/null || echo "")
+            [[ -n "$latest_version" && "$latest_version" != "null" ]] && break
+        done
+    fi
+
     latest_version="${latest_version#v}"
 
     if [[ -z "$latest_version" || "$latest_version" == "null" ]]; then
-        warn "通过 GitHub API 获取最新版本失败，将使用内置备用版本: v${BACKUP_VERSION}"
+        warn "通过 GitHub 接口获取最新版本失败，将使用内置备用版本: v${BACKUP_VERSION}"
         echo "$BACKUP_VERSION"
     else
         info "成功获取最新版本: v${latest_version}"
         echo "$latest_version"
     fi
+}
+
+# ================== 代理下载核心逻辑 ==================
+download_file() {
+    local url_path="$1"
+    local output_file="$2"
+    local success=1
+
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        info "尝试使用代理下载: ${proxy:-直连}"
+        if wget -T 15 -t 2 -O "$output_file" "${proxy}${url_path}"; then
+            success=0
+            break
+        fi
+    done
+    return $success
 }
 
 # ================== 从GitHub下载并解压Xray ==================
@@ -184,9 +206,9 @@ download_and_extract_xray() {
     local download_url="https://github.com/XTLS/Xray-core/releases/download/v${version}/Xray-linux-${arch}.zip"
     local zip_file="$TMP_DIR/xray.zip"
     
-    info "正在从 GitHub 下载 Xray v${version} (${arch})..."
-    if ! curl -L -fsSL "$download_url" -o "$zip_file"; then
-        error "从 GitHub 下载 Xray 失败，请检查网络连接。"
+    info "正在准备从 GitHub 下载 Xray v${version} (${arch})..."
+    if ! download_file "$download_url" "$zip_file"; then
+        error "从 GitHub 下载 Xray 失败，所有代理均已尝试，请检查网络连接。"
         return 1
     fi
     
@@ -682,7 +704,7 @@ configure_custom_socks5_outbound() {
     chmod 644 "$XRAY_CONFIG" 2>/dev/null || true
 
     if ! restart_xray; then
-        error "重启服务失败，当前配置可能与系统环境不兼容。"
+        error "重启服务失败，当前配置可能与 system 境不兼容。"
         return 1
     fi
     info "已成功切换为 Socks5 出口！"
@@ -720,6 +742,7 @@ update_xray() {
         return 1
     fi
 }
+
 # ================== 修改配置 ==================
 modify_config() {
     if [[ ! -f "$XRAY_CONFIG" ]]; then
