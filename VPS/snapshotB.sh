@@ -199,7 +199,7 @@ load_config() { if [ -f "$CONFIG_FILE" ]; then source "$CONFIG_FILE"; fi; }
 draw_header() {
     clear
     echo -e "${GREEN}=================================${NC}"
-    echo -e "${GREEN}     Linux 系统快照备份工具       ${NC}"
+    echo -e "${GREEN}    ◈   系统快照备份工具   ◈     ${NC}"
     echo -e "${GREEN}=================================${NC}"
 }
 
