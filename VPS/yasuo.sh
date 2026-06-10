@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==========================================================
-#   VPS 多目录压缩工具 (循环菜单版)
+#   VPS 多目录压缩工具 (支持 Debian/Ubuntu/CentOS/Alpine)
 # ==========================================================
 
 GREEN="\033[32m"
@@ -13,13 +13,15 @@ DEFAULT_SAVE_DIR="$(pwd)"
 CPU_CORES=$(nproc 2>/dev/null || echo 1)
 
 # =============================
-# 多系统安装函数
+# 多系统安装函数 (新增 Alpine 支持)
 # =============================
 install_pkg() {
     pkg="$1"
 
     if command -v apt >/dev/null 2>&1; then
         apt update -y && apt install -y "$pkg"
+    elif command -v apk >/dev/null 2>&1; then
+        apk update && apk add "$pkg"
     elif command -v dnf >/dev/null 2>&1; then
         dnf install -y "$pkg"
     elif command -v yum >/dev/null 2>&1; then
@@ -34,7 +36,7 @@ check_cmd() {
     cmd="$1"
     if command -v "$cmd" >/dev/null 2>&1; then return; fi
 
-    echo -e "${YELLOW}安装 $cmd ...${RESET}"
+    echo -e "${YELLOW}正在安装依赖 $cmd ...${RESET}"
 
     case "$cmd" in
         tar) install_pkg tar ;;
@@ -45,9 +47,11 @@ check_cmd() {
         7z)
             if command -v apt >/dev/null 2>&1; then
                 install_pkg p7zip-full
+            elif command -v apk >/dev/null 2>&1; then
+                install_pkg p7zip
             else
                 install_pkg p7zip
-                install_pkg p7zip-plugins
+                install_pkg p7zip-plugins 2>/dev/null || true
             fi
             ;;
         *) install_pkg "$cmd" ;;
@@ -66,7 +70,7 @@ while true; do
 
 clear
 echo -e "${GREEN}============================${RESET}"
-echo -e "${GREEN}    VPS 压缩工具${RESET}"
+echo -e "${GREEN}     ◈   压缩工具   ◈      ${RESET}"
 echo -e "${GREEN}============================${RESET}"
 echo -e "${GREEN}1) tar.gz (推荐)${RESET}"
 echo -e "${GREEN}2) tar.xz (高压缩)${RESET}"
@@ -74,6 +78,7 @@ echo -e "${GREEN}3) tar.bz2${RESET}"
 echo -e "${GREEN}4) zip${RESET}"
 echo -e "${GREEN}5) 7z${RESET}"
 echo -e "${GREEN}0) 退出${RESET}"
+echo -e "${GREEN}============================${RESET}"
 
 read -p $'\033[32m请选择压缩格式: \033[0m' format_choice
 
@@ -90,6 +95,7 @@ if [ ${#source_dirs[@]} -eq 0 ]; then
     continue
 fi
 
+# 检查源路径是否存在
 for dir in "${source_dirs[@]}"; do
     if [ ! -e "$dir" ]; then
         echo -e "${RED}❌ 路径不存在: $dir${RESET}"
@@ -98,7 +104,8 @@ for dir in "${source_dirs[@]}"; do
     fi
 done
 
-read -p "保存目录(默认/root): " save_dir
+# 修正提示：使其与 DEFAULT_SAVE_DIR 变量保持一致
+read -p "保存目录(默认 ${DEFAULT_SAVE_DIR}): " save_dir
 save_dir=${save_dir:-$DEFAULT_SAVE_DIR}
 mkdir -p "$save_dir"
 
@@ -110,48 +117,66 @@ if [ -z "$output_name" ]; then
 fi
 
 read -p "压缩级别(1-9 默认6): " level
-read -p "排除目录(多个用空格 可留空): " -a exclude_dirs
-
 level=${level:-6}
+
+read -p "排除目录/文件(多个用空格 可留空): " -a exclude_dirs
+
 timestamp=$(date +%Y%m%d_%H%M%S)
 start_time=$(date +%s)
 
+# =============================
+# 核心压缩逻辑 (全格式支持排除功能)
+# =============================
 case $format_choice in
 
 1)
     check_cmd tar; check_cmd gzip
     archive="${save_dir}/${output_name}_${timestamp}.tar.gz"
-
+    
     exclude_args=()
-    for ex in "${exclude_dirs[@]}"; do
-        exclude_args+=(--exclude="$ex")
-    done
-
+    for ex in "${exclude_dirs[@]}"; do exclude_args+=(--exclude="$ex"); done
+    
     tar "${exclude_args[@]}" -I "gzip -$level" -cvf "$archive" "${source_dirs[@]}"
     ;;
 
 2)
     check_cmd tar; check_cmd xz
     archive="${save_dir}/${output_name}_${timestamp}.tar.xz"
-    tar -I "xz -T$CPU_CORES -$level" -cvf "$archive" "${source_dirs[@]}"
+    
+    exclude_args=()
+    for ex in "${exclude_dirs[@]}"; do exclude_args+=(--exclude="$ex"); done
+    
+    tar "${exclude_args[@]}" -I "xz -T$CPU_CORES -$level" -cvf "$archive" "${source_dirs[@]}"
     ;;
 
 3)
     check_cmd tar; check_cmd bzip2
     archive="${save_dir}/${output_name}_${timestamp}.tar.bz2"
-    tar -I "bzip2 -$level" -cvf "$archive" "${source_dirs[@]}"
+    
+    exclude_args=()
+    for ex in "${exclude_dirs[@]}"; do exclude_args+=(--exclude="$ex"); done
+    
+    tar "${exclude_args[@]}" -I "bzip2 -$level" -cvf "$archive" "${source_dirs[@]}"
     ;;
 
 4)
     check_cmd zip
     archive="${save_dir}/${output_name}_${timestamp}.zip"
-    zip -r -"$level" "$archive" "${source_dirs[@]}"
+    
+    exclude_args=()
+    for ex in "${exclude_dirs[@]}"; do exclude_args+=("-x" "$ex/*" "-x" "$ex"); done
+    
+    zip -r -"$level" "$archive" "${source_dirs[@]}" "${exclude_args[@]}"
     ;;
 
 5)
     check_cmd 7z
     archive="${save_dir}/${output_name}_${timestamp}.7z"
-    7z a -mx="$level" "$archive" "${source_dirs[@]}"
+    
+    exclude_args=()
+    for ex in "${exclude_dirs[@]}"; do exclude_args+=("-xr!$ex"); done
+    
+    7z a -mx="$level" "${exclude_args[@]}" "$archive" "${source_dirs[@]}"
     ;;
 
 *)
@@ -163,6 +188,9 @@ esac
 
 echo
 
+# =============================
+# 结果输出
+# =============================
 if [ ! -f "$archive" ]; then
     echo -e "${RED}❌ 压缩失败${RESET}"
 else
