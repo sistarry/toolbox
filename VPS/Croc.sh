@@ -311,7 +311,7 @@ while true; do
     echo -e "${GREEN}  4) 安全发送本地文件(多选)${RESET}"
     echo -e "${GREEN}  5) 接收远端文件(凭码提取)${RESET}"
     echo -e "${GREEN}---------------------------------------${RESET}"
-    echo -e "${GREEN}  6) 设置下载文件夹${RESET}"
+    echo -e "${GREEN}  6) 设置接收目录${RESET}"
     echo -e "${GREEN}---------------------------------------${RESET}"
     echo -e "${GREEN}  0) 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
