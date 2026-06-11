@@ -94,7 +94,7 @@ show_menu() {
     clear
     CURRENT_TZ=$(get_timezone)
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}        ◈  Linux 时区管理面板  ◈       ${RESET}"
+    echo -e "${GREEN}        ◈    时区 管理面板   ◈         ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 系统环境 : ${YELLOW}${OS_ID}${RESET}"
     echo -e "${GREEN} 当前时区 : ${YELLOW}${CURRENT_TZ}${RESET}"
