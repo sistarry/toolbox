@@ -152,11 +152,15 @@ choose_project() {
         return 1
     fi
     clear
-    echo -e "${GREEN}=== 请选择项目 ===${RESET}"
+    echo -e "${GREEN}==========================${RESET}"
+    echo -e "${GREEN}    ◈   请选择项目   ◈   ${RESET}"
+    echo -e "${GREEN}==========================${RESET}"
     for i in "${!PROJECTS[@]}"; do
         echo -e "${GREEN}$((i+1))) $(basename "${PROJECTS[$i]}")${RESET}"
     done
+    echo -e "${GREEN}==========================${RESET}"
     echo -e "${GREEN}0) 返回${RESET}"
+    echo -e "${GREEN}==========================${RESET}"
     read -p "$(echo -e ${GREEN}请输入编号:${RESET}) " n
     [[ "$n" == "0" ]] && return 1
     PROJECT_DIR="${PROJECTS[$((n-1))]}"
@@ -164,10 +168,11 @@ choose_project() {
 }
 
 choose_time() {
-    echo
+    echo -e "${GREEN}==========================${RESET}"
     echo -e "${GREEN}1) 每日更新${RESET}"
     echo -e "${GREEN}2) 每周更新${RESET}"
     echo -e "${GREEN}3) 自定义 cron${RESET}"
+    echo -e "${GREEN}==========================${RESET}"
     read -p "$(echo -e ${GREEN}选择:${RESET}) " mode
     if [ "$mode" = "1" ]; then
         read -p "几点执行(默认0): " hour
