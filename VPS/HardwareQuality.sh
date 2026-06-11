@@ -27,12 +27,13 @@ pause() {
 menu() {
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}        硬件质量体检工具        ${RESET}"
+    echo -e "${GREEN}    ◈   硬件质量体检工具   ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 1) 标准检测${RESET}"
     echo -e "${GREEN} 2) 硬盘模式${RESET}"
     echo -e "${GREEN} 3) 深度模式${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
