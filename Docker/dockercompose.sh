@@ -145,7 +145,7 @@ function select_project() {
     fi
     for i in "${!projects[@]}"; do
         project_name=$(basename "${projects[$i]}")
-        echo -e "${GREEN}$((i+1))) $project_name${RESET}"
+        echo -e "${YELLOW}$((i+1))) $project_name${RESET}"
     done
     echo -e "${GREEN}========================================${RESET}"
     echo -e "${GREEN}0) 返回主菜单${RESET}"
