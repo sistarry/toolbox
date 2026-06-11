@@ -46,7 +46,7 @@ menu() {
     echo -e "${GREEN} 2) 仅 IPv4${RESET}"
     echo -e "${GREEN} 3) 仅 IPv6${RESET}"
     echo -e "${GREEN}=============================${RESET}"
-    echo -e "${GREEN} 4) SOCKS5${RESET}"
+    echo -e "${GREEN} 4) Socks5${RESET}"
     echo -e "${GREEN} 5) HTTP${RESET}"
     echo -e "${GREEN}=============================${RESET}"
     echo -e "${GREEN} 6) 节点检测${RESET}"
