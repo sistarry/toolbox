@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =========================================
-# 系统更新源切换菜单脚本（现代化面板版）
+# 系统更新源切换菜单脚本
 # 支持 Ubuntu / Debian / CentOS / Alpine
 # =========================================
 
@@ -302,7 +302,7 @@ show_menu() {
     clear
     STATUS=$(get_current_source_status)
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}     ◈  Linux 系统更新源管理面板  ◈    ${RESET}"
+    echo -e "${GREEN}      ◈    系统更新源管理面板    ◈     ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 系统环境  : ${YELLOW}${OS_ID}${RESET}"
     echo -e "${GREEN} 当前源状态: ${YELLOW}${STATUS}${RESET}"
