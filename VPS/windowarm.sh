@@ -94,7 +94,7 @@ install_via_dd() {
 main_menu() {
     clear
     echo -e "${green}==========================================${re}"
-    echo -e "${green}          Windows11 重装系统菜单          ${re}"
+    echo -e "${green}    ◈    Windows11 重装系统菜单    ◈     ${re}"
     echo -e "${green}==========================================${re}"
     echo -e "${green}1. ISO方式(Windows 11 Enterprise LTSC 2024)${re}"
     echo -e "${green}2. DD包方式(Win11 ARM 15G)${re} ${purple}[推荐]${re}"
