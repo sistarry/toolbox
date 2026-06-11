@@ -300,7 +300,7 @@ menu(){
     fi
 
     echo -e "${GREEN}=========================${RESET}"
-    echo -e "${GREEN}  ◈   VPS国家防火墙   ◈  ${RESET}"
+    echo -e "${GREEN}   ◈   国家IP防火墙   ◈  ${RESET}"
     echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}当前模式: ${v_mode}"
     echo -e "${GREEN}目标国家: ${YELLOW}${v_country}${RESET}"
