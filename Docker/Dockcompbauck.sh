@@ -202,18 +202,20 @@ configure_settings_menu() {
     load_config
     while true; do
         clear
-        echo -e "${GREEN}=== 配置设置 ===${RESET}"
-        echo -e "${GREEN}1. Telegram Bot Token (当前: $TG_TOKEN)${RESET}"
-        echo -e "${GREEN}2. Telegram Chat ID (当前: $TG_CHAT_ID)${RESET}"
-        echo -e "${GREEN}3. 服务器名称 (当前: $SERVER_NAME)${RESET}"
-        echo -e "${GREEN}4. 本地备份保留天数 (当前: $RETAIN_DAYS)${RESET}"
-        echo -e "${GREEN}5. 本地备份目录 (当前: $BACKUP_DIR)${RESET}"
-        echo -e "${GREEN}6. 远程服务器用户名 (当前: $REMOTE_USER)${RESET}"
-        echo -e "${GREEN}7. 远程服务器 IP (当前: $REMOTE_IP)${RESET}"
-        echo -e "${GREEN}8. 远程备份目录 (当前: $REMOTE_DIR)${RESET}"
+        echo -e "${GREEN}====================================${RESET}"
+        echo -e "${GREEN}       ◈       配置设置       ◈    ${RESET}"
+        echo -e "${GREEN}====================================${RESET}"
+        echo -e "${GREEN}1. Telegram Bot Token (当前:${RESET} ${YELLOW}$TG_TOKEN${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}2. Telegram Chat ID (当前:${RESET} ${YELLOW}$TG_CHAT_ID${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}3. 服务器名称 (当前:${RESET} ${YELLOW}$SERVER_NAME${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}4. 本地备份保留天数 (当前:${RESET} ${YELLOW}$RETAIN_DAYS${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}5. 本地备份目录 (当前:${RESET} ${YELLOW}$BACKUP_DIR${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}6. 远程服务器用户名 (当前:${RESET} ${YELLOW}$REMOTE_USER${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}7. 远程服务器 IP (当前:${RESET} ${YELLOW}$REMOTE_IP${RESET}${GREEN})${RESET}"
+        echo -e "${GREEN}8. 远程备份目录 (当前:${RESET} ${YELLOW}$REMOTE_DIR${RESET}${GREEN})${RESET}"
         echo -e "${GREEN}0. 返回上级菜单${RESET}"
-
-        read -rp "请选择操作: " choice
+        echo -e "${GREEN}====================================${RESET}"
+        read -rp "$(echo -e "${GREEN}请选择操作: ${RESET}")" choice
         case $choice in
             1) read -rp "请输入 Telegram Bot Token: " input; [[ -n "$input" ]] && TG_TOKEN="$input" ;;
             2) read -rp "请输入 Telegram Chat ID: " input; [[ -n "$input" ]] && TG_CHAT_ID="$input" ;;
@@ -228,7 +230,7 @@ configure_settings_menu() {
         esac
         save_config
         load_config
-        read -rp "按回车继续..."
+        read -rp "$(echo -e "${GREEN}按回车继续...${RESET}")"
     done
 }
 
@@ -243,11 +245,13 @@ list_cron() {
 }
 
 schedule_add() {
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 每天0点${RESET}"
     echo -e "${GREEN}2. 每周一0点${RESET}"
     echo -e "${GREEN}3. 每月1号0点${RESET}"
     echo -e "${GREEN}4. 自定义cron${RESET}"
-    read -p "选择: " t
+    echo -e "${GREEN}====================================${RESET}"
+    read -rp "$(echo -e "${GREEN}选择: ${RESET}")" t
     case $t in
         1) cron_expr="0 0 * * *" ;;
         2) cron_expr="0 0 * * 1" ;;
@@ -293,15 +297,15 @@ schedule_menu() {
         echo -e "${GREEN}3. 清空全部${RESET}"
         echo -e "${GREEN}0. 返回${RESET}"
         echo -e "${GREEN}====================================${RESET}"
-        read -p "选择: " c
-        case $c in
+        read -p "$(echo -e "${GREEN}请选择:${RESET} ")" choice
+        case $choice in
             1) schedule_add ;;
             2) schedule_del_one ;;
             3) schedule_del_all ;;
             0) break ;;
             *) echo -e "${RED}❌ 无效选择${RESET}" ;;
         esac
-        read -p "按回车继续..."
+        read -rp "$(echo -e "${GREEN}按回车继续...${RESET}")"
     done
 }
 
