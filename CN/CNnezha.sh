@@ -12,7 +12,7 @@ RESET="\033[0m"
 
 INSTALL_DIR="/opt/nezha/agent"
 SERVICE_FILE="/etc/systemd/system/nezha-agent.service"
-AGENT_URL="https://v6.gh-proxy.org/https://github.com/nezhahq/agent/releases/download/v2.0.1/nezha-agent_linux_amd64.zip"
+AGENT_URL="https://v6.gh-proxy.org/https://github.com/nezhahq/agent/releases/download/v2.2.2/nezha-agent_linux_amd64.zip"
 SERVICE_URL="https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/CN/nezha-agent.service"
 CONFIG_URL="https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/CN/config.yml"
 echo -e "${GREEN}====国内VPS哪吒探针 Agent 一键安装 ====${RESET}"
