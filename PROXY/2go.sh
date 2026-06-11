@@ -369,7 +369,7 @@ configure_socks5_outbound() {
 # =========================================================
 install_xray() {
   clear
-  purple "正在部署高端智能化隔离版 Xray-Argo 双栈系统，请稍候..."
+  purple "正在部署 Xray-Argo，请稍候..."
   
   local ARCH_RAW=$(uname -m)
   local ARCH ARCH_ARG
@@ -382,15 +382,55 @@ install_xray() {
     *) red "本系统不支持当前服务器架构: ${ARCH_RAW}"; exit 1 ;;
   esac
 
+  # GITHUB 代理数组
+  local GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+  )
+
   mkdir -p "${WORK_DIR}" && chmod 755 "${WORK_DIR}"
-  curl -sLo "${WORK_DIR}/${SERVER_NAME}.zip" "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${ARCH_ARG}.zip"
-  curl -sLo "${WORK_DIR}/argo" "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}"
+
+  # 定义组件的下载相对路径
+  local XRAY_URL_PATH="https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${ARCH_ARG}.zip"
+  local ARGO_URL_PATH="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}"
+
+  # 循环下载 Xray
+  local success=false
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    purple "正在通过代理 ${proxy:-直连} 下载 Xray-core..."
+    if wget -qO "${WORK_DIR}/${SERVER_NAME}.zip" "${proxy}${XRAY_URL_PATH}"; then
+      success=true
+      break
+    fi
+  done
+  if [ "$success" = false ]; then
+    red "Xray-core 下载失败，请检查网络或更换代理！"
+    exit 1
+  fi
+
+  # 循环下载 Argo
+  success=false
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    purple "正在通过代理 ${proxy:-直连} 下载 Cloudflared-Argo..."
+    if wget -qO "${WORK_DIR}/argo" "${proxy}${ARGO_URL_PATH}"; then
+      success=true
+      break
+    fi
+  done
+  if [ "$success" = false ]; then
+    red "Cloudflared-Argo 下载失败，请检查网络或更换代理！"
+    exit 1
+  fi
   
   unzip -q -o "${WORK_DIR}/${SERVER_NAME}.zip" -d "${WORK_DIR}/" || true
   # 将解压出来的原生 xray 改名为我们专属的守护进程名，实现彻底物理分离
   mv "${WORK_DIR}/xray" "${WORK_DIR}/${SERVER_NAME}" 2>/dev/null || true
   chmod +x "${WORK_DIR}/${SERVER_NAME}" "${WORK_DIR}/argo"
-  rm -rf "${WORK_DIR}/${SERVER_NAME}.zip" "${WORK_DIR}/geosite.dat" "${WORK_DIR}/geoip.dat" "${WORK_DIR}/README.md" "${WORK_DIR}/LICENSE" 
+  rm -rf "${WORK_DIR}/${SERVER_NAME}.zip" "${WORK_DIR}/geosite.dat" "${WORK_DIR}/geoip.dat" "${WORK_DIR}/README.md" "${WORK_DIR}/LICENSE"
 
   iptables -F >/dev/null 2>&1 || true
   iptables -P INPUT ACCEPT >/dev/null 2>&1 || true
@@ -811,6 +851,56 @@ EOF
   esac
 }
 
+update_core() {
+  read -r -p "临时隧道更新会变动，是否继续？[y/N]: " confirm
+  case "$confirm" in
+    [yY]|[yY][eE][sS])
+      ;;
+    *)
+      yellow "已取消升级操作"
+      return 1
+      ;;
+  esac
+  local xray_exist
+  check_xray && xray_exist=$? || xray_exist=$?
+  if [[ "$xray_exist" -eq 2 ]]; then
+    yellow "未检测到已安装的组件，请先选择选项 1 进行基础安装！"
+    return 1
+  fi
+
+  clear
+  yellow "开始执行内核无损升级流程..."
+  yellow "正在安全停止现有服务以便替换二进制文件..."
+  stop_argo
+  stop_xray
+
+  # 临时备份现有配置以保万全
+  [[ -f "${CONFIG_DIR}" ]] && cp "${CONFIG_DIR}" "${CONFIG_DIR}.bak"
+  [[ -f "${OUTBOUND_ENV_FILE}" ]] && cp "${OUTBOUND_ENV_FILE}" "${OUTBOUND_ENV_FILE}.bak"
+
+  # 调用安装下载逻辑拉取最新二进制
+  if install_xray; then
+    # 恢复原配置防丢失
+    [[ -f "${CONFIG_DIR}.bak" ]] && mv "${CONFIG_DIR}.bak" "${CONFIG_DIR}"
+    [[ -f "${OUTBOUND_ENV_FILE}.bak" ]] && mv "${OUTBOUND_ENV_FILE}.bak" "${OUTBOUND_ENV_FILE}"
+    
+    # 重新载入环境配置并刷新
+    load_outbound_env
+    rebuild_xray_config
+    
+    yellow "正在重新启动升级后的核心服务..."
+    start_xray
+    start_argo
+    green "内核无损升级成功！所有配置、UUID及固定隧道设置均未受影响。(临时隧道需重新获取)"
+  else
+    red "升级过程中下载失败，正在恢复原服务..."
+    [[ -f "${CONFIG_DIR}.bak" ]] && mv "${CONFIG_DIR}.bak" "${CONFIG_DIR}"
+    [[ -f "${OUTBOUND_ENV_FILE}.bak" ]] && mv "${OUTBOUND_ENV_FILE}.bak" "${OUTBOUND_ENV_FILE}"
+    start_xray
+    start_argo
+  fi
+}
+
 # =========================================================
 # 10. 系统控制核心总线大厅
 # =========================================================
@@ -837,12 +927,13 @@ menu() {
     echo -e "${GREEN} Argo 端口 :${RE} ${YELLOW}${ARGO_PORT}${RE}"
     echo -e "${GREEN}=================================${RE}"
     echo -e " ${GREEN}1. 安装 Xray-Argo${RE}"
-    echo -e " ${GREEN}2. 卸载 Xray-Argo${RE}"
-    echo -e " ${GREEN}3. Xray状态管理${RE}"
-    echo -e " ${GREEN}4. Argo隧道管理${RE}"
-    echo -e " ${GREEN}5. 配置Socks5出口${RE}"
-    echo -e " ${GREEN}6. 查看日志${RE}"
-    echo -e " ${GREEN}7. 查看节点配置${RE}"
+    echo -e " ${GREEN}2. 更新 Xray-Argo${RE}"
+    echo -e " ${GREEN}3. 卸载 Xray-Argo${RE}"
+    echo -e " ${GREEN}4. Xray状态管理${RE}"
+    echo -e " ${GREEN}5. Argo隧道管理${RE}"
+    echo -e " ${GREEN}6. 配置Socks5出口${RE}"
+    echo -e " ${GREEN}7. 查看日志${RE}"
+    echo -e " ${GREEN}8. 查看节点配置${RE}"
     echo -e " ${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}=================================${RE}"
     
@@ -871,12 +962,13 @@ menu() {
           save_outbound_env; get_info; create_shortcut
         fi
         ;;
-      2) uninstall_xray ;;
-      3) manage_xray_menu ;;
-      4) manage_argo_menu ;;
-      5) configure_socks5_outbound ;;
-      6) view_logs ;;
-      7) check_nodes ;;
+      2) update_core ;;
+      3) uninstall_xray ;;
+      4) manage_xray_menu ;;
+      5) manage_argo_menu ;;
+      6) configure_socks5_outbound ;;
+      7) view_logs ;;
+      8) check_nodes ;;
       0) exit 0 ;;
       *) red "输入错误，请重试！" ;;
     esac
