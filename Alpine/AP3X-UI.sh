@@ -10,13 +10,16 @@ plain="\033[0m"
 
 show_menu() {
     clear
-    echo -e "${green}=== 3X-UI管理面板 ===${plain}"
+    echo -e "${green}=======================${plain}"
+    echo -e "${green}  ◈  3X-UI管理面板  ◈  ${plain}"
+    echo -e "${green}=======================${plain}"
     echo -e " ${green}1. 安装${plain}"
     echo -e " ${green}2. 卸载${plain}"
     echo -e " ${green}3. 启动${plain}"
     echo -e " ${green}4. 停止${plain}"
     echo -e " ${green}5. 重启${plain}"
     echo -e " ${green}0. 退出${plain}"
+    echo -e "${green}=======================${plain}"
 }
 
 install_3xui() {
