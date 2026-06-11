@@ -12,8 +12,21 @@ APP_NAME="flux-panel"
 APP_DIR="/opt/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 GOST_SQL_URL="https://github.com/bqlpfy/flux-panel/releases/download/1.4.3/gost.sql"
+NODE_SCRIPT_URL="https://github.com/bqlpfy/flux-panel/raw/main/install.sh"
 
 DOCKER_CMD="docker compose"
+
+
+# 代理前缀列表（第一个留空代表直连尝试）
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
+
 
 check_docker() {
     if ! command -v docker &>/dev/null; then
@@ -36,6 +49,37 @@ check_port() {
 
 check_ipv6_support() {
     if ping6 -c 1 ::1 &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# 代理轮询下载通用函数
+download_file() {
+    local url="$1"
+    local output="$2"
+    local success=false
+
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${url}"
+        if [ -n "$proxy" ]; then
+            echo "📡 正在尝试通过代理下载: ${proxy}"
+        else
+            echo "📡 正在尝试直连下载..."
+        fi
+        
+        curl -L -k --max-time 15 -o "$output" "$target_url"
+        
+        if [ -s "$output" ]; then
+            success=true
+            break
+        else
+            rm -f "$output"
+        fi
+    done
+
+    if [ "$success" = true ]; then
         return 0
     else
         return 1
@@ -84,15 +128,18 @@ configure_docker_ipv6() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== 哆啦A梦转发面板 ===${RESET}"
+        echo -e "${GREEN}============================${RESET}"
+        echo -e "${GREEN}  ◈   哆啦A梦转发面板   ◈   ${RESET}"
+        echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 查看状态${RESET}"
         echo -e "${GREEN}6) 卸载(含数据)${RESET}"
-        echo -e "${GREEN}7) 节点管理${RESET}"
+        echo -e "${GREEN}7)${RESET} ${YELLOW}节点管理${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}============================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
         case $choice in
@@ -102,7 +149,7 @@ menu() {
             4) view_logs ;;
             5) check_status ;;
             6) uninstall_app ;;
-            7) curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh ;;
+            7) manage_nodes ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}"; sleep 1 ;;
         esac
@@ -115,12 +162,13 @@ install_app() {
 
     cd "$APP_DIR" || exit
 
+    
     # 下载数据库初始化文件
-    echo "📡 下载数据库初始化文件..."
+    echo "📡 准备下载数据库初始化文件..."
     if [ ! -f gost.sql ] || [ ! -s gost.sql ]; then
-        curl -L -o gost.sql "$GOST_SQL_URL"
-        if [ ! -s gost.sql ]; then
-            echo -e "${RED}❌ 数据库文件下载失败或为空，请检查 URL: $GOST_SQL_URL${RESET}"
+        if ! download_file "$GOST_SQL_URL" "gost.sql"; then
+            echo -e "${RED}❌ 数据库文件下载失败，请检查网络渠道${RESET}"
+            read -p "按回车返回菜单..."
             return
         fi
     fi
@@ -319,6 +367,18 @@ view_logs() {
 check_status() {
     docker ps | grep -E "gost-mysql|springboot-backend|vite-frontend"
     read -p "按回车返回菜单..."
+}
+
+manage_nodes() {
+    echo "📡 正在获取节点管理..."
+    if download_file "$NODE_SCRIPT_URL" "node_install.sh"; then
+        chmod +x node_install.sh
+        ./node_install.sh
+        rm -f node_install.sh
+    else
+        echo -e "${RED}❌ 无法下载节点管理，请检查网络！${RESET}"
+        read -p "按回车返回菜单..."
+    fi
 }
 
 uninstall_app() {
