@@ -203,7 +203,7 @@ configure_settings_menu() {
     while true; do
         clear
         echo -e "${GREEN}====================================${RESET}"
-        echo -e "${GREEN}       ◈       配置设置       ◈    ${RESET}"
+        echo -e "${GREEN}      ◈       配置设置       ◈    ${RESET}"
         echo -e "${GREEN}====================================${RESET}"
         echo -e "${GREEN}1. Telegram Bot Token (当前:${RESET} ${YELLOW}$TG_TOKEN${RESET}${GREEN})${RESET}"
         echo -e "${GREEN}2. Telegram Chat ID (当前:${RESET} ${YELLOW}$TG_CHAT_ID${RESET}${GREEN})${RESET}"
