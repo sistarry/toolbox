@@ -321,7 +321,7 @@ menu() {
         get_status_text
         
         echo -e "${GREEN}====================================${NC}"
-        echo -e "${GREEN}      BBR+TCP智能调参综合优化        ${NC}"
+        echo -e "${GREEN}   ◈   BBR+TCP智能调参综合优化   ◈  ${NC}"
         echo -e "${GREEN}====================================${NC}"
         echo -e "${GREEN}  BBR  : ${BBR_STATUS}"
         echo -e "${GREEN}  FQ   : ${FQ_STATUS}"
