@@ -156,7 +156,7 @@ choose_project() {
     echo -e "${GREEN}    ◈   请选择项目   ◈   ${RESET}"
     echo -e "${GREEN}==========================${RESET}"
     for i in "${!PROJECTS[@]}"; do
-        echo -e "${GREEN}$((i+1))) $(basename "${PROJECTS[$i]}")${RESET}"
+        echo -e "${YELLOW}$((i+1))) $(basename "${PROJECTS[$i]}")${RESET}"
     done
     echo -e "${GREEN}==========================${RESET}"
     echo -e "${GREEN}0) 返回${RESET}"
