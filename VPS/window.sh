@@ -102,7 +102,7 @@ install_v6dd() {
 while true; do
     clear
     echo -e "${GREEN}===================================${RESET}"
-    echo -e "${GREEN}       Windows10 重装系统菜单       ${RESET}"
+    echo -e "${GREEN}  ◈   Windows10 重装系统菜单   ◈   ${RESET}"
     echo -e "${GREEN}===================================${RESET}"
     echo -e "${GREEN}1) V4安装Windows10${RESET}"
     echo -e "${GREEN}2) V6安装Windows10${RESET}"
