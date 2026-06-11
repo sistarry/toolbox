@@ -7,13 +7,16 @@ RESET="\033[0m"
 
 menu() {
     clear
-    echo -e "${GREEN}=== 磁盘空间排查工具 ===${RESET}"
+    echo -e "${GREEN}========================${RESET}"
+    echo -e "${GREEN} ◈  磁盘空间排查工具  ◈${RESET}"
+    echo -e "${GREEN}========================${RESET}"
     echo -e "${GREEN}1) 查看磁盘整体使用情况${RESET}"
     echo -e "${GREEN}2) 查看 / 目录占用${RESET}"
     echo -e "${GREEN}3) 查看指定目录占用${RESET}"
     echo -e "${GREEN}4) 查找系统最大文件${RESET}"
     echo -e "${GREEN}5) 查找大于100MB文件${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}========================${RESET}"
     read -r -p $'\033[32m请选择: \033[0m' choice
 }
 
@@ -57,6 +60,5 @@ while true; do
         0) exit ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
-    echo
     read -p "按回车返回菜单..."
 done
