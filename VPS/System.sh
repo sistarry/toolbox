@@ -42,7 +42,9 @@ fetch_and_run() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== 系统监控管理菜单 ===${RESET}"
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN} ◈  系统监控管理菜单  ◈${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN} 1) 查看端口${RESET}"
         echo -e "${GREEN} 2) 释放端口${RESET}"
         echo -e "${GREEN} 3) 查看进程${RESET}"
