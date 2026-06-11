@@ -27,12 +27,13 @@ pause() {
 menu() {
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}        网络质量体检工具        ${RESET}"
+    echo -e "${GREEN}    ◈   网络质量体检工具   ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 1) 双栈检测 (IPv4 + IPv6)${RESET}"
     echo -e "${GREEN} 2) 仅检测 IPv4${RESET}"
     echo -e "${GREEN} 3) 仅检测 IPv6${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
 
     case $choice in
