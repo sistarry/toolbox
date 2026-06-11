@@ -4,7 +4,7 @@
 
 ### Rsync同步脚本(安装完成后，只需在终端输入 `s` 或 `S` 即可快速启动主菜单。)
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Rrsync.sh)
 ```
 
 ### 文件目录备份脚本
