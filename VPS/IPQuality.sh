@@ -42,7 +42,7 @@ menu() {
     echo -e "${GREEN}=============================${RESET}"
     echo -e "${GREEN}    ◈  IP 质量体检工具  ◈    ${RESET}"
     echo -e "${GREEN}=============================${RESET}"
-    echo -e "${GREEN} 1) 双栈检测${RESET}"
+    echo -e "${GREEN} 1) 双栈检测 (IPv4 + IPv6)${RESET}"
     echo -e "${GREEN} 2) 仅 IPv4${RESET}"
     echo -e "${GREEN} 3) 仅 IPv6${RESET}"
     echo -e "${GREEN}=============================${RESET}"
