@@ -403,7 +403,7 @@ docker_install() {
     IS_CN=false
     
     # 尝试多接口获取国家代码 (CN)
-    COUNTRY=$(curl -s --max-time 3 https://ip.sb/country_code 2>/dev/null || \
+    COUNTRY=$(curl -s --max-time 3 https://ipinfo.io/country 2>/dev/null || \
               curl -s --max-time 3 https://ipapi.co/country 2>/dev/null || \
               curl -s --max-time 3 http://ip-api.com/json/ | grep -o '"countryCode":"[^"]*' | cut -d'"' -f4)
 
@@ -509,7 +509,7 @@ show_vps_info() {
 main() {
     clear
     echo -e "${GREEN}======================================================${RESET}"
-    echo -e "${GREEN}          欢迎使用 Alpine Linux 全能优化               ${RESET}"
+    echo -e "${GREEN}      ◈    欢迎使用 Alpine Linux 一键优化    ◈        ${RESET}"
     echo -e "${GREEN}======================================================${RESET}"
     
     root_check
