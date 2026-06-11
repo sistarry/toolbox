@@ -91,11 +91,13 @@ menu() {
     while true; do
 
         clear
-
-        echo -e "${GREEN}=== 订阅节点检测菜单 ===${RESET}"
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN}  ◈   订阅节点检测   ◈  ${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN}1) 开始检测${RESET}"
         echo -e "${GREEN}2) 更新检测${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
         case $choice in
