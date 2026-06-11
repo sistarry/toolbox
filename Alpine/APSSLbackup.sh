@@ -47,7 +47,7 @@ menu() {
     while true; do
         clear
         echo -e "${GREEN}============================${RESET}"
-        echo -e "${GREEN}    证书备份与恢复管理      ${RESET}"
+        echo -e "${GREEN}  ◈  证书备份与恢复管理  ◈  ${RESET}"
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN}1) Nginx 证书备份与恢复${RESET}"
         echo -e "${GREEN}2) Caddy 证书备份与恢复${RESET}"
