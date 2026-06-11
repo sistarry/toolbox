@@ -14,7 +14,7 @@
 #   定时任务: /root/dockerupdate.sh /项目路径 项目名称
 # ========================================
 
-SCRIPT_URL="https://raw.githubusercontent.com/iu683/uu/main/oo.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
 SCRIPT_PATH="/root/dockerupdate.sh"
 CRON_TAG="# docker-project-update"
 
