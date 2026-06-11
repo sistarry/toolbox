@@ -417,7 +417,7 @@ while true; do
     CRON_ACTIVE=$(cron_count)
     
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}   ◈ Rsync同步管理系统(快捷指令${YELLOW}S/s${RESET}) ◈  ${RESET}"
+    echo -e "${GREEN} ◈  Rsync同步管理系统${RESET}${YELLOW}(快捷指令S/s)${RESET}${GREEN}  ◈  ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 当前系统环境 : ${YELLOW}${OS}${RESET}"
     echo -e "${GREEN} 活跃任务总数 : ${YELLOW}${FILE_COUNT} 个${RESET}"
