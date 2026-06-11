@@ -282,14 +282,17 @@ schedule_del_all() {
 schedule_menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== 定时任务管理 ===${RESET}"
-        echo -e "${GREEN}------------------------${RESET}"
+        echo -e "${GREEN}====================================${RESET}"
+        echo -e "${GREEN}       ◈    定时任务管理    ◈       ${RESET}"
+        echo -e "${GREEN}====================================${RESET}"
+        echo -e "${GREEN}------------------------------------${RESET}"
         list_cron
-        echo -e "${GREEN}------------------------${RESET}"
+        echo -e "${GREEN}------------------------------------${RESET}"
         echo -e "${GREEN}1. 添加任务${RESET}"
         echo -e "${GREEN}2. 删除任务${RESET}"
         echo -e "${GREEN}3. 清空全部${RESET}"
         echo -e "${GREEN}0. 返回${RESET}"
+        echo -e "${GREEN}====================================${RESET}"
         read -p "选择: " c
         case $c in
             1) schedule_add ;;
@@ -349,7 +352,9 @@ fi
 while true; do
     load_config
     clear
-    echo -e "${GREEN}=== Docker compose 备份恢复管理 ===${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}  ◈ Docker compose 备份恢复管理 ◈   ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 本地备份${RESET}"
     echo -e "${GREEN}2. 恢复项目${RESET}"
     echo -e "${GREEN}3. 设置SSH密钥自动登录${RESET}"
@@ -358,6 +363,7 @@ while true; do
     echo -e "${GREEN}6. 定时任务管理${RESET}"
     echo -e "${GREEN}7. 卸载${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
 
     read -p "$(echo -e ${GREEN}请选择操作: ${RESET})" CHOICE
     case $CHOICE in
