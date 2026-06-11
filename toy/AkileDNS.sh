@@ -40,7 +40,7 @@ fi
 #################################
 # 下载并运行 akdns
 #################################
-echo -e "${YELLOW}▶ 下载 Akile DNS 优选脚本...${RESET}"
+echo -e "${YELLOW}▶ 打开 Akile DNS 优选脚本...${RESET}"
 
 TMP_SCRIPT="/tmp/akdns.sh"
 
