@@ -134,7 +134,9 @@ monitor_docker_containers() {
 # ---------------------------
 function select_project() {
     clear
-    echo -e "${GREEN}=== 请选择要管理的项目 ===${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}       ◈    请选择要管理的项目    ◈     ${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
     projects=($(find "$PROJECTS_DIR" -maxdepth 1 -type d -exec test -f '{}/docker-compose.yml' \; -print | sort))
     if [ ${#projects[@]} -eq 0 ]; then
         echo -e "${RED}未找到任何含 docker-compose.yml 的项目${RESET}"
@@ -145,8 +147,9 @@ function select_project() {
         project_name=$(basename "${projects[$i]}")
         echo -e "${GREEN}$((i+1))) $project_name${RESET}"
     done
+    echo -e "${GREEN}========================================${RESET}"
     echo -e "${GREEN}0) 返回主菜单${RESET}"
-
+    echo -e "${GREEN}========================================${RESET}"
     read -p "$(echo -e ${GREEN}请输入编号: ${RESET})" choice
     if [[ "$choice" == "0" ]]; then
         return
@@ -202,7 +205,9 @@ function delete_project() {
 # ---------------------------
 function delete_multiple_projects() {
     clear
-    echo -e "${RED}=== 多选删除项目 ===${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}       ◈     多选删除项目     ◈         ${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
     projects=($(find "$PROJECTS_DIR" -maxdepth 1 -type d -exec test -f '{}/docker-compose.yml' \; -print | sort))
     if [ ${#projects[@]} -eq 0 ]; then
         echo -e "${RED}未找到任何项目${RESET}"
@@ -214,6 +219,7 @@ function delete_multiple_projects() {
         project_name=$(basename "${projects[$i]}")
         echo -e "${GREEN}$((i+1))) $project_name${RESET}"
     done
+    echo -e "${GREEN}========================================${RESET}"
     echo -e "${GREEN}输入要删除的项目编号，用空格分隔（例如: 1 3 5），0 返回主菜单${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choices
 
@@ -244,7 +250,9 @@ function delete_multiple_projects() {
 # ---------------------------
 function delete_all_stopped_projects() {
     clear
-    echo -e "${RED}=== 一键删除所有未运行项目 ===${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}   ◈    一键删除所有未运行项目    ◈     ${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
     projects=($(find "$PROJECTS_DIR" -maxdepth 1 -type d -exec test -f '{}/docker-compose.yml' \; -print | sort))
     if [ ${#projects[@]} -eq 0 ]; then
         echo -e "${RED}未找到任何项目${RESET}"
@@ -294,7 +302,10 @@ function project_menu() {
     while true; do
         clear
         local project_name=$(basename "$PROJECT_DIR")
-        echo -e "${GREEN}======== 管理项目: $project_name =======${RESET}"
+        echo -e "${GREEN}========================================${RESET}"
+        echo -e "${GREEN}    ◈   管理项目:${RESET} ${YELLOW}$project_name${RESET}  ${GREEN} ◈     ${RESET}"
+        echo -e "${GREEN}========================================${RESET}"
+
         
         # ----------- 新增：动态显示当前项目的容器状态与端口 -----------
         echo -e "${YELLOW}[ 当前容器实时状态 ]${RESET}"
@@ -330,13 +341,15 @@ function project_menu() {
         echo -e "${GREEN} 3) 重启服务${RESET}"
         echo -e "${GREEN} 4) 查看日志${RESET}"
         echo -e "${GREEN} 5) 查看容器状态${RESET}"
-        echo -e "${GREEN} 6) 更新容器(pull&up)${RESET}"
+        echo -e "${GREEN} 6) 更新容器 (pull&up)${RESET}"
         echo -e "${GREEN} 7) 进入容器${RESET}"
         echo -e "${GREEN} 8) 删除容器(含数据卷)${RESET}"
         echo -e "${GREEN} 9) 删除容器+镜像+数据卷${RESET}"
         echo -e "${GREEN}10) 删除整个项目(含文件）${RESET}"
-        echo -e "${GREEN}11) 切换项目${RESET}"
+        echo -e "${GREEN}========================================${RESET}"
+        echo -e "${YELLOW}11) 切换项目${RESET}"
         echo -e "${GREEN} 0) 返回主菜单${RESET}"
+        echo -e "${GREEN}========================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case "$choice" in
             1) docker compose -f "$COMPOSE_FILE" up -d && action_done ;;
@@ -370,13 +383,16 @@ function project_menu() {
 function network_menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Docker 网络管理 ===${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}   ◈    Docker 网络管理    ◈   ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1) 查看所有网络${RESET}"
         echo -e "${GREEN}2) 创建网络${RESET}"
         echo -e "${GREEN}3) 删除网络${RESET}"
         echo -e "${GREEN}4) 将容器加入网络（支持多选）${RESET}"
         echo -e "${GREEN}5) 将容器退出网络（支持多选）${RESET}"
         echo -e "${GREEN}0) 返回主菜单${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case "$choice" in
             1)
@@ -468,13 +484,16 @@ function network_menu() {
 function main_menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Docker Compose 管理 ===${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN} ◈  Docker Compose 项目管理  ◈ ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1) 管理项目${RESET}"
         echo -e "${GREEN}2) 网络管理${RESET}"
         echo -e "${GREEN}3) 查看容器运行状态${RESET}"
         echo -e "${GREEN}4) 多选删除项目${RESET}"
-        echo -e "${GREEN}5) 删除所有未运行的项目${RESET}"
+        echo -e "${GREEN}5) 删除未运行的项目${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case "$choice" in
             1) select_project ;;
