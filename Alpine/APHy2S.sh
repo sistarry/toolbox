@@ -26,6 +26,16 @@ YELLOW="\033[33m"
 BLUE="\033[34m"
 RESET="\033[0m"
 
+# GITHUB 代理列表
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
+
 info() { echo -e "${GREEN}[信息] $*${RESET}" >&2; }
 warn() { echo -e "${YELLOW}[警告] $*${RESET}" >&2; }
 error() { echo -e "${RED}[错误] $*${RESET}" >&2; }
@@ -90,14 +100,51 @@ get_installed_version() {
   fi
 }
 
+# =========================================================
+# 代理网络请求辅助函数
+# =========================================================
+request_github_api() {
+  local path="$1"
+  local response=""
+  
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    # API 请求不能直接加代理前缀，需要判断是否为直连，或者利用特定的 API 代理
+    # 如果是直连（proxy为空），或者由于 API 的特殊性，这里优先尝试直接请求 GitHub API
+    # 如果直连失败，再尝试通过代理（部分代理支持 API 转发，部分不支持）
+    if [[ -z "$proxy" ]]; then
+      response=$(curl -fsSL --max-time 8 "https://api.github.com/${path}")
+    else
+      # 很多 gh-proxy 不支持 api.github.com 转发，但可以用 raw/普通链接规则试探
+      response=$(curl -fsSL --max-time 8 "${proxy}https://api.github.com/${path}" 2>/dev/null || true)
+    fi
+    
+    if [[ -n "$response" && "$response" != "null" ]]; then
+      echo "$response"
+      return 0
+    fi
+  done
+  return 1
+}
+
 get_latest_version() {
   info "正在从 GitHub 获取 sing-box 最新版本号..."
-  local latest_v
-  latest_v=$(curl -fsSL "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | jq -r .tag_name | sed 's/^v//')
+  local latest_v=""
   
+  # 优先尝试 API 获取
+  local api_res
+  if api_res=$(request_github_api "repos/SagerNet/sing-box/releases/latest"); then
+    latest_v=$(echo "$api_res" | jq -r .tag_name 2>/dev/null | sed 's/^v//')
+  fi
+  
+  # 如果 API 失败，轮询代理网页端匹配
   if [[ -z "$latest_v" || "$latest_v" == "null" ]]; then
-    warn "通过 API 获取最新版本失败，尝试备用匹配方案..."
-    latest_v=$(curl -fsSL "https://github.com/SagerNet/sing-box/releases/latest" | grep -oE 'releases/tag/v[0-9.]+' | head -n1 | sed 's|releases/tag/v||')
+    warn "通过 API 获取最新版本失败，尝试备用网页匹配方案..."
+    for proxy in "${GITHUB_PROXY[@]}"; do
+      latest_v=$(curl -fsSL --max-time 8 "${proxy}https://github.com/SagerNet/sing-box/releases/latest" 2>/dev/null | grep -oE 'releases/tag/v[0-9.]+' | head -n1 | sed 's|releases/tag/v||' || true)
+      if [[ -n "$latest_v" ]]; then
+        break
+      fi
+    done
   fi
 
   if [[ -n "$latest_v" ]]; then
@@ -129,7 +176,7 @@ clear_old_iptables() {
 }
 
 apply_new_iptables() {
-  clear_old_iptables
+  # 【修复】去掉了开头的 clear_old_iptables，防止新写入的 main_port 干扰清理逻辑
   if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
     local hop_val
     hop_val=$(cat "${CONFIG_DIR}/hopping.txt")
@@ -137,21 +184,21 @@ apply_new_iptables() {
     local end_p="${hop_val#*-}"
     
     info "正在应用 iptables 转发规则: UDP $start_p-$end_p => 主端口 $port"
-    if iptables -t nat -A PREROUTING -p udp -m multiport --dports "$start_p:$end_p" -j REDIRECT --to-ports "$port"; then
-      ip6tables -t nat -A PREROUTING -p udp -m multiport --dports "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null || true
-    else
-      iptables -t nat -A PREROUTING -p udp --dport "$start_p:$end_p" -j REDIRECT --to-ports "$port"
-      ip6tables -t nat -A PREROUTING -p udp --dport "$start_p:$end_p" -j REDIRECT --to-ports "$port" 2>/dev/null || true
-    fi
     
-    echo "$port" > "${CONFIG_DIR}/main_port.txt"
+    # 采用高兼容性标准的 REDIRECT 或 DNAT 规则
+    if ! iptables -t nat -A PREROUTING -p udp --dport "${start_p}:${end_p}" -j REDIRECT --to-ports "$port" 2>/dev/null; then
+       iptables -t nat -A PREROUTING -p udp --dport "${start_p}-${end_p}" -j REDIRECT --to-ports "$port" 2>/dev/null || true
+    fi
+
+    if [[ -f /etc/init.d/ip6tables ]]; then
+       ip6tables -t nat -A PREROUTING -p udp --dport "${start_p}:${end_p}" -j REDIRECT --to-ports "$port" 2>/dev/null || true
+    fi
     
     if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
     if [[ -f /etc/init.d/ip6tables ]]; then /etc/init.d/ip6tables save &>/dev/null || true; fi
-    info "防火墙端口跳跃规则已固化。"
+    info "防火墙端口跳跃规则已成功固化。"
   fi
 }
-
 # =========================================================
 # 4. 网络诊断与配置管理辅助
 # =========================================================
@@ -216,31 +263,25 @@ get_current_port_display() {
 # 5. 面板节点配置生成核心逻辑 (Hysteria 2)
 # =========================================================
 
-
-# 精准修复外部自定义证书的穿透访问权限，确保非 root 运行的 singbox-hy2 用户有权读取
 fix_external_cert_permission() {
   local cert="$1"
   local key="$2"
   
-  # 针对 /root 目录的致命硬拦截
   if [[ "$cert" == /root/* ]] || [[ "$key" == /root/* ]]; then
     error "致命拒绝: 检测到您的证书位于 /root/ 目录下！"
     warn "原因分析: /root 目录权限极为严苛(700)，任何非 root 用户(包括 singbox-hy2)均无权穿透。"
-    warn "         即使强行赋予文件 644 权限，内核也会因路径阻塞拒绝读取。"
+    warn "          即使强行赋予文件 644 权限，内核也会因路径阻塞拒绝读取。"
     info "权威推荐: 请在 acme.sh 命令中加上 --install-cert 指令，将证书自动分发到公共目录"
-    info "         (例如: /etc/sing-box-hy2/certs/ 或 /etc/ssl/ 文件夹下) 再试。"
+    info "          (例如: /etc/sing-box-hy2/certs/ 或 /etc/ssl/ 文件夹下) 再试。"
     return 1
   fi
 
-  # 1. 自动提取并【逐级向上】放行外部证书的所有上级目录
   info "正在为外部证书路径逐级赋予检索穿透权限 (+x) ..."
   local dir
   for file in "$cert" "$key"; do
     dir=$(dirname "$file")
     while [[ "$dir" != "/" && -n "$dir" ]]; do
       chmod o+x "$dir" 2>/dev/null || true
-      
-      # 如果系统支持 ACL，精准安全地给 sing-box 账号加上特殊通行证
       if command -v setfacl >/dev/null 2>&1; then
         setfacl -m u:"$RUN_USER":rx "$dir" 2>/dev/null || true
       fi
@@ -248,7 +289,6 @@ fix_external_cert_permission() {
     done
   done
   
-  # 2. 确保证书和密钥文件本身可读
   info "正在规范化外部证书与私钥文件的读取权限 ..."
   chmod 644 "$cert" 2>/dev/null || true
   chmod 644 "$key" 2>/dev/null || true
@@ -258,7 +298,6 @@ fix_external_cert_permission() {
   fi
   return 0
 }
-
 
 inst_cert() {
   mkdir -p "$CONFIG_DIR/certs"
@@ -291,7 +330,19 @@ inst_cert() {
       info "正在检查并安装 Acme.sh 依赖..."
       local acme_cmd="/root/.acme.sh/acme.sh"
       if [[ ! -f "$acme_cmd" ]]; then
-        curl https://get.acme.sh | sh -s email=$(date +%s%N | md5sum | cut -c 1-16)@gmail.com
+        # Acme.sh 安装同样加入了代理尝试
+        local acme_installed=false
+        for proxy in "${GITHUB_PROXY[@]}"; do
+          info "正在尝试通过代理 ${proxy:-直连} 下载 acme.sh..."
+          if curl -fsSL --max-time 15 "${proxy}https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh" | sh -s email=$(date +%s%N | md5sum | cut -c 1-16)@gmail.com; then
+            acme_installed=true
+            break
+          fi
+        done
+        if [[ "$acme_installed" = false ]]; then
+           error "Acme.sh 安装失败，请检查网络。"
+           return 1
+        fi
       fi
       
       "$acme_cmd" --set-default-ca --server letsencrypt
@@ -303,7 +354,6 @@ inst_cert() {
         "$acme_cmd" --issue -d "${domain}" --standalone -k ec-256 --insecure
       fi
       
-      # 【智能状态探针】纯 OpenRC 架构：有配置(续期)则重启，无配置(初装)则静默
       local reload_cmd="[ -f /etc/sing-box-hy2/config.json ] && /sbin/rc-service sing-box-hy2 restart || echo '[信息] 初次部署，跳过服务同步'"
       
       if "$acme_cmd" --install-cert -d "${domain}" \
@@ -329,7 +379,6 @@ inst_cert() {
       if [[ -f "$user_cert" && -f "$user_key" ]]; then
         rm -f "$cert_path" "$key_path"
         
-        # 建立软链接或拷贝之前，先穿透修复外部文件和目录的读取权限
         if fix_external_cert_permission "$user_cert" "$user_key"; then
           ln -sf "$user_cert" "$cert_path"
           ln -sf "$user_key" "$key_path"
@@ -356,7 +405,6 @@ inst_cert() {
     chmod 600 "$key_path" || true
   fi
 
-  # 规范所有权：使用 -h 规避穿透修改外部真实证书所有权
   chown -R ${RUN_USER}:${RUN_USER} "$CONFIG_DIR"
   chown -h ${RUN_USER}:${RUN_USER} "$cert_path" "$key_path" 2>/dev/null || true
 }
@@ -373,7 +421,9 @@ inst_port() {
   while true; do
     read -rp "$prompt_msg" port
     if [[ -z "$port" ]]; then
-      if [[ -n "$default_port" ]]; then port="$default_port" && break
+      if [[ -n "$default_port" ]]; then 
+        port="$default_port"
+        break
       else
         port=$(get_random_port)
         info "已为您随机分配未被占用端口: $port" && break
@@ -386,9 +436,6 @@ inst_port() {
     else error "请输入有效的端口数字 (1-65535)"; fi
   done
 
-  # =========================================================
-  # 【记忆重构核心】读取并展示现有的端口跳跃配置
-  # =========================================================
   local default_hop=""
   if [[ -f "${CONFIG_DIR}/hopping.txt" ]]; then
     default_hop=$(cat "${CONFIG_DIR}/hopping.txt")
@@ -407,19 +454,20 @@ inst_port() {
   local jumpInput
   read -rp "请选择端口模式 [1-2] (直接回车默认不变或选择默认项): " jumpInput
   
-  # 如果用户直接回车，且以前有跳跃记录，则直接保持现有的 iptables 逻辑并退出函数
+  # 【核心修复】回车确认保持原跳跃范围，但主端口换了的逻辑
   if [[ -z "$jumpInput" && -n "$default_hop" ]]; then
-    info "检测到回车确认，将 100% 保持原有端口跳跃配置 [${default_hop}] 保持不变。"
-    # 刷新主端口记录，防止主端口变了但跳跃目标没变
+    info "检测到回车确认，将保持原有端口跳跃配置 [${default_hop}]。"
+    
+    # 1. 趁着旧的 main_port.txt 还没被覆盖，先把基于老主端口的防火墙规则彻底干净地清理掉！
+    clear_old_iptables
+    
+    # 2. 清理完老规则后，再把新主端口写入文件
     echo "$port" > "${CONFIG_DIR}/main_port.txt"
+    echo "$default_hop" > "${CONFIG_DIR}/hopping.txt"
     return 0
   fi
 
-  # 如果没有旧配置且直接回车，则走向默认选项 2
   jumpInput=${jumpInput:-2}
-
-  # 只有在用户明确重新选择模式时，才清理旧防火墙规则
-  clear_old_iptables
 
   if [[ $jumpInput == 2 ]]; then
     local old_start="" old_end=""
@@ -445,9 +493,13 @@ inst_port() {
         error "输入无效！起始端口必须小于末尾端口，且范围在 1-65535 之间，请重新输入。"; 
       fi
     done
+    
+    # 【核心修复】手动修改跳跃范围时，也是先清理，再写入
+    clear_old_iptables
     echo "$firstport-$endport" > "${CONFIG_DIR}/hopping.txt"
+    echo "$port" > "${CONFIG_DIR}/main_port.txt"
   else
-    # 用户明确选择了 1 (单端口模式)，清除记录文件
+    clear_old_iptables
     rm -f "${CONFIG_DIR}/hopping.txt" "${CONFIG_DIR}/main_port.txt"
     info "已成功切换回单端口纯净模式"
     if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
@@ -470,7 +522,6 @@ write_and_show_config() {
     skip_cert="true"
   fi
 
-  # 生成 sing-box 格式的 Hysteria 2 配置文件
   cat << EOF > "$HY2_CONFIG"
 {
   "log": {
@@ -521,7 +572,6 @@ EOF
     final_port=$(cat "${CONFIG_DIR}/hopping.txt")
   fi
 
-  # 生成标准的 hysteria2:// 统一分享节点链
   cat << EOF > "$HY2_DIR/url.txt"
 V6VPS 请自行替换 IP 地址为 V6
 V2rayN 链接:
@@ -592,12 +642,33 @@ download_core() {
   local arch url
   arch=$(detect_arch)
   get_latest_version
-  url=$(printf 'https://github.com/SagerNet/sing-box/releases/download/v%s/sing-box-%s-linux-%s.tar.gz' "$SINGBOX_VERSION" "$SINGBOX_VERSION" "$arch")
   
-  info "正在下载官方核心 sing-box v$SINGBOX_VERSION..."
+  # =========================================================
+  # 核心下载轮询代理机制
+  # =========================================================
+  local download_success=false
   cd "$TMP_DIR"
-  if ! wget -O sing-box.tar.gz -q "$url"; then
-    curl -fsSL -o sing-box.tar.gz "$url" || { error "下载核心文件失败"; return 1; }
+  
+  for proxy in "${GITHUB_PROXY[@]}"; do
+    url=$(printf '%ssing-box-%s-linux-%s.tar.gz' "https://github.com/SagerNet/sing-box/releases/download/v$SINGBOX_VERSION/" "$SINGBOX_VERSION" "$arch")
+    if [[ -n "$proxy" ]]; then
+      url="${proxy}${url}"
+    fi
+    
+    info "正在通过代理 [ ${proxy:-直连保底} ] 下载官方核心 sing-box v$SINGBOX_VERSION..."
+    
+    if wget -O sing-box.tar.gz -q "$url" || curl -fsSL -o sing-box.tar.gz "$url"; then
+      if [[ -s sing-box.tar.gz ]]; then
+        download_success=true
+        break
+      fi
+    fi
+    warn "当前代理下载失败，正在尝试下一个..."
+  done
+
+  if [[ "$download_success" = false ]]; then
+    error "所有代理及直连通道均下载核心文件失败，请检查网络后重试。"
+    return 1
   fi
   
   tar -xzf sing-box.tar.gz -C "$TMP_DIR"
@@ -631,7 +702,7 @@ install_hy2() {
 
 update_hy2() {
   if [[ ! -f "$BINARY_PATH" ]]; then
-    error "当前系统未检测到核心，无法执行覆盖升级。"
+    error "当前系统未检测 to 核心，无法执行覆盖升级。"
     return 1
   fi
   info "检测到已有环境，正在执行纯净原地覆盖核心升级..."
@@ -646,7 +717,6 @@ update_hy2() {
 unsthy2() {
   warn "即将执行全面清洁卸载..."
   
-  # 优先清理防火墙链，避免文件先删掉导致清理不到
   clear_old_iptables
   if [[ -f /etc/init.d/iptables ]]; then /etc/init.d/iptables save &>/dev/null || true; fi
   if [[ -f /etc/init.d/ip6tables ]]; then /etc/init.d/ip6tables save &>/dev/null || true; fi
