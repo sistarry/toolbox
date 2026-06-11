@@ -17,11 +17,6 @@ apt-get update -y && apt-get install -y curl
 bash <(curl -fsSL tool.wwwo.eu.cc)
 ```
 
-**国内加速：**
-```bash
-bash <(curl -fsSL toolx.wwwo.eu.cc)
-```
-
 ---
 
 ## 使用说明
