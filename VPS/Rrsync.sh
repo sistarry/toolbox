@@ -13,7 +13,7 @@ YELLOW="\033[33m"
 RESET="\033[0m"
 
 BASE_DIR="/opt/rsync_task"
-SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Rrsync.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Rrsync.sh"
 SCRIPT_PATH="$BASE_DIR/rsync_manager.sh"
 KEY_DIR="$BASE_DIR/keys"
 LOG_DIR="$BASE_DIR/logs"
