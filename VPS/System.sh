@@ -91,7 +91,7 @@ menu() {
                 ;;
             7)
                 echo -e "${GREEN}\n正在国家IP屏蔽...${RESET}"
-                fetch_and_run "GeoFirewall.sh"
+                fetch_and_run "GeoFirewallos.sh"
                 pause
                 ;;
             8)
