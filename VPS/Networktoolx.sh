@@ -106,7 +106,7 @@ run_speedtest() {
     clear
     check_and_install speedtest
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}        Speedtest 网速测试        ${RESET}"
+    echo -e "${GREEN}   ◈   Speedtest 网速测试   ◈   ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}🚀 开始测速...${RESET}"
     echo "-------------------------------------"
@@ -126,7 +126,7 @@ run_nexttrace() {
     clear
     check_and_install nexttrace
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}        NextTrace 路由追踪        ${RESET}"
+    echo -e "${GREEN}   ◈   NextTrace 路由追踪   ◈   ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     read -p "请输入目标IP或域名: " target
     if [ -z "$target" ]; then return; fi
@@ -154,7 +154,7 @@ run_iperf3() {
     while true; do
         clear
         echo -e "${GREEN}===================================${RESET}"
-        echo -e "${GREEN}          iperf3 测速管理          ${RESET}"
+        echo -e "${GREEN}     ◈   iperf3 测速管理   ◈      ${RESET}"
         echo -e "${GREEN}===================================${RESET}"
         echo -e " ${YELLOW}当前参数: 端口=$IPERF_PORT | 时长=${IPERF_TIME}s | 线程=$IPERF_PARALLEL | UDP带宽=$IPERF_UDP_BW${RESET}"
         echo -e "${GREEN}-----------------------------------${RESET}"
@@ -228,7 +228,7 @@ run_mtr() {
     while true; do
         clear
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}        MTR 链路诊断面板         ${RESET}"
+        echo -e "${GREEN}    ◈   MTR 链路诊断面板   ◈    ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}探测协议 :${RESET} ${YELLOW}$(echo "$MTR_PROTO" | tr 'a-z' 'A-Z')${RESET}"
         echo -e "${GREEN}AS号展示 :${RESET} ${YELLOW}$([ "$MTR_SHOW_AS" = "true" ] && echo "开启" || echo "关闭")${RESET}"
@@ -273,7 +273,7 @@ run_mtr() {
 while true; do
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}       网络管理 综合面板        ${RESET}"
+    echo -e "${GREEN}   ◈   网络管理 综合面板   ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}Speedtest :${RESET} $(get_status speedtest)"
     echo -e "${GREEN}NextTrace :${RESET} $(get_status nexttrace)"
