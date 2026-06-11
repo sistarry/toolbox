@@ -698,7 +698,7 @@ main() {
         fi
 
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}       Mosdns-x 管理面板        ${RESET}"
+        echo -e "${GREEN}    ◈  Mosdns-x 管理面板  ◈    ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态   :${RESET} $status"
         echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
