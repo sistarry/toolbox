@@ -8,7 +8,7 @@
 CONF="/opt/geoip/geo.conf"
 UPDATE_SCRIPT="/opt/geoip/update_geo.sh"
 SCRIPT_PATH="/usr/local/bin/geofirewall"
-SCRIPT_URL=" https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APGeoFirewall.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APGeoFirewall.sh"
 
 GREEN="\033[32m"
 RED="\033[31m"
@@ -27,39 +27,18 @@ init_env(){
     # 仅第一次安装依赖
     if [[ ! -f /opt/geoip/.deps_installed ]]; then
         apk update
-        # 安装 bash, ipset, iptables 并确保 ipset-legacy/iptables 正常工作
-        apk add bash ipset iptables ip6tables curl 
+        # 安装 ipset, iptables, ip6tables, curl 以及 crontabs
+        apk add ipset iptables ip6tables curl crontabs
         
-        # 启用并启动 iptables/ip6tables 服务以实现持久化
+        # 允许 iptables 和 ip6tables 服务开机自启
         rc-update add iptables default 2>/dev/null
         rc-update add ip6tables default 2>/dev/null
         rc-service iptables start 2>/dev/null
         rc-service ip6tables start 2>/dev/null
         
         touch /opt/geoip/.deps_installed
-        green "Alpine 依赖环境安装完成"
+        green "Alpine 依赖安装完成并已启动防火墙服务"
     fi
-}
-
-# ================== 保存防火墙规则 (Alpine 专属) ==================
-save_firewall_rules(){
-    # Alpine 使用 rc-service 保存规则到 /etc/iptables/
-    rc-service iptables save >/dev/null 2>&1
-    rc-service ip6tables save >/dev/null 2>&1
-    
-    # 额外备份 ipset，因为 Alpine 重启默认不保存 ipset
-    # 在 /etc/local.d/ 建立开机自启加载 ipset 规则
-    mkdir -p /etc/local.d
-    ipset save > /opt/geoip/ipset.rules 2>/dev/null
-    
-    cat > /etc/local.d/geo_ipset.start <<EOF
-#!/bin/bash
-if [ -f /opt/geoip/ipset.rules ]; then
-    ipset restore < /opt/geoip/ipset.rules
-fi
-EOF
-    chmod +x /etc/local.d/geo_ipset.start
-    rc-update add local default 2>/dev/null
 }
 
 # ================== 下载或更新脚本 ==================
@@ -71,7 +50,10 @@ download_script(){
 }
 
 # ================== 获取信息 ==================
-get_my_ip(){ hostname -i | awk '{print $1}'; }
+get_my_ip(){ 
+    # Alpine 下 hostname -I 默认不可用，改为通过 ip route 获取主网卡 IP
+    ip route get 1.1.1.1 2>/dev/null | grep -oE 'src [0-9.]+' | awk '{print $2}'
+}
 get_ssh_port(){
     grep -i "^Port " /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}' | head -n1
 }
@@ -89,9 +71,12 @@ curl -s -o /opt/geoip/\${CC_L}.ipv6.zone https://www.ipdeny.com/ipv6/ipaddresses
 EOF
 
 chmod +x $UPDATE_SCRIPT
-# Alpine 默认使用的是 busybox crontab
+# Alpine 默认启动 crond 服务
+rc-service crond start 2>/dev/null
+rc-update add crond default 2>/dev/null
+
 (crontab -l 2>/dev/null | grep -v update_geo.sh; echo "0 3 * * * $UPDATE_SCRIPT") | crontab -
-green "每日 03:00 自动更新IP库"
+green "每日 03:00 自动更新IP库 (已确保 crond 服务运行)"
 }
 
 # ================== 原子更新 ipset ==================
@@ -113,6 +98,12 @@ update_ipset(){
     ipset swap ${SET_NAME}_tmp $SET_NAME
     ipset destroy ${SET_NAME}_tmp
     return 0
+}
+
+# ================== 保存规则（Alpine 专属） ==================
+save_rules(){
+    rc-service iptables save >/dev/null 2>&1
+    rc-service ip6tables save >/dev/null 2>&1
 }
 
 # ================== 应用规则 ==================
@@ -187,8 +178,8 @@ apply_rules(){
         fi
     done
 
-    save_firewall_rules
-    green "规则已成功应用"
+    save_rules
+    green "规则已成功应用并保存"
 }
 
 # ================== 添加规则 ==================
@@ -278,7 +269,7 @@ delete_rules(){
         done
         green "端口 $p 规则已删除"
     done
-    save_firewall_rules
+    save_rules
 }
 
 # ================== 查看规则 ==================
@@ -305,14 +296,9 @@ uninstall_all(){
     ip6tables -X GEO_CHAIN 2>/dev/null
     ipset list | grep "^Name: geo_" | awk '{print $2}' | xargs -r -I {} ipset destroy {}
     rm -rf /opt/geoip
-    rm -f /etc/local.d/geo_ipset.start
     crontab -l 2>/dev/null | grep -v update_geo.sh | crontab -
     rm -f $SCRIPT_PATH
-    
-    # 清理后保存一次 Alpine 防火墙状态
-    rc-service iptables save >/dev/null 2>&1
-    rc-service ip6tables save >/dev/null 2>&1
-    
+    save_rules
     green "已彻底卸载完成"
     exit 0
 }
@@ -334,11 +320,11 @@ menu(){
     fi
 
     echo -e "${GREEN}=========================${RESET}"
-    echo -e "${GREEN}   ◈  VPS国家防火墙  ◈   ${RESET}"
+    echo -e "${GREEN}  ◈   国家IP防火墙   ◈  ${RESET}"
     echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}当前模式: ${v_mode}"
-    echo -e "${GREEN}目标国家: \033[33m${v_country}\033[0m"
-    echo -e "${GREEN}受控端口: \033[33m${v_ports}\033[0m"
+    echo -e "${GREEN}目标国家: ${v_country}${RESET}"
+    echo -e "${GREEN}受控端口: ${v_ports}${RESET}"
     echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}1 添加规则${RESET}"
     echo -e "${GREEN}2 删除端口规则${RESET}"
