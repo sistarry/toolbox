@@ -158,7 +158,7 @@ system_clean_menu() {
 
         clear
         echo -e "${GREEN}=======================================${RESET}"
-        echo -e "${GREEN}     ◈    Linux 系统清理面板    ◈     ${RESET}"
+        echo -e "${GREEN}       ◈    系统清理面板    ◈          ${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         echo -e "${GREEN} 包管理器   : ${YELLOW}${PM_STATUS}${RESET}"
         echo -e "${GREEN} 磁盘状态   : ${YELLOW}${DISK_STATUS}${RESET}"
@@ -187,7 +187,7 @@ system_clean_menu() {
                 else
                     echo -e "${YELLOW}直连超时或失败，正在通过代理获取...${RESET}"
                     bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) || {
-                        echo -e "${RED}错误: 通过代理获取脚本也失败了，请检查网络连接。${RESET}"
+                        echo -e "${RED}错误: 通过代理获取失败了，请检查网络连接。${RESET}"
                     }
                 fi
                 ;;
