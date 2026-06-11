@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# Docker 自动更新管理器 Pro Max（单文件整合版）
+# Docker 自动更新管理器
 # 功能：
 #   ✅ 运行即安装到 /root/dockerupdate.sh 并赋权限
 #   ✅ 定时任务调用固定脚本路径 /root/dockerupdate.sh
@@ -14,12 +14,13 @@
 #   定时任务: /root/dockerupdate.sh /项目路径 项目名称
 # ========================================
 
-SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/iu683/uu/main/oo.sh"
 SCRIPT_PATH="/root/dockerupdate.sh"
 CRON_TAG="# docker-project-update"
 
 GREEN="\033[32m"
 RED="\033[31m"
+YELLOW="\033[33m"
 RESET="\033[0m"
 
 PROJECTS_DIR="/opt"
@@ -90,7 +91,7 @@ SERVER_NAME="$server"
 ONLY_RUNNING=true
 EOF
     echo -e "${GREEN}保存成功${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 # ========================================
@@ -194,21 +195,72 @@ add_update() {
     (crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME";
      echo "$CRON_EXP $SCRIPT_PATH $PROJECT_DIR $PROJECT_NAME $CRON_TAG-$PROJECT_NAME") | crontab -
     echo -e "${GREEN}✅ 已添加 $PROJECT_NAME 定时更新 ($CRON_EXP)${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 remove_update() {
     choose_project || return
     crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME" | crontab -
     echo -e "${RED}已删除 $PROJECT_NAME 定时更新${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 list_update() {
+    clear
+    echo -e "${GREEN}=============================================${RESET}"
+    echo -e "${GREEN}     📂 当前生效的 Docker 定时更新任务        ${RESET}"
+    echo -e "${GREEN}=============================================${RESET}"
+    
+    # 获取属于管理器的 crontab 任务
+    cron_items=$(crontab -l 2>/dev/null | grep "$CRON_TAG")
+    
+    if [ -z "$cron_items" ]; then
+        echo -e "${RED}❌ 暂无任何自动更新任务。${RESET}"
+    else
+        echo -e "${YELLOW} 状态   | 运行周期 (Cron)      | 项目名称 --> 路径${RESET}"
+        echo -e "${GREEN}---------------------------------------------${RESET}"
+        
+        # 逐行解析并高亮打印
+        echo "$cron_items" | while read -r line; do
+            # 提取 cron 表达式（前5个字段）
+            cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
+            # 提取项目路径和名称
+            p_path=$(echo "$line" | awk '{print $7}')
+            p_name=$(echo "$line" | awk '{print $8}')
+            
+            # 美化输出
+            printf " [${GREEN}启用${RESET}]  | %-20s | ${GREEN}%-12s${RESET} --> %s\n" "$cron_exp" "$p_name" "$p_path"
+        done
+        
+        echo -e "${GREEN}---------------------------------------------${RESET}"
+    fi
+    
+    echo -e "${GREEN}=============================================${RESET}"
     echo
-    crontab -l | grep "$CRON_TAG"
-    echo
-    read
+    
+    # 顺便展示最后 3 条日志，方便一眼看出最近有没有正常跑
+    if [ -f "$LOG_FILE" ] && [ -s "$LOG_FILE" ]; then
+        echo -e "${GREEN}📋 最近 3 条更新日志记录：${RESET}"
+        tail -n 3 "$LOG_FILE"
+        echo
+    fi
+    
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
+}
+
+# 用于在主菜单内渲染任务看板的函数
+show_menu_cron_board() {
+    cron_items=$(crontab -l 2>/dev/null | grep "$CRON_TAG")
+    echo -e "${YELLOW}📅 [当前生效的定时更新任务]${RESET}"
+    if [ -z "$cron_items" ]; then
+        echo -e "${RED}   暂无任何定时任务${RESET}"
+    else
+        echo "$cron_items" | while read -r line; do
+            cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
+            p_name=$(echo "$line" | awk '{print $8}')
+            printf "   🔹 %-12s | 周期: %-15s\n" "$p_name" "$cron_exp"
+        done
+    fi
 }
 
 run_now() {
@@ -246,7 +298,7 @@ add_custom_update() {
     (crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME";
      echo "$CRON_EXP $SCRIPT_PATH $CUSTOM_DIR $PROJECT_NAME $CRON_TAG-$PROJECT_NAME") | crontab -
     echo -e "${GREEN}✅ 已添加 $PROJECT_NAME 自定义文件夹定时更新 ($CRON_EXP)${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 remove_custom_update() {
@@ -255,13 +307,13 @@ remove_custom_update() {
     PROJECT_NAME=$(basename "$CUSTOM_DIR")
     crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME" | crontab -
     echo -e "${RED}已删除 $PROJECT_NAME 自定义文件夹定时更新${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 delete_log() {
     [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE"
     echo -e "${RED}✅ 日志已删除${RESET}"
-    read
+    read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 add_all_updates() {
@@ -328,7 +380,9 @@ init_conf
 while true; do
     clear
     echo -e "${GREEN}====================================${RESET}"
-    echo -e "${GREEN}      Docker 自动更新管理器      ${RESET}"
+    echo -e "${GREEN}  ◈    Docker 自动更新管理器    ◈   ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    show_menu_cron_board
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN} 1) 添加项目自动更新${RESET}"
     echo -e "${GREEN} 2) 删除项目更新任务${RESET}"
@@ -345,6 +399,7 @@ while true; do
     echo -e "${GREEN}13) 更新管理器${RESET}"
     echo -e "${GREEN}14) 卸载管理器${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
 
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
     case $choice in
