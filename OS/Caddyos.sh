@@ -53,8 +53,7 @@ fetch_and_run() {
         echo -e "${RED}错误：所有代理通道均已失败，请检查网络连接。${RESET}"
         exit 1
     fi
-}  }
-}
+}  
 
 # 安装逻辑判断
 case "$OS" in
