@@ -10,9 +10,9 @@ YELLOW="\033[33m"
 BLUE="\033[36m"
 RESET="\033[0m"
 
-echo -e "${BLUE}==============================${RESET}"
-echo -e "${GREEN}     VPS 安全扫描工具        ${RESET}"
-echo -e "${BLUE}==============================${RESET}"
+echo -e "${GREEN}==============================${RESET}"
+echo -e "${GREEN}    ◈   安全扫描工具   ◈      ${RESET}"
+echo -e "${GREEN}==============================${RESET}"
 
 # 必须 root
 if [ "$EUID" -ne 0 ]; then
