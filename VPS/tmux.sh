@@ -187,7 +187,7 @@ while true; do
         5) open_workspace "work5" ;;
         6) delete_workspace ;;
         7) show_status ;;
-        0) echo -e "${YELLOW}已安全退出工作区控制台，您的后台任务仍在安全运行！${RESET}"; exit 0 ;;
+        0) exit 0 ;;
         *) echo -e "${RED}❌ 无效指令，请重新输入！${RESET}"; sleep 1 ;;
     esac
 done
