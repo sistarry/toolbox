@@ -2728,7 +2728,7 @@ show_main_menu() {
 
 
     echo -e "${COLOR_GREEN}================================${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}     BBR V3/ XanMod 网络调优     ${COLOR_RESET}"
+    echo -e "${COLOR_GREEN} ◈  BBR V3/ XanMod 网络调优  ◈  ${COLOR_RESET}"
     echo -e "${COLOR_GREEN}================================${COLOR_RESET}"
     echo -e "${COLOR_GREEN}XanMod :${COLOR_RESET} ${COLOR_YELLOW}${kernel_line}${COLOR_RESET}"
     echo -e "${COLOR_GREEN}BBR    :${COLOR_RESET} ${COLOR_YELLOW}${bbr_line}${COLOR_RESET}"
