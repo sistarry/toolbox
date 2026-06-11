@@ -12,9 +12,9 @@ RESET='\033[0m'
 work_dir="/etc/argo" 
 
 status_check() {
-    echo -e "${ORANGE}╔══════════════════════════╗${RESET}"
-    echo -e "${ORANGE}       核心状态检测          ${RESET}"
-    echo -e "${ORANGE}╚══════════════════════════╝${RESET}"
+    echo -e "${ORANGE}========================================${RESET}"
+    echo -e "${ORANGE}       ◈      代理工具检测     ◈        ${RESET}"
+    echo -e "${ORANGE}========================================${RESET}"
     echo ""
 
     format_status() {
