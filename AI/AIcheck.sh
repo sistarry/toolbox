@@ -12,7 +12,7 @@ B='\033[0;34m'   # 蓝色 (Blue)
 NC='\033[0m'     # 无颜色 (No Color)
 
 echo -e "${G}========================================${NC}"
-echo -e "${G}            AI 工具检测           ${NC}"
+echo -e "${G}       ◈      AI 工具检测      ◈       ${NC}"
 echo -e "${G}========================================${NC}"
 
 # 树状格式化输出函数
@@ -98,7 +98,7 @@ if command -v codex &> /dev/null; then
 else
     loc="未安装"; ver=""; status=""
 fi
-print_result "Codex CLI (OpenAI)" "$loc" "$ver" "$status"
+print_result "Codex CLI" "$loc" "$ver" "$status"
 
 # 3. Gemini CLI 检测
 if command -v gemini &> /dev/null; then
