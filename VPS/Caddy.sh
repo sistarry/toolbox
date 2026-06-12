@@ -809,7 +809,7 @@ menu() {
         echo -e "${GREEN} 4. 修改配置${RESET}"
         echo -e "${GREEN} 5. 删除站点${RESET}"
         echo -e "${GREEN} 6. 查看证书信息${RESET}"
-        echo -e "${GREEN} 7. Emby反代管理${RESET}"
+        echo -e "${GREEN} 7. Emby反代配置${RESET}"
         echo -e "${GREEN} 8. 查看证书状态${RESET}"
         echo -e "${GREEN} 9. 重载配置${RESET}"
         echo -e "${GREEN}10. 查看日志${RESET}"
