@@ -18,14 +18,13 @@ if [[ "$0" != "$LOCAL_SCRIPT" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     curl -fsSL -o "$LOCAL_SCRIPT.tmp" "$REMOTE_URL" || {
-        echo "下载失败"
+        echo "安装失败"
         exit 1
     }
 
     if [[ ! -f "$LOCAL_SCRIPT" ]] || ! cmp -s "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"; then
         mv "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"
         chmod +x "$LOCAL_SCRIPT"
-        echo "${GREEN}已安装/更新到最新版本${RESET}"
     else
         rm -f "$LOCAL_SCRIPT.tmp"
     fi
