@@ -14,14 +14,13 @@ if [[ "$0" != "$LOCAL_SCRIPT" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     curl -fsSL -o "$LOCAL_SCRIPT.tmp" "$REMOTE_URL" || {
-        echo "下载失败"
+        echo "安装失败"
         exit 1
     }
 
     if [[ ! -f "$LOCAL_SCRIPT" ]] || ! cmp -s "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"; then
         mv "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"
         chmod +x "$LOCAL_SCRIPT"
-        echo "已安装/更新到最新版本"
     else
         rm -f "$LOCAL_SCRIPT.tmp"
     fi
@@ -180,19 +179,19 @@ restore() {
     # =========================
     # 校验
     # =========================
-    if [[ ! -d /root/.acme.sh || ! -d /root/ssl ]]; then
-        echo -e "${RED}恢复失败：文件未正确解压${RESET}"
+    if [[ ! -d "$ACME_HOME" || ! -d "$SSL_DIR" ]]; then
+        echo -e "${RED}恢复失败：文件未正确解压，找不到证书目录${RESET}"
         return
     fi
 
     # =========================
     # 修复权限（关键）
     # =========================
-    chmod 755 /root/.acme.sh/acme.sh 2>/dev/null
-    chmod -R 755 /root/.acme.sh 2>/dev/null
-    chmod -R 600 /root/.acme.sh/*.conf 2>/dev/null
+    chmod 755 "$ACME_HOME/acme.sh" 2>/dev/null
+    chmod -R 755 "$ACME_HOME" 2>/dev/null
+    chmod -R 600 "$ACME_HOME"/*.conf 2>/dev/null
 
-    chmod -R 600 /root/ssl 2>/dev/null
+    chmod -R 600 "$SSL_DIR" 2>/dev/null
 
     # =========================
     # 恢复 cron（关键）
@@ -257,18 +256,36 @@ fi
 #################################
 # 菜单
 #################################
+#################################
+# 菜单
+#################################
 while true; do
     clear
-    echo -e "${GREEN}==== ACME备份恢复====${RESET}"
+    
+    # ---- 动态获取定时任务状态 ----
+    if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+        CRON_STATUS="${YELLOW}已开启${RESET}"
+    else
+        CRON_STATUS="${RED}已关闭${RESET}"
+    fi
+
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}      ◈  ACME 证书备份系统  ◈      ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$DATA_DIR${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
+    echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 立即备份${RESET}"
     echo -e "${GREEN}2. 恢复备份${RESET}"
     echo -e "${GREEN}3. 设置定时任务${RESET}"
     echo -e "${GREEN}4. 删除定时任务${RESET}"
-    echo -e "${GREEN}5. 设置备份目录(当前: $DATA_DIR)${RESET}"
-    echo -e "${GREEN}6. 设置保留天数(当前: $RETAIN_DAYS 天)${RESET}"
-    echo -e "${GREEN}7. 设置Telegram${RESET}"
-    echo -e "${GREEN}8. 查看定时任务${RESET}"
+    echo -e "${GREEN}5. 设置备份目录${RESET}"
+    echo -e "${GREEN}6. 设置保留天数${RESET}"
+    echo -e "${GREEN}7. 设置Telegram通知${RESET}"
+    echo -e "${GREEN}8. 查看定时任务详情${RESET}"
     echo -e "${GREEN}9. 卸载${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
 
     read -r -p $'\033[32m选择: \033[0m' c
@@ -277,25 +294,46 @@ while true; do
         2) restore ;;
         3) add_cron ;;
         4) remove_cron ;;
-        5) read -p "备份目录: " DATA_DIR; mkdir -p "$DATA_DIR"; save_config ;;
-        6) read -p "备份文件保留天数: " RETAIN_DAYS; save_config ;;
+        5) 
+            read -p "备份目录: " input_dir
+            if [[ -n "$input_dir" ]]; then
+                DATA_DIR="$input_dir"
+                mkdir -p "$DATA_DIR"
+                save_config
+                echo -e "${GREEN}✅ 备份目录已更新${RESET}"
+            else
+                echo -e "${YELLOW}⚠️ 未输入有效目录，保持原样${RESET}"
+            fi
+            ;;
+        6) 
+            read -p "备份文件保留天数: " input_days
+            if [[ "$input_days" =~ ^[0-9]+$ ]]; then
+                RETAIN_DAYS="$input_days"
+                save_config
+                echo -e "${GREEN}✅ 保留天数已更新${RESET}"
+            else
+                echo -e "${RED}❌ 输入无效，请输入纯数字${RESET}"
+            fi
+            ;;
         7)
             read -p "服务器名称(默认: $(hostname)): " SERVICE_NAME
             SERVICE_NAME=${SERVICE_NAME:-$(hostname)}
             read -p "TG TOKEN: " TG_TOKEN
             read -p "CHAT ID: " TG_CHAT_ID
             save_config
+            echo -e "${GREEN}✅ Telegram 配置已更新${RESET}"
             ;;
         8) show_cron ;;
         9)
-           echo -e "${YELLOW}正在卸载...${RESET}"
-           crontab -l 2>/dev/null | grep -v "$CRON_TAG" | crontab -
-           rm -rf "$INSTALL_DIR"
-           echo -e "${RED}卸载完成${RESET}"
-           exit 0
-           ;;
+            echo -e "${YELLOW}正在卸载...${RESET}"
+            crontab -l 2>/dev/null | grep -v "$CRON_TAG" | crontab -
+            rm -rf "$INSTALL_DIR"
+            echo -e "${RED}卸载完成${RESET}"
+            exit 0
+            ;;
         0) exit ;;
+        *) echo -e "${RED}❌ 无效选择${RESET}" ;;
     esac
 
-    read -p "回车继续..."
+    read -p "按回车继续..."
 done
