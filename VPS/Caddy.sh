@@ -653,11 +653,14 @@ EOF
 emby_proxy_menu() {
     while true; do
         clear
-        echo -e "${GREEN}==== Emby 反代管理 ====${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}    ◈    Emby 反代管理    ◈    ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1. 普通反代(80申请证书)${RESET}"
         echo -e "${GREEN}2. 主站+推流重定向(80申请证书)${RESET}"
         echo -e "${GREEN}3. 普通反代(自定义证书)${RESET}"
         echo -e "${GREEN}0. 返回主菜单${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -ne "${GREEN}请选择: ${RESET}" 
         read -r emby_choice
 
