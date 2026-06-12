@@ -15,7 +15,7 @@ Tip="${YELLOW}[提示]${NC}"
 cop_info(){
     clear
     echo -e "${GREEN}=======================================${RESET}"
-    echo -e "${GREEN}◈  DDNS 自动化管理面板(快捷指令ddns)  ◈ ${RESET}"
+    echo -e "${GREEN}◈  DDNS 自动化管理面板${RESET}${YELLOW}(快捷指令ddns)${RESET} ${GREEN} ◈ ${RESET}"
     echo -e "${GREEN}=======================================${RESET}"
 }
 
