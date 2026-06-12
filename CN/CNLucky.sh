@@ -55,7 +55,9 @@ get_public_ip() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== Lucky 管理菜单 ===${RESET}"
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN}  ◈  Lucky 管理菜单  ◈ ${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
@@ -63,6 +65,7 @@ menu() {
         echo -e "${GREEN}5) 查看状态${RESET}"
         echo -e "${GREEN}6) 卸载${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
         case $choice in
