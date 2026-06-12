@@ -275,8 +275,8 @@ while true; do
     echo -e "${GREEN}6. 设置保留天数${RESET}"
     echo -e "${GREEN}7. 设置Telegram通知${RESET}"
     echo -e "${GREEN}8. 卸载${RESET}"
-    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
 
     read -p "$(echo -e ${GREEN}选择: ${RESET})" c
 
