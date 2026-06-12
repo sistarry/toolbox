@@ -680,6 +680,7 @@ main() {
     check_root
     
     while true; do
+        clear
         # 1. 动态获取状态信息
         local version=$(get_current_version)
         
