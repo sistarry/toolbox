@@ -272,7 +272,7 @@ while true; do
     echo -e "${GREEN}    ◈  Nginx 备份菜单  ◈   ${RESET}"
     echo -e "${GREEN}============================${RESET}"
     echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$DATA_DIR${RESET}"
-    echo -e "${CYAN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
     echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
     echo -e "${GREEN}============================${RESET}"
     echo -e "${GREEN}1. 立即备份${RESET}"
