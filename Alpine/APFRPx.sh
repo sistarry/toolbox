@@ -192,13 +192,18 @@ update_status_variables() {
 }
 
 select_role() {
-    clear
-    echo -e "${YELLOW}[自动检测] 当前本机未检测到已初始化的 FRP 服务端或客户端。${RESET}"
-    echo "请选择本机角色："
-    echo "1) FRPS 服务端 (用于公网VPS)"
-    echo "2) FRPC 客户端 (用于内网/被穿透设备)"
-    
-    read -p "输入 1 或 2 并回车: " role </dev/tty
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}      ◈     FRP 初始化安装     ◈       ${RESET}"
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${YELLOW}提示：当前本机未检测到已初始化的 FRP 服务端或客户端。${RESET}"
+    echo -e "${YELLOW}请选择本机角色："
+    echo -e "${GREEN}========================================${RESET}"
+    echo -e "${GREEN}1) FRPS 服务端 (用于公网VPS)${RESET}"
+    echo -e "${GREEN}2) FRPC 客户端 (用于内网/被穿透设备)${RESET}"
+    echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}========================================${RESET}"  
+    echo -ne "${GREEN}请输入选项: ${RESET}"
+    read role </dev/tty
     
     mkdir -p "$FRP_INSTALL_DIR"
     case $role in
@@ -210,8 +215,7 @@ select_role() {
             echo "client" > "$ROLE_FILE" 
             client_menu
             ;;
-        *) 
-            echo "输入无效，退出。"
+        0) 
             exit 1 
             ;;
     esac
