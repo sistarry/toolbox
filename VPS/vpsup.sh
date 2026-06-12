@@ -738,23 +738,23 @@ clean_system() {
     
     case "$OS_TYPE" in
         debian)
-            log "${BLUE}正在清理 Debian/Ubuntu 缓存...${NC}"
+            log "${YELLOW}正在清理 Debian/Ubuntu 缓存...${NC}"
             apt-get autoremove -y >> "$LOG_FILE" 2>&1
             apt-get autoclean -y >> "$LOG_FILE" 2>&1
             apt-get clean -y >> "$LOG_FILE" 2>&1
             ;;
         rhel)
-            log "${BLUE}正在清理 RHEL/CentOS 缓存...${NC}"
+            log "${YELLOW}正在清理 RHEL/CentOS 缓存...${NC}"
             yum autoremove -y >> "$LOG_FILE" 2>&1
             yum clean all >> "$LOG_FILE" 2>&1
             ;;
         alpine)
-            log "${BLUE}正在清理 Alpine 缓存...${NC}"
+            log "${YELLOW}正在清理 Alpine 缓存...${NC}"
             rm -rf /var/cache/apk/*
             ;;
     esac
 
-    log "${BLUE}正在清理临时文件与系统日志...${NC}"
+    log "${YELLOW}正在清理临时文件与系统日志...${NC}"
     # 清理日志文件 (保留目录结构，清空内容)
     find /var/log -type f -regex '.*\.gz$\|.*\.[0-9]$.*\.log$' -exec truncate -s 0 {} + 2>/dev/null || true
     
@@ -819,7 +819,7 @@ show_vps_info() {
     local dns_v4_display="${PRIMARY_DNS_V4:-8.8.8.8}, ${SECONDARY_DNS_V4:-1.1.1.1}"
     local dns_v6_display="${PRIMARY_DNS_V6:-2606:4700:4700::1111}"
 
-    echo -e "${CYAN}================== VPS信息 ==================${NC}"
+    echo -e "${GREEN}================== VPS信息 ==================${NC}"
     echo -e "${YELLOW}主机名: ${hostname_display}${NC}"
     echo -e "${YELLOW}时区: ${TIMEZONE:-Asia/Shanghai}${NC}"
     echo -e "${YELLOW}Swap: ${swap_display}${NC}"
@@ -829,7 +829,7 @@ show_vps_info() {
     echo -e "${YELLOW}Fail2ban: ${fail2ban_display}${NC}"
     echo -e "${YELLOW}Docker: ${docker_display}${NC}"
     echo -e "${YELLOW}SSH端口: ${ssh_display}${NC}"
-    echo -e "${CYAN}==============================================${NC}"
+    echo -e "${GREEN}=============================================${NC}"
 }
 
 # -----------------------------
@@ -840,14 +840,14 @@ main() {
     root_check
 
    # ================= 修改后：默认确认逻辑 =================
-    echo -e "${GREEN}======================================================${NC}"
-    echo -e "${GREEN}         ◈     欢迎使用 VPS 一键优化     ◈           ${NC}"
-    echo -e "${GREEN}======================================================${NC}"
+    echo -e "${GREEN}=============================================${NC}"
+    echo -e "${GREEN}     ◈     欢迎使用 VPS 一键优化     ◈       ${NC}"
+    echo -e "${GREEN}=============================================${NC}"
     echo -e "${YELLOW}本脚本将执行：系统更新、BBR调优、防火墙放行、DNS设置、${NC}"
     echo -e "${YELLOW}Swap配置、SSH加固、Docker安装、垃圾清理等一系列操作。${NC}"
     echo -e "${YELLOW}注意：运行结束后会自动重启服务器。${NC}"
     echo -e "${YELLOW}注意: Alpine/容器/轻量级虚拟化 (LXC/Docker/OpenVZ)不支持${NC}"
-    echo -e "${GREEN}------------------------------------------------------${NC}"
+    echo -e "${GREEN}---------------------------------------------${NC}"
 
     if [[ "$non_interactive" = false ]]; then
         read -p "是否确认开始优化? [y/n]: " -r CONFIRM
@@ -878,11 +878,11 @@ main() {
     fi
 
     if [ "$IS_CONTAINER" = true ]; then
-        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${YELLOW}❌ 错误: 检测到当前环境为虚拟化容器: ${VIRT_TYPE}${NC}"
         echo -e "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${NC}"
         echo -e "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${NC}"
-        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         exit 1
     fi
     # ----------------------------------
