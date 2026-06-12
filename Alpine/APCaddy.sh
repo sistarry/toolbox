@@ -675,11 +675,14 @@ EOF
 emby_proxy_menu() {
     while true; do
         clear
-        echo -e "${GREEN}==== Emby 反代管理 ====${RESET}"
-        echo -e "${GREEN}1. 普通反代(自动申请证书)${RESET}"
-        echo -e "${GREEN}2. 主站+推流重定向(自动申请证书)${RESET}"
-        echo -e "${GREEN}3. 普通反代(使用自定义证书)${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}    ◈    Emby 反代管理    ◈    ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}1. 普通反代(80申请证书)${RESET}"
+        echo -e "${GREEN}2. 主站+推流重定向(80申请证书)${RESET}"
+        echo -e "${GREEN}3. 普通反代(自定义证书)${RESET}"
         echo -e "${GREEN}0. 返回主菜单${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -ne "${GREEN}请选择: ${RESET}" 
         read -r emby_choice
         case $emby_choice in
@@ -774,6 +777,59 @@ view_caddy_logs() {
     pause
 }
 
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_backup_restore() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APCaddybackup.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+    pause
+}
+
 menu() {
     while true; do
         clear
@@ -785,18 +841,19 @@ menu() {
         echo -e "${GREEN}版本   :${RESET} ${YELLOW}$VERSION_SHOW${RESET}"
         echo -e "${GREEN}站点   :${RESET} ${YELLOW}$SITE_COUNT 个${RESET}"
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN} 1. 安装Caddy${RESET}"
-        echo -e "${GREEN} 2. 添加站点(自动申请)${RESET}"
-        echo -e "${GREEN} 3. 修改配置${RESET}"
-        echo -e "${GREEN} 4. 添加站点(自定义证书)${RESET}"
+        echo -e "${GREEN} 1. 安装 Caddy${RESET}"
+        echo -e "${GREEN} 2. 添加站点(80申请证书)${RESET}"
+        echo -e "${GREEN} 3. 添加站点(自定义证书)${RESET}"
+        echo -e "${GREEN} 4. 修改配置${RESET}"
         echo -e "${GREEN} 5. 删除站点${RESET}"
         echo -e "${GREEN} 6. 查看证书信息${RESET}"
-        echo -e "${GREEN} 7. Emby反代管理${RESET}"
+        echo -e "${GREEN} 7. Emby反代配置${RESET}"
         echo -e "${GREEN} 8. 查看证书状态${RESET}"
-        echo -e "${GREEN} 9. 重载Caddy配置${RESET}"
-        echo -e "${GREEN}10. 查看Caddy日志${RESET}"
-        echo -e "${GREEN}11. 更新Caddy${RESET}"
-        echo -e "${GREEN}12. 卸载Caddy${RESET}"
+        echo -e "${GREEN} 9. 重载配置${RESET}"
+        echo -e "${GREEN}10. 查看日志${RESET}"
+        echo -e "${GREEN}11. 更新 Caddy${RESET}"
+        echo -e "${GREEN}12. 卸载 Caddy${RESET}"
+        echo -e "${GREEN}13. 备份恢复${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -ne "${GREEN} 请选择: ${RESET}"
@@ -805,8 +862,8 @@ menu() {
         case $choice in
             1) install_caddy ;;
             2) add_site ;;
-            3) modify_site ;;
-            4) add_site_with_cert ;;
+            3) add_site_with_cert ;;
+            4) modify_site ;;
             5) delete_site ;;
             6) view_sites ;;
             7) emby_proxy_menu ;;
@@ -815,6 +872,7 @@ menu() {
             10) view_caddy_logs ;;
             11) update_caddy ;;
             12) uninstall_caddy ;;
+            13) run_backup_restore ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选项${RESET}"; pause ;;
         esac
