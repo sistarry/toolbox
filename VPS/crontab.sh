@@ -193,7 +193,7 @@ while true; do
 
 
     if crontab -l >/dev/null 2>&1; then
-        TASK_COUNT=$(crontab -l 2>/dev/null | grep -v '^\s*#' | grep -vE '^(LANG|LC_ALL|LANGUAGE)=' | grep -v 'run-parts' | grep -v '/etc/periodic' | grep '[^\s]' | wc -l | tr -d ' ')
+        TASK_COUNT=$(crontab -l 2>/dev/null | grep -v '^\s*#' | grep -vE '^[A-Za-z0-9_]+=' | grep -v 'run-parts' | grep -v '/etc/periodic' | grep '[^\s]' | wc -l | tr -d ' ')
     else
         TASK_COUNT=0
     fi
@@ -208,7 +208,7 @@ while true; do
     
 
     if [ "$TASK_COUNT" -gt 0 ]; then
-        crontab -l 2>/dev/null | grep -v '^\s*#' | grep -vE '^(LANG|LC_ALL|LANGUAGE)=' | grep -v 'run-parts' | grep -v '/etc/periodic' | grep '[^\s]' | awk '{print "   • " $0}'
+        crontab -l 2>/dev/null | grep -v '^\s*#' | grep -vE '^[A-Za-z0-9_]+=' | grep -v 'run-parts' | grep -v '/etc/periodic' | grep '[^\s]' | awk '{print "   • " $0}'
     else
         echo -e "   ${YELLOW}(暂无用户自定义的定时任务)${RESET}"
     fi
