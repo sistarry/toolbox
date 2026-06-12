@@ -42,7 +42,7 @@ check_network() {
 
 # 重装系统函数
 reinstall_os() {
-    clear
+
     echo -e "${yellow}重装系统将无法恢复数据，请提前做好备份${re}"
     echo -e "${yellow}注意：NAT重装后SSH端口密码保持原端口密码不变${re}"
     
