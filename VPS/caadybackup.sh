@@ -18,14 +18,13 @@ if [[ "$0" != "$LOCAL_SCRIPT" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     curl -fsSL -o "$LOCAL_SCRIPT.tmp" "$REMOTE_URL" || {
-        echo "下载失败"
+        echo "安装失败"
         exit 1
     }
 
     if [[ ! -f "$LOCAL_SCRIPT" ]] || ! cmp -s "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"; then
         mv "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"
         chmod +x "$LOCAL_SCRIPT"
-        echo "已安装/更新到最新版本"
     else
         rm -f "$LOCAL_SCRIPT.tmp"
     fi
@@ -248,27 +247,65 @@ fi
 #################################
 # 菜单
 #################################
+#################################
+# 菜单
+#################################
 while true; do
     clear
-    echo -e "${CYAN}==== Caddy 备份系统====${RESET}"
+    
+    # ---- 动态获取定时任务状态 ----
+    if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+        CRON_STATUS="${YELLOW}已开启${RESET}"
+    else
+        CRON_STATUS="${RED}已关闭${RESET}"
+    fi
+
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}       ◈  Caddy 备份系统  ◈        ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$DATA_DIR${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
+    echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 立即备份${RESET}"
     echo -e "${GREEN}2. 恢复备份${RESET}"
     echo -e "${GREEN}3. 设置定时任务${RESET}"
     echo -e "${GREEN}4. 删除定时任务${RESET}"
-    echo -e "${GREEN}5. 设置备份目录(当前: $DATA_DIR)${RESET}"
-    echo -e "${GREEN}6. 设置保留天数(当前: $RETAIN_DAYS 天)${RESET}"
+    echo -e "${GREEN}5. 设置备份目录${RESET}"
+    echo -e "${GREEN}6. 设置保留天数${RESET}"
     echo -e "${GREEN}7. 设置Telegram通知${RESET}"
     echo -e "${GREEN}8. 卸载${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
 
     read -p "$(echo -e ${GREEN}选择: ${RESET})" c
+
     case $c in
         1) backup ;;
         2) restore ;;
         3) add_cron ;;
         4) remove_cron ;;
-        5) read -p "新目录: " DATA_DIR; mkdir -p "$DATA_DIR"; save_config ;;
-        6) read -p "保留天数: " RETAIN_DAYS; save_config ;;
+        5) 
+            read -p "新目录: " input_dir
+            if [[ -n "$input_dir" ]]; then
+                DATA_DIR="$input_dir"
+                mkdir -p "$DATA_DIR"
+                save_config
+                echo -e "${GREEN}✅ 备份目录已更新${RESET}"
+            else
+                echo -e "${YELLOW}未输入有效目录，保持原样${RESET}"
+            fi
+            ;;
+        6) 
+            read -p "保留天数: " input_days
+            if [[ "$input_days" =~ ^[0-9]+$ ]]; then
+                RETAIN_DAYS="$input_days"
+                save_config
+                echo -e "${GREEN}✅ 保留天数已更新${RESET}"
+            else
+                echo -e "${RED}❌ 输入无效，请输入纯数字${RESET}"
+            fi
+            ;;
         7) set_tg ;;
         8)
             echo -e "${YELLOW}正在卸载...${RESET}"
@@ -278,7 +315,8 @@ while true; do
             exit 0
             ;;
         0) exit 0 ;;
+        *) echo -e "${RED}❌ 无效选择${RESET}" ;;
     esac
 
-    read -p "$(echo -e ${GREEN}回车继续....${RESET})"
+    read -p "$(echo -e ${GREEN}按回车继续...${RESET})"
 done
