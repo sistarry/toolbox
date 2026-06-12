@@ -592,7 +592,7 @@ check_domains_status() {
 uninstall_nginx() {
     clear
     echo -e "${RED}========================================${RESET}"
-    echo -e "${RED}        ⚠️ 警告：正在执行完全卸载 ⚠️         ${RESET}"
+    echo -e "${RED}         警告：正在执行完全卸载           ${RESET}"
     echo -e "${RED}========================================${RESET}"
     echo -e "${RED}此操作将会：${RESET}"
     echo -e "${YELLOW} 1. 停止并删除 Nginx 服务以及主程序${RESET}"
@@ -600,7 +600,7 @@ uninstall_nginx() {
     echo -e "${YELLOW} 3. 卸载 Certbot 并清空所有申请的 SSL 证书 (/etc/letsencrypt)${RESET}"
     echo -e "${RED}----------------------------------------${RESET}"
     
-    echo -ne "${RED}💥 确定要完全卸载 Nginx 及所有站点证书吗？(y/N, 默认N): ${RESET}"
+    echo -ne "${RED}确定要完全卸载 Nginx 及所有站点证书吗？(y/N, 默认N): ${RESET}"
     read un_choice
     if [[ ! "$un_choice" =~ ^[Yy]$ ]]; then
         echo -e "${GREEN}⏭ 已取消卸载，未做任何变更。${RESET}"
@@ -693,6 +693,59 @@ emby_menu() {
     pause
 }
 
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_backup_restore() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APNginxbackup.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+    pause
+}
+
 # ------------------------------
 # 主循环控制看板菜单
 # ------------------------------
@@ -710,17 +763,17 @@ while true; do
     echo -e "${GREEN} 站点 :${RESET}  ${YELLOW}${SITE_COUNT} 个${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN} 1. 安装 Nginx${RESET}"
-    echo -e "${GREEN} 2. 添加配置 (Certbot托管)${RESET}"
-    echo -e "${GREEN} 3. 添加配置 (自定义证书)${RESET}"
+    echo -e "${GREEN} 2. 添加配置(80申请证书)${RESET}"
+    echo -e "${GREEN} 3. 添加配置(自定义证书)${RESET}"
     echo -e "${GREEN} 4. 修改配置${RESET}"
     echo -e "${GREEN} 5. 删除配置${RESET}"
     echo -e "${GREEN} 6. 测试证书续期${RESET}"
     echo -e "${GREEN} 7. 查看证书信息${RESET}"
     echo -e "${GREEN} 8. 查看证书状态${RESET}"
-    echo -e "${GREEN} 9. Emby反代配置${RESET}"
-    echo -e "${GREEN}10. 重载Nginx${RESET}"
-    echo -e "${GREEN}11. 更新Nginx${RESET}"
-    echo -e "${GREEN}12. 卸载Nginx${RESET}"
+    echo -e "${GREEN} 9. 重载配置${RESET}"
+    echo -e "${GREEN}10. 更新 Nginx${RESET}"
+    echo -e "${GREEN}11. 卸载 Nginx${RESET}"
+    echo -e "${GREEN}12. 备份恢复${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -ne "${GREEN} 请选择 : ${RESET}"
@@ -735,10 +788,10 @@ while true; do
         6) test_renew ;;
         7) check_cert ;;
         8) check_domains_status ;;
-        9) emby_menu ;;
-        10) reload_nginx ;;
-        11) update_nginx_software ;;
-        12) uninstall_nginx ;;
+        9) reload_nginx ;;
+        10) update_nginx_software ;;
+        11) uninstall_nginx ;;
+        12) run_backup_restore ;;
         0) exit 0 ;;
         *) echo -e "${RED}输入有误！${RESET}"; sleep 1 ;;
     esac
