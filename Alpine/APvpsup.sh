@@ -41,7 +41,7 @@ detect_environment() {
     else
         VIRT_TYPE="独立虚拟机/物理机 (KVM/XEN/VMware)"
     fi
-    log "${YELLOW}当前运行环境: ${VIRT_TYPE}${RESET}"
+    log "${GREEN}当前运行环境:${RESET} ${RED}${VIRT_TYPE}${RESET}"
     log "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${RESET}"
     log "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${RESET}"
     log "${YELLOW}注意：运行结束后会自动重启服务器。${RESET}"
@@ -50,10 +50,10 @@ detect_environment() {
 # 2. 系统更新与依赖安装
 update_system() {
     log "\n${YELLOW}=============== 1. 系统更新与依赖 ===============${RESET}"
-    log "${BLUE}正在更新 apk 软件源...${RESET}"
+    log "${GREEN}正在更新 apk 软件源...${RESET}"
     apk update && apk upgrade
     
-    log "${BLUE}正在安装基础依赖工具...${RESET}"
+    log "${GREEN}正在安装基础依赖工具...${RESET}"
     for pkg in $deps; do
         if ! apk info -e "$pkg" >/dev/null 2>&1; then
             apk add "$pkg"
@@ -101,7 +101,7 @@ configure_firewall() {
     log "\n${YELLOW}=============== 4. 防火墙完全放行 ===============${RESET}"
     
     if command -v iptables >/dev/null 2>&1; then
-        log "${BLUE}[INFO] 正在清理 iptables 规则...${RESET}"
+        log "${GREEN}[INFO] 正在清理 iptables 规则...${RESET}"
         iptables -F 2>/dev/null || true
         iptables -X 2>/dev/null || true
         iptables -P INPUT ACCEPT 2>/dev/null || true
@@ -125,7 +125,7 @@ configure_bbr() {
         return 0
     fi
     
-    log "${BLUE}正在配置优化级内核参数...${RESET}"
+    log "${GREEN}正在配置优化级内核参数...${RESET}"
     local config_file="/etc/sysctl.d/99-bbr.conf"
     
     cat > "$config_file" << EOF
@@ -154,7 +154,7 @@ EOF
 # 7. 传统 DNS 配置
 configure_dns() {
     log "\n${YELLOW}=============== 6. DNS 配置 ===============${RESET}"
-    log "${BLUE}正在修改 /etc/resolv.conf...${RESET}"
+    log "${GREEN}正在修改 /etc/resolv.conf...${RESET}"
     
     chattr -i /etc/resolv.conf 2>/dev/null || true
     
@@ -188,7 +188,7 @@ configure_swap() {
         return 0
     fi
     
-    log "${BLUE}正在为 Alpine 激活并挂载 1GB 兼容性 Swap...${RESET}"
+    log "${GREEN}正在为 Alpine 激活并挂载 1GB 兼容性 Swap...${RESET}"
     
     # 彻底卸载可能残留的坏文件
     swapoff /swapfile 2>/dev/null || true
@@ -279,7 +279,7 @@ configure_ssh() {
 
         # 如果没有被跳过，则执行删除和生成，并自动关闭密码登录
         if [ "$skip_key" = false ]; then
-            log "${BLUE}正在为当前服务器自动生成专属 SSH 登录密钥对...${RESET}"
+            log "${GREEN}正在为当前服务器自动生成专属 SSH 登录密钥对...${RESET}"
             rm -f "$key_file" "${key_file}.pub"
             
             # 免交互生成密钥
@@ -325,7 +325,7 @@ configure_fail2ban() {
         return 0
     fi
     
-    log "${BLUE}正在安装 Fail2ban...${RESET}"
+    log "${GREEN}正在安装 Fail2ban...${RESET}"
     apk add fail2ban >/dev/null
 
     mkdir -p /etc/fail2ban/jail.d
@@ -355,7 +355,7 @@ EOF
 install_tools() {
     log "\n${YELLOW}=============== 10. 实用工具集安装 ===============${RESET}"
     
-    log "${BLUE}配置 Alpine 原生 dcron 计划任务服务...${RESET}"
+    log "${GREEN}配置 Alpine 原生 dcron 计划任务服务...${RESET}"
     if [ -f /etc/init.d/crond ]; then
         rc-update add crond default >/dev/null 2>&1 || true
         rc-service crond start >/dev/null 2>&1 || true
@@ -395,7 +395,7 @@ docker_install() {
         fi
     fi
     
-    log "${BLUE}开始安装 Docker 引擎与 Docker-Compose...${RESET}"
+    log "${GREEN}开始安装 Docker 引擎与 Docker-Compose...${RESET}"
     apk add docker docker-cli docker-cli-compose >/dev/null
     
     # ==================== 新增：智能判断国家并配置加速 ====================
