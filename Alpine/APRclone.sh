@@ -79,27 +79,28 @@ get_system_status() {
 show_menu() {
     clear
     get_system_status
-    
+
     echo -e "${GREEN}========================================${RESET}"
     echo -e "${CYAN} [ Rclone 管理 ]${RESET}"
-    echo -e "${GREEN} 1) 安装 Rclone${RESET}       ${GREEN} 2) 更新 Rclone${RESET}"
-    echo -e "${GREEN} 3) 配置 Rclone${RESET}       ${GREEN} 4) 查看远程存储列表${RESET}"
-    echo -e "${GREEN} 5) 查看远程存储文件${RESET}"
+    echo -e "${GREEN} 1. 安装 Rclone${RESET}       ${GREEN} 2. 更新 Rclone${RESET}"
+    echo -e "${GREEN} 3. 配置 Rclone${RESET}       ${GREEN} 4. 查看远程存储列表${RESET}"
+    echo -e "${GREEN} 5. 查看远程存储文件${RESET}"
     echo -e "${GREEN}----------------------------------------${RESET}"
     echo -e "${CYAN} [ 挂载管理 (配置开机自启) ]${RESET}"
-    echo -e "${GREEN} 6) 挂载网盘 ${RESET}         ${GREEN} 7) 查看已创建的资产清单${RESET}"
-    echo -e "${GREEN} 8) 卸载指定挂载点${RESET}    ${GREEN} 9) 卸载所有挂载点${RESET}"
-    echo -e "${GREEN}10) 查看挂载运行状态${RESET}  ${GREEN}11) 查看挂载实时日志${RESET}"
+    echo -e "${GREEN} 6. 挂载网盘 ${RESET}         ${GREEN} 7. 查看已创建的资产清单${RESET}"
+    echo -e "${GREEN} 8. 卸载指定挂载点${RESET}    ${GREEN} 9. 卸载所有挂载点${RESET}"
+    echo -e "${GREEN}10. 查看挂载运行状态${RESET}  ${GREEN}11. 查看挂载实时日志${RESET}"
     echo -e "${GREEN}----------------------------------------${RESET}"
     echo -e "${CYAN} [ 数据同步与任务 ]${RESET}"
-    echo -e "${GREEN}12) 同步 本地 → 远程${RESET}  ${GREEN}13) 同步 远程 → 本地${RESET}"
-    echo -e "${GREEN}14) 定时任务管理${RESET}"
+    echo -e "${GREEN}12. 同步 本地 → 远程${RESET}  ${GREEN}13. 同步 远程 → 本地${RESET}"
+    echo -e "${GREEN}14. 定时任务管理${RESET}"
     echo -e "${GREEN}----------------------------------------${RESET}"
     echo -e "${CYAN} [ 全局设置与常规 ]${RESET}"
-    echo -e "${GREEN}15) 修改TG通知参数${RESET}    ${GREEN}16) 卸载 Rclone${RESET}"
+    echo -e "${GREEN}15. 修改TG通知参数${RESET}    ${GREEN}16. 卸载 Rclone${RESET}"
     echo -e "${GREEN}----------------------------------------${RESET}"
-    echo -e "${GREEN} 0) 退出${RESET}"
+    echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}========================================${RESET}"
+  
 }
 
 # ================== 基础操作 ==================
