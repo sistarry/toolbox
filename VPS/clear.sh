@@ -199,7 +199,6 @@ run_backup_restore() {
     else
         echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
     fi
-    pause
 }
 
 
