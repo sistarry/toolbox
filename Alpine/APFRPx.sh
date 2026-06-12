@@ -610,7 +610,7 @@ log_frpc() {
 show_frps_dashboard_info() {
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}       FRPS 面板详情        ${RESET}"
+    echo -e "${GREEN}     ◈   FRPS 面板详情   ◈     ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     if [ -f "$FRP_INSTALL_DIR/frps.toml" ]; then
         local DASH_HOST=$(awk -F'=' '/webServer\.addr/{gsub(/[ "]/,"",$2);print $2}' "$FRP_INSTALL_DIR/frps.toml")
@@ -642,7 +642,7 @@ server_menu() {
         update_status_variables
         clear
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}        FRPS 服务端管理面板     ${RESET}"
+        echo -e "${GREEN}    ◈  FRPS 服务端管理面板  ◈   ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态   :${RESET} $G_STATUS"
         echo -e "${GREEN}版本   :${RESET} ${YELLOW}${G_VERSION}${RESET}"
@@ -683,7 +683,7 @@ client_menu() {
         update_status_variables
         clear
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}      FRPC 客户端管理面板        ${RESET}"
+        echo -e "${GREEN}    ◈  FRPC 客户端管理面板  ◈   ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态   :${RESET} $G_STATUS"
         echo -e "${GREEN}版本   :${RESET} ${YELLOW}${G_VERSION}${RESET}"
