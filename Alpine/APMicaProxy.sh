@@ -485,7 +485,7 @@ while true; do
     echo -e "${GREEN} 7. 重启 当前控制实例${RESET}"
     echo -e "${GREEN} 8. 查看当前实例日志${RESET}"
     echo -e "${GREEN} 9. 查看当前实例配置${RESET}"
-    echo -e "${YELLOW}10. 切换实例名字/多开新建不限数量的代理✨${RESET}"
+    echo -e "${GREEN}10.${RESET} ${YELLOW}切换实例名字/多开新建不限数量的代理✨${RESET}"
     echo -e "${GREEN} 0. 退出控制面板${RESET}"
     echo -e "${GREEN}===========================================${RESET}"
     
