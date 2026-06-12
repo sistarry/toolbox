@@ -88,7 +88,6 @@ get_status() {
 # =============================
 while true; do
 
-clear
 status_tgz=$(get_status tar gzip)
 status_txz=$(get_status tar xz)
 status_tbz=$(get_status tar bzip2)
