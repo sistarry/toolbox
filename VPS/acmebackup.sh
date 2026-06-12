@@ -285,8 +285,8 @@ while true; do
     echo -e "${GREEN}7. 设置Telegram通知${RESET}"
     echo -e "${GREEN}8. 查看定时任务详情${RESET}"
     echo -e "${GREEN}9. 卸载${RESET}"
-    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
 
     read -r -p $'\033[32m选择: \033[0m' c
     case $c in
