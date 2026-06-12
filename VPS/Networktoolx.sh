@@ -284,7 +284,7 @@ while true; do
     echo -e " ${GREEN}2) 运行 NextTrace 路由追踪${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
     echo -e " ${GREEN}3) 运行 iperf3 测速${RESET}"
-    echo -e " ${GREEN}4) 运行 MTR 多协议链路诊断${RESET}"
+    echo -e " ${GREEN}4) 运行 MTR 链路诊断${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
     echo -e " ${GREEN}0) 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
