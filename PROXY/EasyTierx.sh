@@ -547,7 +547,7 @@ main() {
         G_PROXYCIDR=$(get_runtime_proxy)
 
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}         EasyTier 管理面板        ${RESET}"
+        echo -e "${GREEN}    ◈  EasyTier 管理面板  ◈     ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态    :${RESET} $G_STATUS"
         echo -e "${GREEN}版本    :${RESET} ${YELLOW}${G_VERSION}${RESET}"
@@ -562,9 +562,9 @@ main() {
         echo -e "${GREEN} 5. 加入组网网络${RESET}"
         echo -e "${GREEN} 6. 查看配置文件${RESET}"
         echo -e "${GREEN} 7. 查看网络节点${RESET}"
-        echo -e "${GREEN} 8. 启动 EasyTier 服务${RESET}"
-        echo -e "${GREEN} 9. 停止 EasyTier 服务${RESET}"
-        echo -e "${GREEN}10. 重启 EasyTier 服务${RESET}"
+        echo -e "${GREEN} 8. 启动 EasyTier${RESET}"
+        echo -e "${GREEN} 9. 停止 EasyTier${RESET}"
+        echo -e "${GREEN}10. 重启 EasyTier${RESET}"
         echo -e "${GREEN}11. 查看运行日志${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         echo -e "${GREEN}================================${RESET}"
