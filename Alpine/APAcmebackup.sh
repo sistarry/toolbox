@@ -22,7 +22,7 @@ if [[ "$0" != "$LOCAL_SCRIPT" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     curl -fsSL -o "$LOCAL_SCRIPT.tmp" "$REMOTE_URL" || {
-        echo "下载失败，将继续使用本地/当前脚本运行"
+        echo "安装失败"
         cp "$0" "$LOCAL_SCRIPT"
         chmod +x "$LOCAL_SCRIPT"
     }
@@ -31,7 +31,6 @@ if [[ "$0" != "$LOCAL_SCRIPT" ]]; then
         if [[ ! -f "$LOCAL_SCRIPT" ]] || ! cmp -s "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"; then
             mv "$LOCAL_SCRIPT.tmp" "$LOCAL_SCRIPT"
             chmod +x "$LOCAL_SCRIPT"
-            echo "已安装/更新到最新版本"
         else
             rm -f "$LOCAL_SCRIPT.tmp"
         fi
@@ -196,19 +195,19 @@ restore() {
     # =========================
     # 校验
     # =========================
-    if [[ ! -d /root/.acme.sh || ! -d /root/ssl ]]; then
-        echo -e "${RED}恢复失败：文件未正确解压${RESET}"
+    if [[ ! -d "$ACME_HOME" || ! -d "$SSL_DIR" ]]; then
+        echo -e "${RED}恢复失败：文件未正确解压，找不到证书目录${RESET}"
         return
     fi
 
     # =========================
     # 修复权限（关键）
     # =========================
-    chmod 755 /root/.acme.sh/acme.sh 2>/dev/null
-    chmod -R 755 /root/.acme.sh 2>/dev/null
-    chmod -R 600 /root/.acme.sh/*.conf 2>/dev/null
+    chmod 755 "$ACME_HOME/acme.sh" 2>/dev/null
+    chmod -R 755 "$ACME_HOME" 2>/dev/null
+    chmod -R 600 "$ACME_HOME"/*.conf 2>/dev/null
 
-    chmod -R 600 /root/ssl 2>/dev/null
+    chmod -R 600 "$SSL_DIR" 2>/dev/null
 
     # =========================
     # 恢复 cron（关键）
@@ -284,16 +283,31 @@ fi
 #################################
 while true; do
     clear
-    echo -e "${GREEN}==== ACME证书备份工具 ====${RESET}"
+
+    # ---- 动态获取定时任务状态 ----
+    if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+        CRON_STATUS="${YELLOW}已开启${RESET}"
+    else
+        CRON_STATUS="${RED}已关闭${RESET}"
+    fi
+
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}      ◈  ACME 证书备份系统  ◈      ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$DATA_DIR${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
+    echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 立即备份${RESET}"
     echo -e "${GREEN}2. 恢复备份${RESET}"
     echo -e "${GREEN}3. 设置定时任务${RESET}"
     echo -e "${GREEN}4. 删除定时任务${RESET}"
-    echo -e "${GREEN}5. 设置备份目录(当前: $DATA_DIR)${RESET}"
-    echo -e "${GREEN}6. 设置保留天数(当前: $RETAIN_DAYS 天)${RESET}"
-    echo -e "${GREEN}7. 设置Telegram${RESET}"
-    echo -e "${GREEN}8. 查看定时任务${RESET}"
+    echo -e "${GREEN}5. 设置备份目录${RESET}"
+    echo -e "${GREEN}6. 设置保留天数${RESET}"
+    echo -e "${GREEN}7. 设置Telegram通知${RESET}"
+    echo -e "${GREEN}8. 查看定时任务详情${RESET}"
     echo -e "${GREEN}9. 卸载${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
 
     read -r -p $'\033[32m选择: \033[0m' c
