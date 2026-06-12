@@ -919,7 +919,7 @@ menu() {
 
     clear
     echo -e "${GREEN}=================================${RE}"
-    echo -e "${GREEN}       Xray-Argo 管理面板         ${RE}"
+    echo -e "${GREEN}◈Xray-Argo 管理面板(快捷指令2go)◈${RE}"
     echo -e "${GREEN}=================================${RE}"
     echo -e "${GREEN} Xray 状态 :${RE} $xray_status_view"
     echo -e "${GREEN} Argo 隧道 :${RE} $argo_status_view"
