@@ -735,25 +735,25 @@ show_menu() {
         local VERSION_SHOW="${clean_cur_v:-$cur_v}"
 
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}      ◈  Hermes 管理面板  ◈      ${RESET}"
+        echo -e "${GREEN}  ◈  Hermes Agent 管理面板  ◈  ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态    :${RESET} $STATUS"
         echo -e "${GREEN}版本    :${RESET} ${YELLOW}$VERSION_SHOW${RESET}"
         echo -e "${GREEN}模型    :${RESET} ${YELLOW}$CONFIG_COUNT 个配置${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN} 1. 安装 Hermes Agent${RESET}"
-        echo -e "${GREEN} 2. 启动 Gateway (消息网关后台)${RESET}"
-        echo -e "${GREEN} 3. 停止 Gateway (消息网关服务)${RESET}"
-        echo -e "${GREEN} 4. API供应商与模型切换管理${RESET}"
-        echo -e "${GREEN} 5. 启动终端交互式对话UI${RESET}"
-        echo -e "${GREEN} 6. 运行初始化配置向导${RESET}"
-        echo -e "${GREEN} 7. 升级 Hermes Agent${RESET}"
+        echo -e "${GREEN} 2. 启动 Gateway(消息网关后台)${RESET}"
+        echo -e "${GREEN} 3. 停止 Gateway(消息网关服务)${RESET}"
+        echo -e "${GREEN} 4. API模型切换管理${RESET}"
+        echo -e "${GREEN} 5. 终端交互式对话UI${RESET}"
+        echo -e "${GREEN} 6. 初始化配置向导${RESET}"
+        echo -e "${GREEN} 7. 更新 Hermes Agent${RESET}"
         echo -e "${GREEN} 8. 卸载 Hermes Agent${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -ne "${GREEN} 请选择: ${RESET}"
         
-        if ! read choice; then echo -e "${GREEN}退出。${RESET}"; exit 0; fi
+        if ! read choice; then echo -e "${GREEN}退出${RESET}"; exit 0; fi
         
         case $choice in
             1)
