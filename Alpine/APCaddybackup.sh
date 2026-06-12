@@ -315,16 +315,30 @@ fi
 #################################
 while true; do
     clear
-    echo -e "${CYAN}==== Caddy 备份系统 ====${RESET}"
+    # ---- 动态获取定时任务状态 ----
+    if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+        CRON_STATUS="${YELLOW}已开启${RESET}"
+    else
+        CRON_STATUS="${RED}已关闭${RESET}"
+    fi
+
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}       ◈  Caddy 备份系统  ◈        ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$DATA_DIR${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
+    echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 立即备份${RESET}"
     echo -e "${GREEN}2. 恢复备份${RESET}"
     echo -e "${GREEN}3. 设置定时任务${RESET}"
     echo -e "${GREEN}4. 删除定时任务${RESET}"
-    echo -e "${GREEN}5. 设置备份目录(当前: $DATA_DIR)${RESET}"
-    echo -e "${GREEN}6. 设置保留天数(当前: $RETAIN_DAYS 天)${RESET}"
+    echo -e "${GREEN}5. 设置备份目录${RESET}"
+    echo -e "${GREEN}6. 设置保留天数${RESET}"
     echo -e "${GREEN}7. 设置Telegram通知${RESET}"
     echo -e "${GREEN}8. 卸载${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
 
     read -p "$(echo -e ${GREEN}选择: ${RESET})" c
     case $c in
