@@ -191,7 +191,9 @@ uninstall(){
 
 menu(){
     clear
-    echo -e "${GREEN}==== 机场签到管理菜单 ====${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
+    echo -e "${GREEN} ◈   机场签到管理菜单  ◈ ${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}1) 添加机场${RESET}"
     echo -e "${GREEN}2) 删除机场${RESET}"
     echo -e "${GREEN}3) 查看机场${RESET}"
@@ -202,6 +204,7 @@ menu(){
     echo -e "${GREEN}8) 查看定时任务${RESET}"
     echo -e "${GREEN}9) 卸载${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
     echo -ne "${GREEN}请选择:${RESET} "
     read num
 
