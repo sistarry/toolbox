@@ -41,10 +41,10 @@ detect_environment() {
     else
         VIRT_TYPE="独立虚拟机/物理机 (KVM/XEN/VMware)"
     fi
-    log "${YELLOW}[INFO] 当前运行环境: ${VIRT_TYPE}${RESET}"
-    log "${YELLOW}[INFO] 由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${RESET}"
-    log "${YELLOW}[INFO] 请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${RESET}"
-    log "${YELLOW}[INFO] 注意：运行结束后会自动重启服务器。${RESET}"
+    log "${YELLOW}当前运行环境: ${VIRT_TYPE}${RESET}"
+    log "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${RESET}"
+    log "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${RESET}"
+    log "${YELLOW}注意：运行结束后会自动重启服务器。${RESET}"
 }
 
 # 2. 系统更新与依赖安装
@@ -492,7 +492,7 @@ show_vps_info() {
     local dns_v4_display="${PRIMARY_DNS_V4:-8.8.8.8}, ${SECONDARY_DNS_V4:-1.1.1.1}"
     local dns_v6_display="${PRIMARY_DNS_V6:-2606:4700:4700::1111}"
 
-    echo -e "${CYAN}================== VPS信息 ==================${RESET}"
+    echo -e "${GREEN}================== VPS信息 ==================${RESET}"
     echo -e "${YELLOW}主机名:     ${hostname_display}${RESET}"
     echo -e "${YELLOW}时区:       ${TIMEZONE:-Asia/Shanghai}${RESET}"
     echo -e "${YELLOW}Swap 虚拟:  ${swap_display}${RESET}"
@@ -502,15 +502,15 @@ show_vps_info() {
     echo -e "${YELLOW}Fail2ban:   ${fail2ban_display}${RESET}"
     echo -e "${YELLOW}Docker:     ${docker_display}${RESET}"
     echo -e "${YELLOW}SSH端口:    ${ssh_display}${RESET}"
-    echo -e "${CYAN}===================================================${RESET}"
+    echo -e "${GREEN}=============================================${RESET}"
 }
 
 # 主流程控制
 main() {
 
-    echo -e "${GREEN}======================================================${RESET}"
-    echo -e "${GREEN}      ◈    欢迎使用 Alpine Linux 一键优化    ◈        ${RESET}"
-    echo -e "${GREEN}======================================================${RESET}"
+    echo -e "${GREEN}=============================================${RESET}"
+    echo -e "${GREEN}  ◈    欢迎使用 Alpine Linux 一键优化    ◈   ${RESET}"
+    echo -e "${GREEN}=============================================${RESET}"
     
     root_check
     detect_environment
