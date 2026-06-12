@@ -695,6 +695,59 @@ uninstall_nginx() {
     pause
 }
 
+
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_backup_restore() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/nginxbackup.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+    pause
+}
 # ------------------------------
 # 主菜单逻辑循环面板
 # ------------------------------
@@ -731,16 +784,17 @@ while true; do
     echo -e "${GREEN}站点   :${RESET} ${YELLOW}$SITE_COUNT 个${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 1. 安装 Nginx${RESET}"
-    echo -e "${GREEN} 2. 添加配置 (Certbot托管)${RESET}"
-    echo -e "${GREEN} 3. 添加配置 (自定义证书)${RESET}"
+    echo -e "${GREEN} 2. 添加配置(80申请证书)${RESET}"
+    echo -e "${GREEN} 3. 添加配置(自定义证书)${RESET}"
     echo -e "${GREEN} 4. 修改配置${RESET}"
     echo -e "${GREEN} 5. 删除配置${RESET}"
     echo -e "${GREEN} 6. 测试证书续期${RESET}"
     echo -e "${GREEN} 7. 查看证书信息${RESET}"
     echo -e "${GREEN} 8. 查看证书状态${RESET}"
-    echo -e "${GREEN} 9. 重载Nginx配置${RESET}"
-    echo -e "${GREEN}10. 更新Nginx${RESET}"
-    echo -e "${GREEN}11. 卸载Nginx${RESET}"
+    echo -e "${GREEN} 9. 重载配置${RESET}"
+    echo -e "${GREEN}10. 更新 Nginx${RESET}"
+    echo -e "${GREEN}11. 卸载 Nginx${RESET}"
+    echo -e "${GREEN}12. 备份恢复${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -ne "${GREEN} 请选择:${RESET}"
@@ -758,6 +812,7 @@ while true; do
         9)  nginx -t && systemctl reload nginx && echo -e "${GREEN}Nginx 配置已重载成功${RESET}" || echo -e "${RED}配置检查失败，请修复后重试${RESET}"; pause ;;
         10) update_nginx_software ;;
         11) uninstall_nginx ;;
+        12) run_backup_restore ;;
         0)  exit 0 ;;
         *)  echo -e "${RED}无效选项${RESET}" ; pause ;;
     esac
