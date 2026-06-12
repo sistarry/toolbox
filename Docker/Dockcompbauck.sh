@@ -80,15 +80,45 @@ tg_send() {
         --data-urlencode "text=[$SERVER] $MESSAGE" >/dev/null 2>&1
 }
 
+
 # ================== SSH密钥自动生成 ==================
 setup_ssh_key() {
     if [[ ! -f "$SSH_KEY" ]]; then
         echo -e "${CYAN}🔑 生成 SSH 密钥...${RESET}"
         ssh-keygen -t rsa -b 4096 -f "$SSH_KEY" -N ""
         echo -e "${GREEN}✅ 密钥生成完成: $SSH_KEY${RESET}"
-        read -rp "请输入远程用户名@IP (例如 root@1.2.3.4): " REMOTE
-        ssh-copy-id -i "$SSH_KEY.pub" -o StrictHostKeyChecking=no "$REMOTE"
-        echo -e "${GREEN}✅ 密钥已部署到远程: $REMOTE${RESET}"
+    fi
+
+    # ---- 交互式读取远程信息 ----
+    # 1. 读取用户名（默认 root）
+    read -rp "$(echo -e "${GREEN}请输入远程用户名（默认 root）: ${RESET}")" username
+    username=${username:-root}
+
+    # 2. 读取服务器 IP 并校验
+    read -rp "$(echo -e "${GREEN}请输入远程服务器 IP: ${RESET}")" ip_address
+    if [ -z "$ip_address" ]; then
+        echo -e "${RED}❌ 错误: 服务器 IP 不能为空！${RESET}"
+        return 1  # 使用 return 避免直接关闭整个菜单脚本
+    fi
+
+    # 3. 读取 SSH 端口（默认 22）
+    read -rp "$(echo -e "${GREEN}请输入SSH端口（默认 22）: ${RESET}")" port
+    port=${port:-22}
+
+    echo -e "${CYAN}🚀 正在将公钥部署到远程服务器 ${username}@${ip_address}:${port} ...${RESET}"
+    
+    # 核心：将端口参数 -p 传递给 ssh-copy-id
+    ssh-copy-id -i "$SSH_KEY.pub" -p "$port" -o StrictHostKeyChecking=no "${username}@${ip_address}"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ 密钥已成功部署到远程: ${username}@${ip_address}:${port}${RESET}"
+        
+        # 可选：顺便把这些信息同步到你的全局配置中，方便远程备份功能直接使用
+        REMOTE_USER="$username"
+        REMOTE_IP="$ip_address"
+        save_config
+    else
+        echo -e "${RED}❌ 密钥部署失败，请检查网络或密码是否正确。${RESET}"
     fi
 }
 
@@ -356,8 +386,20 @@ fi
 while true; do
     load_config
     clear
+
+    # ---- 动态获取状态 ----
+    # 检查 crontab 中是否存在该脚本的定时任务
+    if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+        CRON_STATUS="${YELLOW}已开启${RESET}"
+    else
+        CRON_STATUS="${RED}已关闭${RESET}"
+    fi
+
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}  ◈ Docker compose 备份恢复管理 ◈   ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$BACKUP_DIR${RESET}"
+    echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 本地备份${RESET}"
     echo -e "${GREEN}2. 恢复项目${RESET}"
