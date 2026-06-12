@@ -403,7 +403,7 @@ pause() {
 # 14. 显示国内/国外推荐源列表
 show_recommended_sources() {
     clear
-    echo -e "${GREEN}正在获取外部推荐源脚本...${RESET}"
+    echo -e "${GREEN}正在获取外部推荐源...${RESET}"
     if command -v curl >/dev/null 2>&1; then
         bash <(curl -sSL https://linuxmirrors.cn/main.sh)
     elif command -v wget >/dev/null 2>&1; then
