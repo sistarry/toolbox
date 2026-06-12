@@ -116,25 +116,25 @@ while true; do
     case "$choice" in 
         1)
             set_timezone "Etc/UTC"
-            read -p "按回车继续..."
+            read -p "$(echo -e "${GREEN}按回车继续...${RESET}")"
             ;;
         2)
             set_timezone "Asia/Shanghai"
-            read -p "按回车继续..."
+            read -p "$(echo -e "${GREEN}按回车继续...${RESET}")"
             ;;
         3)
             set_timezone "America/New_York"
-            read -p "按回车继续..."
+            read -p "$(echo -e "${GREEN}按回车继续...${RESET}")"
             ;;
         4)
             set_timezone "Europe/London"
-            read -p "按回车继续..."
+            read -p "$(echo -e "${GREEN}按回车继续...${RESET}")"
             ;;
         5)
             echo -en "${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET}"
             read tz
             set_timezone "$tz"
-            read -p "按回车继续..."
+            read -p "$(echo -e "${GREEN}按回车继续...${RESET}")"
             ;;
         0)
             exit 0
