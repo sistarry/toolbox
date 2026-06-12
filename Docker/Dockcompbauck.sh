@@ -399,6 +399,7 @@ while true; do
     echo -e "${GREEN}  ◈ Docker compose 备份恢复管理 ◈   ${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN} 📂 当前备份目录: ${YELLOW}$BACKUP_DIR${RESET}"
+    echo -e "${GREEN} ⏳  备份保留天数: ${YELLOW}$RETAIN_DAYS 天${RESET}"
     echo -e "${GREEN} ⏰  定时任务状态: $CRON_STATUS${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 本地备份${RESET}"
