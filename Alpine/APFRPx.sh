@@ -200,8 +200,9 @@ select_role() {
     echo -e "${GREEN}========================================${RESET}"
     echo -e "${GREEN}1) FRPS 服务端 (用于公网VPS)${RESET}"
     echo -e "${GREEN}2) FRPC 客户端 (用于内网/被穿透设备)${RESET}"
+    echo -e "${GREEN}0) 退出${RESET}"
     echo -e "${GREEN}========================================${RESET}"  
-    echo -ne "${GREEN}请输入选项(x退出): ${RESET}"
+    echo -ne "${GREEN}请输入选项: ${RESET}"
     read role </dev/tty
     
     mkdir -p "$FRP_INSTALL_DIR"
@@ -215,7 +216,7 @@ select_role() {
             client_menu
             ;;
         0) 
-            exit 1 
+            exit 0 
             ;;
     esac
 }
