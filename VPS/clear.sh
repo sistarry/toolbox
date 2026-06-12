@@ -148,6 +148,61 @@ clean_docker() {
     fi
 }
 
+
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_backup_restore() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+    pause
+}
+
+
 # =========================================================
 # 主视觉面板菜单
 # =========================================================
@@ -181,15 +236,7 @@ system_clean_menu() {
                 clean_docker
                 ;;
             3)
-                # 使用 --connect-timeout 限制直连等待时间为 5 秒
-                if bash <(curl -fsSL --connect-timeout 5 https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) 2>/dev/null; then
-                    echo
-                else
-                    echo -e "${YELLOW}直连超时或失败，正在通过代理获取...${RESET}"
-                    bash <(curl -fsSL https://v6.gh-proxy.org/https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/clean-server.sh) || {
-                        echo -e "${RED}错误: 通过代理获取失败了，请检查网络连接。${RESET}"
-                    }
-                fi
+                run_backup_restore
                 ;;
             0)
                 break
