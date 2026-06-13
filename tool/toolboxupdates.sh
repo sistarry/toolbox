@@ -169,10 +169,7 @@ run_update() {
     # 更新各脚本（支持传相对路径）
     update_one "vps-toolbox" "vps-toolbox.sh" "tool/vps-toolbox.sh"
     update_one "proxy" "proxy.sh" "PROXY/proxy.sh"
-    update_one "oracle" "oracle.sh" "Oracle/oracle.sh"
     update_one "store" "store.sh" "Docker/Store.sh"
-    update_one "panel" "panel.sh" "Panel/panel.sh"
-    update_one "nat" "nat.sh" "NAT/NAT.sh"
 
     if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
         MSG="🚀 脚本已更新
