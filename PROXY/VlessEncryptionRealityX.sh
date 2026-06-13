@@ -690,7 +690,7 @@ show_menu() {
   echo -e "${GREEN} 9. 查看节点配置${RESET}"
   echo -e "${GREEN}10. 配置Socks5出口${RESET}"
   echo -e "${GREEN}11. SNI域名优选✨${RESET}"
-  echo -e "${GREEN}0. 退出${RESET}"
+  echo -e "${GREEN} 0. 退出${RESET}"
   echo -e "${GREEN}================================${RESET}"
 }
 
