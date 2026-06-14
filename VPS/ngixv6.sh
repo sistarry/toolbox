@@ -10,6 +10,38 @@ RESET="\033[0m"
 CUSTOM_SSL_BASE="/etc/nginx/custom_ssl"
 mkdir -p "$CUSTOM_SSL_BASE"
 
+
+# ✨ 终极双栈/纯v6 智能 IP 获取引擎
+get_public_ip() {
+    local mode=${1:-"v6"} # auto: 自动, v4: 强制IPv4, v6: 强制IPv6
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
+        done
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
+        done
+    else
+        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+
+    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
+    echo "127.0.0.1" && return 0
+}
+
+
 generate_random_email() {
     RAND_STR=$(tr -dc a-z0-9 </dev/urandom | head -c 10)
     echo "${RAND_STR}@gmail.com"
@@ -166,7 +198,7 @@ EOF
 
 check_domain_resolution() {
     DOMAIN=$1
-    VPS_IP=$(curl -6 -s https://ifconfig.co || echo "")
+    VPS_IP=$(get_public_ip || echo "")
     DOMAIN_IP=$(dig AAAA +short "$DOMAIN" | tail -n1 || echo "")
 
     echo -e "${YELLOW}检测域名 AAAA 记录...${RESET}"
