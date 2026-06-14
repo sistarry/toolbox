@@ -15,7 +15,7 @@ CONFIG_FILE="$APP_DIR/config.env"
 
 function menu() {
     clear
-    echo -e "${GREEN}=== DNSMgr 管理菜单 ===${RESET}"
+    echo -e "${GREEN}=== DNSMgr+MySQL管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装启动${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
     echo -e "${GREEN}3) 卸载(含数据)${RESET}"
@@ -78,7 +78,7 @@ services:
     image: mysql:5.7
     restart: always
     ports:
-      - "3306:3306"   # 可远程访问
+      - "3306:3306"  
     environment:
       - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
       - TZ=Asia/Shanghai
