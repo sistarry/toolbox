@@ -68,7 +68,7 @@ for proxy in "${GITHUB_PROXY[@]}"; do
             rm -f "$TMP_SCRIPT" # 运行完删除临时文件
             break # 真正安装成功，跳出循环
         else
-            echo -e "${RED}安装脚本执行过程中出错或被取消。${RESET}"
+            echo -e "${RED}安装执行过程中出错或被取消。${RESET}"
             rm -f "$TMP_SCRIPT"
             # 如果你是主动取消的，这里也可以决定是否继续尝试其他代理
             # 绝大多数情况下，能下载成功说明网络没问题，不需要再试下一个代理了
