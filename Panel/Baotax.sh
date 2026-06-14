@@ -25,7 +25,7 @@ pause(){
 menu(){
 clear
 echo -e "${GREEN}======================================${RESET}"
-echo -e "${GREEN}           宝塔面板 管理菜单           ${RESET}"
+echo -e "${GREEN}        ◈  宝塔面板 管理菜单  ◈       ${RESET}"
 echo -e "${GREEN}======================================${RESET}"
 
 # ----- 状态、版本、端口 强行直读 -----
@@ -65,7 +65,7 @@ if command -v bt &>/dev/null; then
     fi
     echo -e "${GREEN}面板端口  :${RESET} ${YELLOW}${port:-8888}${RESET}"
 else
-    echo -e "${GREEN}核心状态  :${RESET} ${RED}未检测到宝塔环境，请先执行选项 66 进行安装${RESET}"
+    echo -e "${GREEN}核心状态  :${RESET} ${RED}未安装${RESET}"
 fi
 echo -e "${GREEN}======================================${RESET}"
 
