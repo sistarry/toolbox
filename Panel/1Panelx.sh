@@ -114,7 +114,7 @@ pause(){
 menu(){
 clear
 echo -e "${GREEN}======================================${RESET}"
-echo -e "${GREEN}           1Panel 管理菜单             ${RESET}"
+echo -e "${GREEN}      ◈    1Panel 管理菜单    ◈      ${RESET}"
 echo -e "${GREEN}======================================${RESET}"
 
 local REAL_CMD=$(get_cmd_path)
@@ -171,7 +171,7 @@ if [ -n "$REAL_CMD" ] || [ -d "/opt/1panel" ]; then
     # 最终显示，彻底干掉不准的默认值和 netstat 瞎猜
     echo -e "${GREEN}面板端口  :${RESET} ${YELLOW}${port:-5556}${RESET}"
 else
-    echo -e "${GREEN}核心状态  :${RESET} ${RED}未检测到 1Panel 环境，请先执行选项 66 进行安装${RESET}"
+    echo -e "${GREEN}核心状态  :${RESET} ${RED}未安装${RESET}"
 fi
 echo -e "${GREEN}======================================${RESET}"
 
