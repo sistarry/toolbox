@@ -108,7 +108,7 @@ function menu() {
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     
-    read -p $'\e[32m请输入数字: \e[0m' num
+    read -p $'\e[32m请输入选项: \e[0m' num
     case "$num" in
         1) install_app ;;
         2) update_app ;;
