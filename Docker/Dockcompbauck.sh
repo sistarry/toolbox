@@ -405,7 +405,7 @@ while true; do
     echo -e "${GREEN}1. 本地备份${RESET}"
     echo -e "${GREEN}2. 恢复项目${RESET}"
     echo -e "${GREEN}3. 设置SSH密钥自动登录${RESET}"
-    echo -e "${GREEN}4. 配置设置（Telegram/保留天数/目录/远程信息）${RESET}"
+    echo -e "${GREEN}4. 配置设置（通知/保留天数/目录/远程信息）${RESET}"
     echo -e "${GREEN}5. 远程备份${RESET}"
     echo -e "${GREEN}6. 定时任务管理${RESET}"
     echo -e "${GREEN}7. 卸载${RESET}"
