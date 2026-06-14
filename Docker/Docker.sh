@@ -184,6 +184,12 @@ docker_compose_install_update() {
 # -----------------------------
 # Docker IPv6
 # -----------------------------
+# -----------------------------
+# Docker IPv6
+# -----------------------------
+# -----------------------------
+# Docker IPv6
+# -----------------------------
 docker_ipv6_on() {
     root_use
     mkdir -p /etc/docker
@@ -744,6 +750,68 @@ monitor_docker_containers() {
     done
 }
 
+
+# -----------------------------
+# Docker 配置修改通用函数
+# -----------------------------
+set_docker_mirror() {
+    root_use
+    mkdir -p /etc/docker
+    
+    echo -e "${CYAN}请选择或输入镜像加速源选项:${RESET}"
+    echo -e "${GREEN}1. 使用默认高速代理${RESET}"
+    echo -e "${GREEN}2. 输入自定义加速源${RESET}"
+    echo -e "${GREEN}3. 恢复默认设置(清空加速源)${RESET}"
+    read -p "请输入选项 (默认 1): " mirror_choice
+    mirror_choice=${mirror_choice:-1}
+
+    local mirrors=""
+    
+    if [ "$mirror_choice" == "1" ]; then
+        mirrors='["https://gh-proxy.org/docker/","https://registry.lfree.org","https://hub.glowp.xyz","https://docker.1panel.live"]'
+    elif [ "$mirror_choice" == "2" ]; then
+        read -p "请输入完整的加速地址 (例如 https://hub.glowp.xyz , 多个用英文逗号隔开): " custom_mirror
+        # 简单转换补全为 JSON 数组格式
+        mirrors="[\"$(echo $custom_mirror | sed 's/,/","/g' | sed 's/ //g')\"]"
+    elif [ "$mirror_choice" == "3" ]; then
+        echo -e "${YELLOW}正在恢复默认设置，移除所有自定义镜像源...${RESET}"
+        # 移除配置：如果 jq 存在就删掉该 Key，否则直接覆盖为一个空配置或移出该字段
+        if command -v jq &>/dev/null && [ -f /etc/docker/daemon.json ]; then
+            jq 'del(."registry-mirrors")' /etc/docker/daemon.json > /etc/docker/daemon.json.tmp 2>/dev/null
+            if [ $? -eq 0 ]; then
+                mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json
+            else
+                echo "{}" > /etc/docker/daemon.json
+            fi
+        else
+            echo "{}" > /etc/docker/daemon.json
+        fi
+        echo -e "${GREEN}✅ 已成功恢复默认设置！${RESET}"
+        restart_docker
+        return
+    else
+        echo -e "${RED}无效选项，操作已取消${RESET}"
+        return
+    fi
+
+    # 写入配置逻辑 (针对 1 和 2 选项)
+    if command -v jq &>/dev/null && [ -f /etc/docker/daemon.json ]; then
+        jq --argjson m "$mirrors" '. + {"registry-mirrors": $m}' /etc/docker/daemon.json > /etc/docker/daemon.json.tmp 2>/dev/null
+        if [ $? -eq 0 ]; then
+            mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json
+        else
+            echo "{\"registry-mirrors\": $mirrors}" > /etc/docker/daemon.json
+        fi
+    else
+        echo "{\"registry-mirrors\": $mirrors}" > /etc/docker/daemon.json
+    fi
+
+    echo -e "${GREEN}✅ 镜像加速源配置成功！当前配置为:${RESET}"
+    cat /etc/docker/daemon.json
+    restart_docker
+}
+
+
 # -----------------------------
 # 主菜单显示状态
 # -----------------------------
@@ -782,8 +850,9 @@ main_menu() {
         echo -e "${GREEN}12. Docker 备份/恢复${RESET}"
         echo -e "${GREEN}13. 重启 Docker${RESET}"
         echo -e "${GREEN}14. 卷管理 ${RESET}"
-        echo -e "${GREEN}15.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
-        echo -e "${GREEN}16. Docker监控${RESET}"
+        echo -e "${GREEN}15. 设置Docker镜像加速源${RESET}"
+        echo -e "${GREEN}16.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
+        echo -e "${GREEN}17. Docker监控${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case $choice in
@@ -801,8 +870,9 @@ main_menu() {
             12) check_docker_running && docker_backup_menu ;;
             13|13) check_docker_running && restart_docker ;;
             14|14) check_docker_running && docker_volume ;;
-            15|15) check_docker_running && docker_cleanup ;;
-            16|16) monitor_docker_containers ;;
+            15|15) check_docker_running && set_docker_mirror ;;
+            16|16) check_docker_running && docker_cleanup ;;
+            17|17) monitor_docker_containers ;;
              00|0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
