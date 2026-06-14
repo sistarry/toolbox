@@ -12,7 +12,7 @@ RESET="\033[0m"
 clear
 
 echo -e "${GREEN}========================================${RESET}"
-echo -e "${GREEN}        ShellCrash 开始安装${RESET}"
+echo -e "${GREEN}     ◈  ShellCrash 初始化安装  ◈        ${RESET}"
 echo -e "${GREEN}========================================${RESET}"
 
 # 1. 检查并安装 curl
