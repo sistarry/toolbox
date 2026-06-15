@@ -76,7 +76,7 @@ get_openclaw_status() {
             OPENCLAW_VERSION=$(echo "$raw_v" | awk '{if(NF>1) print $(NF-1)" "$NF; else print $1}')
         fi
     else
-        STATUS="${RED}未安装 (Not Installed)${RESET}"
+        STATUS="${RED}未安装${RESET}"
         OPENCLAW_VERSION="${RED}未安装${RESET}"
     fi
 
