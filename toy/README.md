@@ -7,10 +7,6 @@
 bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Rrsync.sh)
 ```
 
-### 文件目录备份脚本
-```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/Filebackup.sh)
-```
 
 ### 开小鸡工具箱
 ```bash
