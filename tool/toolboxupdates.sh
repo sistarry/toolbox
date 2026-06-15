@@ -6,7 +6,7 @@ set -e
 #################################
 ROOT="/root"
 SCRIPT_PATH="$ROOT/toolboxupdate.sh"
-SCRIPT_URL="tool/update.sh"  # 提取相对路径，方便拼接代理
+SCRIPT_URL="tool/toolboxupdates.sh"  # 提取相对路径，方便拼接代理
 CONF="/etc/toolbox-update.conf"
 LOG_FILE="/var/log/toolbox-update.log"
 CRON_TAG="# toolbox-auto-update"
