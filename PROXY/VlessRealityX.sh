@@ -445,7 +445,9 @@ generate_link() {
     hostname=$(hostname -s 2>/dev/null | tr ' ' '_')
     [[ -z "$hostname" ]] && hostname="Xray"
 
-    cat > /root/xray_vless_reality.txt <<EOF
+    mkdir -p /root/proxynode/Reality/
+
+    cat > /root/proxynode/Reality/xray_vless_reality.txt <<EOF
 vless://${uuid}@${display_ip}:${port}?flow=xtls-rprx-vision&encryption=none&type=tcp&security=reality&sni=${domain}&fp=chrome&pbk=${public_key}&sid=${shortid}&spx=%2F#${hostname}-VLESS-Reality
 EOF
 }
@@ -484,9 +486,9 @@ show_current_config() {
     echo -e "${YELLOW}📄 V6VPS 请自行替换分享链接中的 IP 地址为 V6 ★${RESET}"
     echo
 
-    if [[ -f /root/xray_vless_reality.txt ]]; then
+    if [[ -f /root/proxynode/Reality/xray_vless_reality.txt ]]; then
         echo -e "${GREEN}====== 👉 分享链接 ======${RESET}"
-        cat /root/xray_vless_reality.txt
+        cat /root/proxynode/Reality/xray_vless_reality.txt
     fi
 }
 
@@ -837,7 +839,7 @@ uninstall_xray() {
     rm -f "$XRAY_BINARY"
     rm -rf "/usr/local/etc/${SERVICE_NAME}"
     rm -rf "/usr/local/share/${SERVICE_NAME}"
-    rm -f /root/xray_vless_reality.txt
+    rm -f /root/proxynode/Reality/xray_vless_reality.txt
     
     info "服务已完全卸载并清理残留。"
 }
