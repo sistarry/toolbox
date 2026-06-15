@@ -159,7 +159,7 @@ fail2ban_menu() {
         echo -e "${GREEN}  6. 查看日志实时监控${RESET}"
         echo -e "${GREEN}  7. 卸载 Fail2Ban${RESET}"
         echo -e "${GREEN}  8. 更新 Fail2Ban${RESET}"
-        echo -e "${GREEN}  0. 退出面板${RESET}"
+        echo -e "${GREEN}  0. 退出${RESET}"
         echo -e "${GREEN}===============================${RESET}"
         echo -ne "${GREEN} 请选择: ${RESET}"
         
