@@ -524,7 +524,7 @@ main() {
         local smartdns_status_view="${RED}已停止${NC}"
         [ "$smartdns_installed" = "true" ] && smartdns_status_view="${GREEN}运行中${NC} ${YELLOW}(端口: 53)${NC}"
 
-        local whitelist_view="${YELLOW}公开解锁(任意设备改DNS即可解锁)${NC}"
+        local whitelist_view="${YELLOW}公开解锁(任意设备改DNS可解锁)${NC}"
         if [ -f "$ALLOWLIST_FILE" ] && [ -s "$ALLOWLIST_FILE" ]; then
             local count=$(grep -v '^[[:space:]]*#' "$ALLOWLIST_FILE" | sed '/^[[:space:]]*$/d' | wc -l)
             whitelist_view="${YELLOW}安全模式(允许已授权的 ${count} 个IP)${NC}"
