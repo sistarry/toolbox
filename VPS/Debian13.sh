@@ -38,6 +38,8 @@ read -p "请输入用户名 (默认 root): " USERNAME
 USERNAME=${USERNAME:-root}
 
 # SSH 公钥输入
+echo -e "${YELLOW}提示: 密钥支持 公钥字符串、URL、github:用户名、gitlab:用户名${RESET}"
+echo -e "${YELLOW}例如: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPYYSr25hwiXYTbVBlSzNNiYHl6vCD8CJWG70rTU+6qj2T root@localhost${RESET}"
 read -p "请输入 SSH 登录公钥 (留空则使用密码登录): " SSH_KEY
 
 # 密码输入与随机生成逻辑
