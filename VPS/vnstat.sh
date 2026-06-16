@@ -411,11 +411,33 @@ detect_service() {
 }
 
 detect_package_manager() {
-    if command -v apk >/dev/null 2>&1; then PKG_MANAGER="apk"; PKG_INSTALL_CMD="apk update && apk add vnstat bc iptables ip6tables cronie || apk add vnstat bc iptables ip6tables dcron"; PKG_REMOVE_CMD="apk del vnstat"
-    elif command -v apt >/dev/null 2>&1; then PKG_MANAGER="apt"; PKG_INSTALL_CMD="apt update && apt install -y vnstat bc iptables ip6tables cron"; PKG_REMOVE_CMD="apt remove -y vnstat && apt autoremove -y"
-    elif command -v dnf >/dev/null 2>&1; then PKG_MANAGER="dnf"; PKG_INSTALL_CMD="dnf install -y epel-release || true; dnf install -y vnstat bc iptables ip6tables crontabs"; PKG_REMOVE_CMD="dnf remove -y vnstat"
-    elif command -v yum >/dev/null 2>&1; then PKG_MANAGER="yum"; PKG_INSTALL_CMD="yum install -y epel-release || true; yum install -y vnstat bc iptables ip6tables crontabs"; PKG_REMOVE_CMD="yum remove -y vnstat"
-    else echo "未检测到支持的包管理器"; exit 1; fi
+    if command -v apk >/dev/null 2>&1; then 
+        PKG_MANAGER="apk"
+        # Alpine Linux 允许尝试安装，如果 ip6tables 找不到也不影响整体
+        PKG_INSTALL_CMD="apk update && apk add vnstat bc iptables ip6tables cronie 2>/dev/null || apk add vnstat bc iptables dcron"
+        PKG_REMOVE_CMD="apk del vnstat"
+        
+    elif command -v apt >/dev/null 2>&1; then 
+        PKG_MANAGER="apt"
+        # 核心改造：先安装基础组件，再单独尝试安装 ip6tables（如果失败不报错中断）
+        PKG_INSTALL_CMD="apt update && apt install -y vnstat bc iptables cron && { apt install -y ip6tables 2>/dev/null || true; }"
+        PKG_REMOVE_CMD="apt remove -y vnstat && apt autoremove -y"
+        
+    elif command -v dnf >/dev/null 2>&1; then 
+        PKG_MANAGER="dnf"
+        # RHEL/Fedora 系同理，通过 || true 允许 ip6tables 找不到时跳过
+        PKG_INSTALL_CMD="dnf install -y epel-release || true; dnf install -y vnstat bc iptables crontabs && { dnf install -y ip6tables -y 2>/dev/null || true; }"
+        PKG_REMOVE_CMD="dnf remove -y vnstat"
+        
+    elif command -v yum >/dev/null 2>&1; then 
+        PKG_MANAGER="yum"
+        PKG_INSTALL_CMD="yum install -y epel-release || true; yum install -y vnstat bc iptables crontabs && { yum install -y ip6tables 2>/dev/null || true; }"
+        PKG_REMOVE_CMD="yum remove -y vnstat"
+        
+    else 
+        echo "未检测到支持的包管理器"
+        exit 1
+    fi
 }
 
 require_root() { if [ "$(id -u)" -ne 0 ]; then echo "请使用 root 身份运行此脚本"; exit 1; fi; }
