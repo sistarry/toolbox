@@ -822,7 +822,7 @@ auto_localize_and_link() {
     # 如果脚本文件不存在，才去下载
     if [[ ! -f "${LOCAL_SCRIPT_PATH}" ]]; then
         local download_success=false
-        local base_url="https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftablesx.sh"
+        local base_url="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/nftablesx.sh"
     
         
         # 遍历代理列表进行 wget 下载
