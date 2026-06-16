@@ -556,16 +556,16 @@ show_menu() {
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN} 1. 安装 vnstat${RESET}"
     echo -e "${GREEN} 2. 重启 vnstat${RESET}"
-    echo -e "${GREEN} 3. 查看 服务状态${RESET}"
-    echo -e "${GREEN} 4. 查看 网络接口${RESET}"
-    echo -e "${GREEN} 5. 添加 监控接口${RESET}"
-    echo -e "${GREEN} 6. 查看 默认流量统计${RESET}"
-    echo -e "${GREEN} 7. 查看 指定网卡流量${RESET}"
-    echo -e "${GREEN} 8. 查看 日流量统计${RESET}"
-    echo -e "${GREEN} 9. 查看 月流量统计${RESET}"
-    echo -e "${GREEN}10. 实时 流量监控${RESET}"
-    echo -e "${GREEN}11. 配置 定时通知${RESET}"
-    echo -e "${GREEN}12. 卸载 vnstat${RESET}"
+    echo -e "${GREEN} 3. 卸载 vnstat${RESET}"
+    echo -e "${GREEN} 4. 查看 服务状态${RESET}"
+    echo -e "${GREEN} 5. 查看 网络接口${RESET}"
+    echo -e "${GREEN} 6. 添加 监控接口${RESET}"
+    echo -e "${GREEN} 7. 查看 默认流量统计${RESET}"
+    echo -e "${GREEN} 8. 查看 指定网卡流量${RESET}"
+    echo -e "${GREEN} 9. 查看 日流量统计${RESET}"
+    echo -e "${GREEN}10. 查看 月流量统计${RESET}"
+    echo -e "${GREEN}11. 实时 流量监控${RESET}"
+    echo -e "${GREEN}12. ${YELLOW}设置 端口监控 >>${RESET}"
     echo -e "${GREEN}13. ${YELLOW}设置 流量日报 >>${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}==============================${RESET}"
@@ -611,16 +611,16 @@ main() {
         case "$choice" in
             1) install_vnstat; pause ;;
             2) restart_service; pause ;;
-            3) show_service_status; pause ;;
-            4) list_interfaces; pause ;;
-            5) add_interface; pause ;;
-            6) show_default_stats; pause ;;
-            7) show_interface_stats; pause ;;
-            8) show_daily_stats; pause ;;
-            9) show_monthly_stats; pause ;;
-            10) live_monitor ;;
-            11) menu_cron_config ;;
-            12) remove_vnstat ;;
+            3) remove_vnstat ;;
+            4) show_service_status; pause ;;
+            5) list_interfaces; pause ;;
+            6) add_interface; pause ;;
+            7) show_default_stats; pause ;;
+            8) show_interface_stats; pause ;;
+            9) show_daily_stats; pause ;;
+            10) show_monthly_stats; pause ;;
+            11) live_monitor ;;
+            12) menu_cron_config ;;
             13) run_tgday ;;
             0) exit 0 ;;
             *) echo "无效选项"; pause ;;
