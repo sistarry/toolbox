@@ -341,16 +341,54 @@ do_restore_manual() {
 
 do_install() {
     info "准备安全安装 Alpine iptables 双栈环境..."
-    apk add iptables ip6tables bash curl bind-tools dcron
     
+    # 1. 安装基础依赖
+    apk add iptables ip6tables bash curl bind-tools dcron >/dev/null 2>&1
+    
+    # 2. 开启内核转发与初始化配置
     enable_ip_forward && init_conf
     
+    # 3. 【核心加固】防止 Alpine 启动默认服务时锁死 SSH 或报错
+    # 提前创建并写入极其纯净、放行的基础规则文件（Alpine 默认路径）
+    mkdir -p /etc/iptables
+    
+    cat << 'EOF' > /etc/iptables/rules.iv4
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+COMMIT
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+COMMIT
+EOF
+
+    # 镜像复制一份给 IPv6
+    cp /etc/iptables/rules.iv4 /etc/iptables/rules.iv6
+
+    # 4. 注册并安全启动服务
     rc-update add iptables default >/dev/null 2>&1 || true
     rc-update add ip6tables default >/dev/null 2>&1 || true
+    
+    # 此时启动绝对安全，INPUT 链全放行，且 nat 链已被初始化创建
     rc-service iptables start >/dev/null 2>&1 || true
     rc-service ip6tables start >/dev/null 2>&1 || true
     
+    # 5. 【策略优化】立即执行一次规则写入，确保不用等 cron 触发就直接生效
+    if type write_and_apply_rules >/dev/null 2>&1; then
+        info "正在注入初始端口转发规则..."
+        write_and_apply_rules
+    fi
+    
+    # 6. 配置定时任务（DDNS 域名探针）
     setup_ddns_cron
+    # 确保 Alpine 的 cron 服务也是启动状态
+    rc-update add dcron default >/dev/null 2>&1 || true
+    rc-service dcron start >/dev/null 2>&1 || true
+    
     info "Alpine iptables 双栈环境初始化完成！INPUT 链绝对纯净安全。"
     pause_to_menu
 }
@@ -672,11 +710,27 @@ main_menu() {
         load_rules
         panel_rules_count="${#RULES[@]}"
 
+
+        # 内核识别模块，彻底修掉菜单显示“内核未知”的问题
+        if [ "$panel_status" != "${RED}未运行${RESET}" ]; then
+            if ls -l /sbin/iptables 2>/dev/null | grep -q "nft"; then
+                backend_type="${YELLOW}iptables-nft (兼容模式)${RESET}"
+            else
+                backend_type="${YELLOW}iptables (原生内核)${RESET}"
+            fi
+        else
+            if [ -e /proc/net/ip_tables_names ]; then
+                backend_type="${YELLOW}iptables (就绪但未启动)${RESET}"
+            else
+                backend_type="${YELLOW}内核模块未加载${RESET}"
+            fi
+        fi
+
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN}  ◈ iptables 转发面板${RESET} ${YELLOW}(快捷键A/a)${RESET} ${GREEN}◈${RESET}"
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN} 状态 :${RESET} $panel_status"
-        echo -e "${GREEN} 版本 :${RESET} ${YELLOW}${panel_version}${RESET}"
+        echo -e "${GREEN} 内核 :${RESET} $backend_type"
         echo -e "${GREEN} 规则 : 已载入${RESET} ${YELLOW}${panel_rules_count}${RESET} ${GREEN}条转发${RESET}"
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN} 1. 安装 依赖环境${RESET}"
