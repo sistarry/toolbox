@@ -323,11 +323,11 @@ while true; do
     echo -e "${GREEN}=======================================${NC}"
 
     # --- 菜单选项 ---
-    echo -e "${GREEN} 1. 全新安装环境与配置${NC}"
-    echo -e "${GREEN} 2. 修改现有配置/调整通知时间${NC}"
-    echo -e "${GREEN} 3. 立即手动触发测试 (发送日报)${NC}"
-    echo -e "${GREEN} 4. 重新构建报表核心逻辑 (更新)${NC}"
-    echo -e "${GREEN} 5. 完全卸载 (清理配置与定时任务)${NC}"
+    echo -e "${GREEN} 1. 安装${NC}"
+    echo -e "${GREEN} 2. 修改配置${NC}"
+    echo -e "${GREEN} 3. 手动触发测试 (发送日报)${NC}"
+    echo -e "${GREEN} 4. 更新${NC}"
+    echo -e "${GREEN} 5. 卸载${NC}"
     echo -e "${GREEN} 0. 退出${NC}"
     echo -e "${GREEN}=======================================${NC}"
 
