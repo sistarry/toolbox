@@ -387,8 +387,8 @@ EOF
 }
 
 # ==================== 【重点修改区域】 ====================
-# 【终极同步修复】：彻底解决多域名先后变动时，因文件提前对齐导致的逻辑盲区与死锁
 do_backend_ddns_sync() {
+    # 基础前置检查
     [[ -f "${CONF_FILE}" ]] || exit 0
     load_rules
     if [[ ${#RULES[@]} -eq 0 ]]; then exit 0; fi
@@ -396,29 +396,38 @@ do_backend_ddns_sync() {
     local need_reload=0
     local rule lport target dport note proto type current_dns_ip
     local new_rules=()
+    local changed_domains=() # 记录本轮真正发生变动的域名列表
 
     for rule in "${RULES[@]}"; do
+        # 拆分规则字段
         IFS='|' read -r lport target dport note proto <<< "$rule"
         type=$(detect_ip_type "$target")
         
+        # 类型 2 表示 DDNS 域名规则
         if [[ "$type" == "2" ]]; then
-            # 1. 采集该域名的全球最新 DNS 解析
+            # 1. 采集该域名的全球最新 DNS 解析 IP
             current_dns_ip=$(resolve_domain "$target")
             
             if [[ -n "$current_dns_ip" ]]; then
-                # 2. 【核心精准判定】：不再盲目用 grep 匹配全行，而是精准提取该域名在文件中上一次写入的实际 IP 
-                # 我们通过定位 '# DOMAIN: 域名'，向下找最近的一条 tcp 或 udp 转发规则，精准切出旧 IP
+                # 2. 【终极精准提取】：废弃 grep -A 3，改用 awk 提取属于该域名的专属文本块
+                # 逻辑：从 '# DOMAIN: 当前域名' 开始，直到遇到下一个 '# DOMAIN:' 或文件末尾，从中精准切出旧 IP
                 local last_active_ip=""
-                last_active_ip=$(grep -A 3 -F "DOMAIN: ${target}" "${CONF_FILE}" 2>/dev/null | grep -E "dnat (to|ip6 to)" | head -n1 | awk '{print $NF}' | awk -F':' '{print $1}' | tr -d '[] ')
+                last_active_ip=$(awk -v domain="DOMAIN: ${target}" '
+                    $0 ~ domain {flag=1; next} 
+                    /^# DOMAIN:/ {flag=0} 
+                    flag
+                ' "${CONF_FILE}" 2>/dev/null | grep -E "dnat (to|ip6 to)" | head -n1 | awk '{print $NF}' | awk -F':' '{print $1}' | tr -d '[] ')
 
-                # 3. 只有当全球最新 IP 和 文件里上一次生效的旧 IP 不一致时，才叫真正变动
+                # 3. 核心判定：只有当全球最新 IP 和 文件里上一次生效的旧 IP 不一致时，才叫真正变动
                 if [[ "$current_dns_ip" != "$last_active_ip" ]]; then
                     need_reload=1
-                    echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] 检测到域名 ${target} IP 已变动 [旧: ${last_active_ip:-无} -> 新: ${current_dns_ip}]，触发局部热重载..." >> "${LOG_FILE}"
+                    changed_domains+=("${target}")
+                    echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] 检测到域名 ${target} IP 已变动 [旧: ${last_active_ip:-无} -> 新: ${current_dns_ip}]" >> "${LOG_FILE}"
                 fi
                 new_rules+=("${lport}|${target}|${dport}|${note}|${proto}")
             else
-                # DNS 抽风网络失败保护
+                # DNS 解析抽风/网络失败保护：保持原规则，防止剔除正常转发
+                echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] 警告：域名 ${target} 临时解析失败，启动网络保护机制，保留原规则。" >> "${LOG_FILE}"
                 new_rules+=("${lport}|${target}|${dport}|${note}|${proto}")
             fi
         else
@@ -427,12 +436,33 @@ do_backend_ddns_sync() {
         fi
     done
 
-    # 4. 只有真正有域名发生新旧交替变动时，才允许全量刷新重写，防止污染其他正常域名
+    # 4. 只有真正有域名发生新旧交替变动时，才允许全量刷新重写与重载
     if [[ $need_reload -eq 1 ]]; then
+        # 备份当前的配置文件，建立事务安全防线
+        cp -f "${CONF_FILE}" "${CONF_FILE}.bak" 2>/dev/null
+        
+        # 将新规则同步到全局数组，供写入函数使用
         RULES=("${new_rules[@]}")
-        write_conf_file
-        reload_rules
+        
+        # 尝试写入文件
+        if write_conf_file; then
+            # 尝试应用底层防火墙规则
+            if reload_rules; then
+                echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] 包含域名 [${changed_domains[*]}] 的规则局部热重载应用成功！" >> "${LOG_FILE}"
+                rm -f "${CONF_FILE}.bak" 2>/dev/null
+            else
+                # 【死锁防御核心一】：底层应用失败，必须回滚文件！
+                # 否则文件里已经是新 IP，而内核还是旧 IP，下一轮循环会因为“文件已对齐”而彻底丢失重试机会
+                echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] ❌ 错误：底层 reload_rules 失败！正在回滚配置文件平衡状态..." >> "${LOG_FILE}"
+                mv -f "${CONF_FILE}.bak" "${CONF_FILE}"
+            fi
+        else
+            # 【死锁防御核心二】：配置文件写入失败（如磁盘满、无权限）
+            echo "$(date '+%Y-%m-%d %H:%M:%S') [DDNS] ❌ 错误：write_conf_file 写入失败，请检查磁盘空间或权限！" >> "${LOG_FILE}"
+            mv -f "${CONF_FILE}.bak" "${CONF_FILE}" 2>/dev/null
+        fi
     fi
+
     exit 0
 }
 # ========================================================
@@ -804,6 +834,8 @@ do_uninstall() {
         fi
     fi
     rm -rf "${CONF_DIR}" 2>/dev/null
+    rm -rf "${LOG_FILE}" 2>/dev/null
+
 
     echo -e "${GREEN}✅ 纯净卸载成功！转发规则已彻底清除，快捷键已拔除。${RESET}"
     exit 0
@@ -872,11 +904,27 @@ main_menu() {
         load_rules
         panel_rules_count="${#RULES[@]}"
 
+        if is_nftables_active; then
+            # 检查 iptables 命令是否被桥接到了 nftables (iptables-nft)
+            if iptables -V 2>/dev/null | grep -q "nf_tables"; then
+                backend_type="${YELLOW}iptables-nft (兼容模式)${RESET}"
+            else
+                backend_type="${YELLOW}nftables (纯原生内核)${RESET}"
+            fi
+        else
+            # 如果 nft 没运行，但传统 iptables 有规则或服务在跑
+            if lsmod 2>/dev/null | grep -q "ip_tables"; then
+                backend_type="${YELLOW}iptables (传统旧内核)${RESET}"
+            else
+                backend_type="${YELLOW}未知/未初始化${RESET}"
+            fi
+        fi
+
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN}   ◈ nftables 转发面板${RESET}${YELLOW}(快捷键A/a)${RESET} ${GREEN}◈${RESET}"
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN} 状态 :${RESET} $panel_status"
-        echo -e "${GREEN} 版本 :${RESET} ${YELLOW}${panel_version}${RESET}"
+        echo -e "${GREEN} 内核 :${RESET} $backend_type"
         echo -e "${GREEN} 规则 : 已载入${RESET} ${YELLOW}${panel_rules_count}${RESET} ${GREEN}条转发${RESET}"
         echo -e "${GREEN}=====================================${RESET}"
         echo -e "${GREEN} 1. 安装 依赖环境${RESET}"
