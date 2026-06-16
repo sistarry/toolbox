@@ -460,6 +460,60 @@ remove_vnstat() {
     echo "清理完成！"; exit 0
 }
 
+
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_tgday() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/OS/vnstattgos.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+}
+
+
 get_panel_info() {
     detect_service
     if [ "$INIT_SYSTEM" = "systemd" ] && systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then panel_status="运行中"
@@ -490,6 +544,7 @@ show_menu() {
     echo -e "${GREEN}10. 实时 流量监控${RESET}"
     echo -e "${GREEN}11. 配置 TG 定时通知任务 >>${RESET}"
     echo -e "${GREEN}12. 卸载 vnstat${RESET}"
+    echo -e "${GREEN}13. ${YELLOW}设置 流量日报 >>${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
@@ -544,6 +599,7 @@ main() {
             10) live_monitor ;;
             11) menu_cron_config ;;
             12) remove_vnstat ;;
+            13) run_tgday ;;
             0) exit 0 ;;
             *) echo "无效选项"; pause ;;
         esac
