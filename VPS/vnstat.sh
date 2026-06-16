@@ -6,7 +6,7 @@ set -e
 CONFIG_FILE="/etc/vnstat_tg.conf"
 PORT_DB_FILE="/etc/vnstat_tg_ports.db"
 PERM_SCRIPT_PATH="/usr/local/bin/vnstat_mgr.sh"
-REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vnstat.sh"
+REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/vnstat.sh"
 
 TG_BOT_TOKEN=""
 TG_CHAT_ID=""
