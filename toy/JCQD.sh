@@ -6,6 +6,7 @@ RUN_SCRIPT="$APP_DIR/jcqd_run.sh"
 
 GREEN="\033[32m"
 RED="\033[31m"
+YELLOW="\033[33m"
 RESET="\033[0m"
 
 mkdir -p $APP_DIR
@@ -191,9 +192,33 @@ uninstall(){
 
 menu(){
     clear
+
+    # 1. 动态获取状态
+    local cron_status="🔴 未开启"
+    local cron_info=$(crontab -l 2>/dev/null | grep jcqd_run.sh)
+    if [ -n "$cron_info" ]; then
+        # 提取前面的 cron 表达式部分
+        local cron_time=$(echo "$cron_info" | sed 's/ bash.*//')
+        cron_status="🟢 已开启 "
+    fi
+
+    local ac_count=$(jq '.accounts | length' $CONFIG 2>/dev/null || echo "0")
+
+    # 2. 渲染菜单头部和状态
     echo -e "${GREEN}=========================${RESET}"
-    echo -e "${GREEN} ◈   机场签到管理菜单  ◈ ${RESET}"
+    echo -e "${GREEN} ◈   机场签到管理菜单   ◈ ${RESET}"
     echo -e "${GREEN}=========================${RESET}"
+    echo -e "${GREEN}定时任务状态:${RESET} ${YELLOW}$cron_status${RESET}"
+    echo -e "${GREEN}当前已加机场:${RESET} ${YELLOW}$ac_count 个${RESET}"
+    echo -e "${GREEN}-------------------------${RESET}"
+    
+    # 如果有机场，直接把列表简要打印在菜单里
+    if [ "$ac_count" -gt 0 ]; then
+        echo -e "${YELLOW}已加机场列表:${RESET}"
+        list_accounts
+        echo -e "${GREEN}-------------------------${RESET}"
+    fi
+
     echo -e "${GREEN}1) 添加机场${RESET}"
     echo -e "${GREEN}2) 删除机场${RESET}"
     echo -e "${GREEN}3) 查看机场${RESET}"
