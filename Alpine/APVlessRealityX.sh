@@ -471,7 +471,7 @@ show_menu() {
     [[ -f "$X_CONFIG" ]] && port_show=$(jq -r '.inbounds[0].port' "$X_CONFIG" 2>/dev/null || echo "-")
 
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}    Xray Vless-Reality 面板     ${RESET}"
+    echo -e "${GREEN}  ◈ Xray Vless-Reality 面板 ◈  ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态   :${RESET} $status"
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
