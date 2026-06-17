@@ -857,7 +857,7 @@ select_best_sni() {
         statici.icloud.com tag.demandbase.com tag-logger.demandbase.com
         ts1.tc.mm.bing.net ts2.tc.mm.bing.net vs.aws.amazon.com www.apple.com
         www.icloud.com www.microsoft.com www.oracle.com www.xbox.com
-        www.xilinx.com xp.apple.com
+        www.xilinx.com xp.apple.com itunes.apple.com
     )
 
     local BEST_SNI=""
@@ -904,7 +904,7 @@ show_menu() {
     fi
 
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}      VLESS-Reality 面板       ${RESET}"
+    echo -e "${GREEN}    ◈  VLESS-Reality 面板  ◈   ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态   :${RESET} $status"
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
