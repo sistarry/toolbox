@@ -125,11 +125,49 @@ configure_docker_ipv6() {
     echo -e "${GREEN}✅ Docker IPv6 已启用${RESET}"
 }
 
+# 获取容器状态的辅助函数
+get_container_status() {
+    local container_name="$1"
+    if ! command -v docker &>/dev/null; then
+        echo -e "${RED}未安装Docker${RESET}"
+        return
+    fi
+    
+    local status
+    status=$(docker inspect --format='{{.State.Status}}' "$container_name" 2>/dev/null)
+    
+    if [ "$status" = "running" ]; then
+        echo -e "${GREEN}运行中${RESET}"
+    elif [ -n "$status" ]; then
+        echo -e "${RED}已停止($status)${RESET}"
+    else
+        echo -e "${YELLOW}未创建${RESET}"
+    fi
+}
+
 menu() {
     while true; do
         clear
+        # 动态读取当前配置的端口
+        local current_front="-"
+        local current_back="-"
+        if [ -f "$APP_DIR/.env" ]; then
+            current_front=$(grep 'FRONTEND_PORT=' "$APP_DIR/.env" | cut -d= -f2)
+            current_back=$(grep 'BACKEND_PORT=' "$APP_DIR/.env" | cut -d= -f2)
+        fi
+
+        # 动态获取服务状态
+        local frontend_status=$(get_container_status "vite-frontend")
+        local backend_status=$(get_container_status "springboot-backend")
+        local mysql_status=$(get_container_status "gost-mysql")
+
+
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN}  ◈   哆啦A梦转发面板   ◈   ${RESET}"
+        echo -e "${GREEN}============================${RESET}"
+        echo -e "${GREEN}前端端口:${RESET} ${YELLOW}${current_front}${RESET} ${GREEN}状态: ${frontend_status}"
+        echo -e "${GREEN}后端端口:${RESET} ${YELLOW}${current_back}${RESET} ${GREEN}状态: ${backend_status}"
+        echo -e "${GREEN}数据状态:${RESET} ${mysql_status}"
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
