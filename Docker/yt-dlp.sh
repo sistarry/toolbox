@@ -185,7 +185,7 @@ download_single() {
 
 download_batch() {
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${GREEN}                进入交互式批量下载模式               ${RESET}"
+    echo -e "${GREEN} 进入交互式批量下载模式               ${RESET}"
     echo -e "${GREEN} 请连续输入视频链接，每输完一个按一次回车。         ${RESET}"
     echo -e "${GREEN} 输入完毕后，输入英文字母 ${YELLOW}q${GREEN} 即可开始下载。         ${RESET}"
     echo -e "${GREEN}====================================================${RESET}"
