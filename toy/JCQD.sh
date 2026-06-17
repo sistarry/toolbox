@@ -210,7 +210,7 @@ menu(){
     echo -e "${GREEN}=========================${RESET}"
     echo -e "${GREEN}定时任务状态:${RESET} ${YELLOW}$cron_status${RESET}"
     echo -e "${GREEN}当前已加机场:${RESET} ${YELLOW}$ac_count 个${RESET}"
-    echo -e "${GREEN}-------------------------${RESET}"
+    echo -e "${GREEN}=========================${RESET}"
     
     # 如果有机场，直接把列表简要打印在菜单里
     if [ "$ac_count" -gt 0 ]; then
