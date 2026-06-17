@@ -331,7 +331,7 @@ while true; do
 
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}   Shadowsocks-Rust 管理面板    ${RESET}"
+    echo -e "${GREEN} ◈ Shadowsocks-Rust 管理面板 ◈ ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态   :${RESET} $STATUS"
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${VERSION_SHOW}${RESET}"
