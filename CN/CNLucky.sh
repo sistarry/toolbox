@@ -53,17 +53,36 @@ get_public_ip() {
 }
 
 menu() {
+    # 在这里加上 while true; do 开启循环
     while true; do
         clear
+        # 1. 动态获取 Lucky 容器的状态 (先安全检测 docker 命令是否存在，防止菜单本身报错)
+        local container_status="🔴 未运行 (未检测到容器)"
+        if command -v docker &>/dev/null; then
+            if docker ps -a --format '{{.Names}}' | grep -q "^lucky$"; then
+                local is_running=$(docker ps --format '{{.Names}}' | grep -q "^lucky$" && echo "yes" || echo "no")
+                if [ "$is_running" = "yes" ]; then
+                    container_status="🟢 运行中"
+                else
+                    container_status="🟡 已停止"
+                fi
+            fi
+        else
+            container_status="❌ 未安装 Docker"
+        fi
+        # 2. 渲染菜单头部、状态与端口信息
         echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN}  ◈  Lucky 管理菜单  ◈ ${RESET}"
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN}状态:${RESET} ${YELLOW}$container_status${RESET}"
+        echo -e "${GREEN}端口:${RESET} ${YELLOW}16601${RESET}${YELLOW} (Host模式)${RESET}"
         echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 查看状态${RESET}"
-        echo -e "${GREEN}6) 卸载${RESET}"
+        echo -e "${GREEN}6) 卸载(含数据)${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
         echo -e "${GREEN}========================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
@@ -78,7 +97,7 @@ menu() {
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}"; sleep 1 ;;
         esac
-    done
+    done # 这里的 done 就能闭合上方的 while 了
 }
 
 install_app() {
@@ -110,9 +129,9 @@ EOF
 
     echo
     echo -e "${GREEN}✅ Lucky 已启动${RESET}"
-    echo -e "${GREEN}✅ webui http://${SERVER_IP}:16601${RESET}"
-    echo -e "${GREEN}✅ 账号密码: 666/666${RESET}"
-    echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
+    echo -e "${YELLOW}✅ 访问地址: http://${SERVER_IP}:16601${RESET}"
+    echo -e "${YELLOW}✅ 账号密码: 666/666${RESET}"
+    echo -e "${YELLOW}📂 安装目录: $APP_DIR${RESET}"
     read -p "按回车返回菜单..."
 }
 
