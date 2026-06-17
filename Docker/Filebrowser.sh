@@ -176,9 +176,9 @@ EOF
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}    Filebrowser 部署成功！    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${YELLOW}网盘访问地址  : http://127.0.0.1:${custom_port}${RESET}"
-    echo -e "${YELLOW}默认用户名    : admin${RESET}"
-    echo -ne "${YELLOW}初始随机密码  : ${RESET}"
+    echo -e "${YELLOW}网盘访问地址   : http://127.0.0.1:${custom_port}${RESET}"
+    echo -e "${YELLOW}默认用户名     : admin${RESET}"
+    echo -ne "${YELLOW}初始随机密码   : ${RESET}"
     get_fb_password
     echo -e "${YELLOW}宿主机配置路径 : $BASE_DIR/config${RESET}"
     echo -e "${YELLOW}宿主机网盘路径 : $custom_download${RESET}"
