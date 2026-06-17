@@ -799,7 +799,7 @@ menu() {
     port_show=$(get_current_port_display)
 
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}     Sing-box Hysteria2 面板    ${RESET}"
+    echo -e "${GREEN}  ◈ Sing-box Hysteria2 面板 ◈ ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态   :${RESET} ${status}"
     echo -e "${GREEN}版本   :${RESET} ${YELLOW}${version}${RESET}"
