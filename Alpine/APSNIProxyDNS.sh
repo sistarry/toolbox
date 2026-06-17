@@ -146,9 +146,7 @@ clear_client_allowlist() {
     ensure_root
     print_info "正在清空客户端 IP 白名单..."
     if command -v iptables &> /dev/null; then
-        iptables -D INPUT -p tcp --dport "$LISTEN_PORT" -j ACCEPT 2>/dev/null || true
-        iptables -D INPUT -p udp --dport 53 -j ACCEPT 2>/dev/null || true
-        
+        # 彻底清除通过脚本添加的所有单独接受规则与末尾的 DROP 规则
         if [ -f "$ALLOWLIST_FILE" ]; then
             while read -r ip; do
                 [[ "$ip" =~ ^# ]] || [ -z "$ip" ] && continue
@@ -168,6 +166,7 @@ apply_client_allowlist() {
     check_command "iptables"
     
     print_info "正在构建客户端 IP 安全白名单规则..."
+    # 先清空旧规则，防止产生重复垃圾规则
     clear_client_allowlist >/dev/null 2>&1
 
     for ip in "${allowed_ips[@]}"; do
@@ -175,6 +174,7 @@ apply_client_allowlist() {
         iptables -A INPUT -p udp --dport 53 -s "$ip" -j ACCEPT
     done
     
+    # 规则尾部追加兜底拒绝逻辑，非白名单 IP 无法连接
     iptables -A INPUT -p tcp --dport "$LISTEN_PORT" -j DROP
     iptables -A INPUT -p udp --dport 53 -j DROP
 
@@ -205,9 +205,10 @@ manage_client_allowlist() {
     fi
     echo -e "${GREEN}=============================================${NC}"
     
-    echo -e "${GREEN}  1. 设置授权落地机 IP${NC}"
-    echo -e "${GREEN}  2. 追加授权落地机 IP${NC}"
-    echo -e "${GREEN}  3. 清空限制(公开解锁)${NC}"
+    echo -e "${GREEN}  1. 覆盖设置 授权落地机 IP${NC}"
+    echo -e "${GREEN}  2. 追加放行 授权落地机 IP${NC}"
+    echo -e "${GREEN}  3. 精准删除 某个授权 IP${NC}"
+    echo -e "${GREEN}  4. 清空限制 (变更为公开解锁)${NC}"
     echo -e "${GREEN}  0. 返回主菜单${NC}"
     echo -e "${GREEN}=============================================${NC}"
     
@@ -238,6 +239,7 @@ manage_client_allowlist() {
             
             [ "${#allowed_ips[@]}" -eq 0 ] && { print_warning "未输入有效IP。"; return 0; }
             
+            # 使用 awk 数组完成 IP 去重
             local unique_ips=()
             while IFS= read -r line; do
                 [ -n "$line" ] && unique_ips+=("$line")
@@ -246,8 +248,49 @@ $(printf '%s\n' "${allowed_ips[@]}" | awk '!seen[$0]++')
 EOF
             apply_client_allowlist "${unique_ips[@]}"
             ;;
-        3) clear_client_allowlist && print_success "已转为公开解锁。";;
-        *) return 0 ;;
+        3)
+            if [ -z "$current_allowed" ]; then
+                print_warning "当前处于公开解锁模式，没有可以删除的 IP。"
+                sleep 1.5
+                return 0
+            fi
+            echo -n -e "\n${YELLOW}请输入要删除的落地机 IP: ${NC}"
+            local remove_ip
+            read_required_input remove_ip
+            remove_ip=$(echo "$remove_ip" | tr -d '\n\r[[:space:]]')
+
+            local remaining_ips=()
+            local found=false
+            while IFS= read -r ip; do
+                [ -z "$ip" ] && continue
+                if [ "$ip" = "$remove_ip" ]; then
+                    found=true
+                else
+                    remaining_ips+=("$ip")
+                fi
+            done <<< "$current_allowed"
+
+            if [ "$found" = "false" ]; then
+                print_error "白名单中未找到该 IP: $remove_ip"
+                sleep 1.5
+                return 0
+            fi
+
+            # 如果删除了该 IP 后白名单已全空，则平滑切换回公开解锁模式
+            if [ "${#remaining_ips[@]}" -eq 0 ]; then
+                clear_client_allowlist
+                print_success "已移除最后一个 IP，安全策略自动切换为公开解锁模式。"
+            else
+                apply_client_allowlist "${remaining_ips[@]}"
+                print_success "成功移除 IP [ $remove_ip ]，其余白名单已重新生效。"
+            fi
+            ;;
+        4) 
+            clear_client_allowlist && print_success "已转为公开解锁。"
+            ;;
+        *) 
+            return 0 
+            ;;
     esac
 }
 
