@@ -34,7 +34,39 @@ check_port() {
 menu() {
     while true; do
         clear
-        echo -e "${GREEN}=== AriaNg 管理菜单 ===${RESET}"
+        
+        # 1. 动态获取 AriaNg 容器状态
+        local container_status="🔴 未运行 (未检测到容器)"
+        if command -v docker &>/dev/null; then
+            if docker ps -a --format '{{.Names}}' | grep -q "^ariang$"; then
+                local is_running=$(docker ps --format '{{.Names}}' | grep -q "^ariang$" && echo "yes" || echo "no")
+                if [ "$is_running" = "yes" ]; then
+                    container_status="🟢 运行中"
+                else
+                    container_status="🟡 已停止"
+                fi
+            fi
+        else
+            container_status="❌ 未安装 Docker"
+        fi
+
+        # 2. 动态获取当前配置的端口
+        local current_port="6880"
+        if [ -f "$COMPOSE_FILE" ]; then
+            # 从 docker-compose.yml 中提取 127.0.0.1:xxxx:6880 中的端口号
+            local yaml_port=$(grep -oP '127\.0\.0\.1:\K[0-9]+(?=:6880)' "$COMPOSE_FILE" 2>/dev/null)
+            if [ -n "$yaml_port" ]; then
+                current_port="$yaml_port"
+            fi
+        fi
+
+        # 3. 渲染菜单头部、状态与端口信息
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN}  ◈ AriaNg 管理菜单 ◈  ${RESET}"
+        echo -e "${GREEN}========================${RESET}"
+        echo -e "${GREEN}状态:${RESET} ${YELLOW}$container_status${RESET}"
+        echo -e "${GREEN}端口:${RESET} ${YELLOW}$current_port${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
@@ -42,6 +74,7 @@ menu() {
         echo -e "${GREEN}5) 查看状态${RESET}"
         echo -e "${GREEN}6) 卸载${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}========================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
         case $choice in
