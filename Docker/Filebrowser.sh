@@ -25,6 +25,7 @@ check_dependencies() {
 
 # 动态获取容器状态、映射端口和数据目录
 get_status_info() {
+    # 1. 检查容器状态
     if [ "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
         status="${YELLOW}运行中${RESET}"
     elif [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
@@ -33,22 +34,30 @@ get_status_info() {
         status="${RED}未部署${RESET}"
     fi
 
+    # 2. 如果容器存在（不论运行还是停止），从容器状态中提取信息
     if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
+        # 提取镜像名称/版本
         img_version=$(docker inspect -f '{{.Config.Image}}' "$CONTAINER_NAME" 2>/dev/null)
         [[ -z "$img_version" ]] && img_version="已安装"
-    else
-        img_version="${RED}未安装${RESET}"
-    fi
 
-    if [[ -f "$COMPOSE_FILE" ]]; then
-        # 精准提取 WebUI 宿主机端口
-        webui_port=$(grep -E "\-[[:space:]]*[\"']?[0-9]+:[0-9]+" "$COMPOSE_FILE" | head -n 1 | awk -F ':' '{print $1}' | tr -d '[:space:]"-')
+        # 【优化：从容器状态提取 WebUI 端口】
+        # 优先获取容器绑定的宿主机端口（假设容器内监听的是 80 端口，请根据实际情况修改，比如 Filebrowser 默认通常是 80）
+        webui_port=$(docker inspect -f '{{(index (index .NetworkSettings.Ports "80/tcp") 0).HostPort}}' "$CONTAINER_NAME" 2>/dev/null)
+        # 如果上面指定内部端口没获取到，则兜底获取容器暴露出来的第一个宿主机端口
+        [[ -z "$webui_port" ]] && webui_port=$(docker inspect -f '{{range $p, $conf := .NetworkSettings.Ports}}{{if $conf}}{{(index $conf 0).HostPort}}{{break}}{{end}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
+        # 如果容器停止了或没映射端口，则给个默认值
         [[ -z "$webui_port" ]] && webui_port="8089"
 
-        # 优化网盘绝对路径抓取
-        download_dir=$(grep -E -- "- .+/srv" "$COMPOSE_FILE" | awk -F ':' '{print $1}' | sed 's/- //g' | tr -d '"' | xargs)
+        # 【优化：从容器状态提取下载目录（挂载路径）】
+        # 精准查找容器内挂载到 /srv 的宿主机绝对路径
+        download_dir=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/srv"}}{{.Source}}{{end}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
+        # 如果没挂载到 /srv，查找包含 filebrowser 的挂载，或者任意第一个挂载作为兜底
+        [[ -z "$download_dir" ]] && download_dir=$(docker inspect -f '{{range .Mounts}}{{.Source}}{{break}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
+        # 终极兜底默认值
         [[ -z "$download_dir" ]] && download_dir="/opt/filebrowser/file"
     else
+        # 容器未安装/未部署时的返回值
+        img_version="${RED}未安装${RESET}"
         webui_port="N/A"
         download_dir="N/A"
     fi
