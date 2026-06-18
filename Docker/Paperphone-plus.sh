@@ -156,7 +156,6 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD}
 EOF
 
     # 💡 核心修复：如果是通过 Docker 编排，.env 里的 localhost 要改成服务名（mysql / redis）
-    # 同时，如果项目的 docker-compose.yml 没有做端口映射，我们用脚本动态确保它能用
     
     cd "$APP_DIR" || exit
     echo -e "${YELLOW}正在启动 Docker 容器...${RESET}"
