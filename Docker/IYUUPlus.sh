@@ -44,8 +44,8 @@ menu() {
         clear
         echo -e "${GREEN}=== IYUUPlus 管理菜单 ===${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
-        echo -e "${GREEN}2) 重启${RESET}"
-        echo -e "${GREEN}3) 更新${RESET}"
+        echo -e "${GREEN}2) 更新${RESET}"
+        echo -e "${GREEN}3) 重启${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 查看状态${RESET}"
         echo -e "${GREEN}6) 卸载（含数据）${RESET}"
@@ -54,8 +54,8 @@ menu() {
 
         case $choice in
             1) install_app ;;
-            2) restart_app ;;
-            3) update_app ;;
+            2) update_app ;;
+            3) restart_app ;;
             4) view_logs ;;
             5) check_status ;;
             6) uninstall_app ;;
