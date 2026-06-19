@@ -6,21 +6,24 @@ RESET="\033[0m"
 
 menu() {
     clear
-    echo -e "${GREEN}=== 国际宝塔面板管理菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN} ◈  宝塔面板  国际版管理菜单  ◈ ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 安装面板${RESET}"
     echo -e "${GREEN}2) 卸载面板${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
             echo -e "${GREEN}正在安装国际宝塔面板...${RESET}"
-            URL=https://www.aapanel.com/script/install_7.0_en.sh
+            URL=https://www.aapanel.com/script/install_panel_en.sh
             if [ -f /usr/bin/curl ]; then
                 curl -ksSO "$URL"
             else
-                wget --no-check-certificate -O install_7.0_en.sh "$URL"
+                wget --no-check-certificate -O install_panel_en.sh "$URL"
             fi
-            bash install_7.0_en.sh aapanel
+            bash install_panel_en.sh ipssl
             pause
             ;;
         2)
