@@ -62,13 +62,16 @@ uninstall_app() {
 # 显示主菜单
 show_menu() {
     clear
-    echo -e "${GREEN}=== OCI-Start 管理菜单 ===${RESET}"
+    echo -e "${GREEN}============================${RESET}"
+    echo -e "${GREEN}   ◈ OCI-Start 管理菜单 ◈  ${RESET}"
+    echo -e "${GREEN}============================${RESET}"
     echo -e "${GREEN}1) 安装应用${RESET}"
     echo -e "${GREEN}2) 停止应用${RESET}"
     echo -e "${GREEN}3) 重启应用${RESET}"
     echo -e "${GREEN}4) 更新应用${RESET}"
     echo -e "${GREEN}5) 卸载应用${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}============================${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
     case $choice in
         1) setup_script ;;
