@@ -39,15 +39,18 @@ menu() {
 
         clear
 
-        echo -e "${GREEN}=== VaultFleet 管理菜单 ===${RESET}"
+        echo -e "${GREEN}==============================${RESET}"
+        echo -e "${GREEN}  ◈  VaultFleet 管理菜单  ◈${RESET}"
+        echo -e "${GREEN}==============================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
         echo -e "${GREEN}2) 更新${RESET}"
         echo -e "${GREEN}3) 重启${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 查看状态${RESET}"
         echo -e "${GREEN}6) 卸载(含数据)${RESET}"
-        echo -e "${GREEN}7) 卸载 Agent${RESET}"
+        echo -e "${GREEN}7)${RESET} ${YELLOW}卸载 Agent${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN}==============================${RESET}"
 
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
@@ -58,7 +61,7 @@ menu() {
             4) view_logs ;;
             5) check_status ;;
             6) uninstall_app ;;
-            7) curl -fsSL https://raw.githubusercontent.com/momo-z/VaultFleet/main/build/uninstall.sh | bash ;;
+            7) run_node ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ; sleep 1 ;;
         esac 
@@ -158,6 +161,60 @@ uninstall_app() {
 
     echo -e "${RED}✅ 已彻底卸载${RESET}"
 
+    read -p "按回车返回菜单..."
+}
+
+
+# ============================================================
+# 新增：GitHub 代理下载核心函数
+# ============================================================
+run_node() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/momo-z/VaultFleet/main/build/uninstall.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
     read -p "按回车返回菜单..."
 }
 
