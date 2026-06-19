@@ -6,11 +6,14 @@ RESET="\033[0m"
 
 menu() {
     clear
-    echo -e "${GREEN}=== 开心宝塔面板管理菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN} ◈  宝塔面板  开心版管理菜单  ◈ ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 安装面板${RESET}"
     echo -e "${GREEN}2) 更新面板${RESET}"
     echo -e "${GREEN}3) 卸载面板${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
