@@ -102,10 +102,10 @@ menu(){
 
 clear
 
-echo -e "${GREEN}================================${RESET}"
-echo -e "${GREEN}      RBot 管理脚本${RESET}"
-echo -e "${GREEN}================================${RESET}"
-echo -e "${GREEN}1.安装 RBot${RESET}"
+echo -e "${GREEN}============================${RESET}"
+echo -e "${GREEN}   ◈   RBot 管理菜单   ◈   ${RESET}"
+echo -e "${GREEN}============================${RESET}"
+echo -e "${GREEN}1.安装RBot${RESET}"
 echo -e "${GREEN}2.启动${RESET}"
 echo -e "${GREEN}3.查看状态${RESET}"
 echo -e "${GREEN}4.查看日志${RESET}"
@@ -114,6 +114,7 @@ echo -e "${GREEN}6.重启${RESET}"
 echo -e "${GREEN}7.升级${RESET}"
 echo -e "${GREEN}8.卸载${RESET}"
 echo -e "${GREEN}0.退出${RESET}"
+echo -e "${GREEN}============================${RESET}"
 
 read -rp "$(echo -e ${GREEN}请输入选项:${RESET}) " choice
 }
