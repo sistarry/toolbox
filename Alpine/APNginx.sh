@@ -317,8 +317,8 @@ install_nginx() {
 
     CONFIRM=${CONFIRM:-y}
     if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-        echo -e "${RED}已取消配置退出${RESET}"
-        exit 0
+        echo -e "${RED}已取消配置${RESET}"
+        return 0
     fi
 
     killall nginx >/dev/null 2>&1      # 强杀 Certbot 没关干净的临时进程，释放 80 端口
