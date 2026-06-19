@@ -9,6 +9,8 @@ menu() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} ◈  宝塔面板  开心版管理菜单  ◈ ${RESET}"
     echo -e "${GREEN}================================${RESET}"
+    echo -e "${YELLOW}开心版获取地址: https://bbs.bt.sb${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 安装面板${RESET}"
     echo -e "${GREEN}2) 更新面板${RESET}"
     echo -e "${GREEN}3) 卸载面板${RESET}"
