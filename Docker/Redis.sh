@@ -270,7 +270,7 @@ function show_info() {
     echo -e "${GREEN}安装路径 :${RESET} $APP_DIR"
     echo -e "${GREEN}默认连接索引 :${RESET} db0 ~ db15 (共16个)"
     echo -e "${GREEN}认证连接密码 :${RESET} ${YELLOW}${REDIS_PASSWORD}${RESET}"
-    echo -e "${GREEN}标准连接串   :${RESET} ${CYAN}redis://:${REDIS_PASSWORD}@${public_ip}:${PORT}/0${RESET}"
+    echo -e "${GREEN}标准连接串   :${RESET} ${CYAN}redis://:${REDIS_PASSWORD}@${SERVER_IP}:${PORT}/0${RESET}"
     echo -e "${GREEN}配置文件路径 :${RESET} ${CONFIG_FILE}"
     echo -e "${GREEN}================================${RESET}"
     
