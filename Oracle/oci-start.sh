@@ -177,6 +177,126 @@ show_info() {
     echo -e "${GREEN}================================${RESET}"
 }
 
+# ======================
+# 9. Nginx 动态反代配置逻辑
+# ======================
+setup_nginx_proxy() {
+    if ! command -v nginx &> /dev/null; then
+        echo -e "\n${RED}❌ 未检测到系统中安装了 Nginx，请先安装 Nginx！${RESET}"
+        return
+    fi
+
+    echo -e "\n${YELLOW}================================${RESET}"
+    echo -e "${YELLOW}   自动提取端口 & 覆盖 Nginx 配置   ${RESET}"
+    echo -e "${YELLOW}================================${RESET}"
+    
+    # 1. 引导输入域名
+    read -p "请输入你要覆盖的域名 (例如: oci.666666.xyz): " DOMAIN
+    if [[ -z "$DOMAIN" ]]; then
+        echo -e "${RED}❌ 域名不能为空！${RESET}"
+        return
+    fi
+
+    # 2. 锁定标准的 Ubuntu/Debian 配置文件路径
+    local CONF_PATH="/etc/nginx/sites-available/${DOMAIN}"
+    local ENABLED_PATH="/etc/nginx/sites-enabled/${DOMAIN}"
+
+    # 3. 核心提示：如果文件存在，触发安全警告与二次确认
+    if [[ -f "$CONF_PATH" ]]; then
+        echo -e "\n${RED}⚠️  安全警告：检测到该域名的配置文件已存在！${RESET}"
+        echo -e "${RED}📂 文件路径: $CONF_PATH${RESET}"
+        echo -e "${RED}🕒 最后修改: $(date -r "$CONF_PATH" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "未知")${RESET}"
+        echo -e "${YELLOW}👉 继续操作将【彻底清空并覆盖】该文件的所有原配置！${RESET}"
+        
+        read -p "确定要覆盖吗？(y/N): " CONFIRM
+        if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+            echo -e "${GREEN}❌ 操作已安全取消，未修改任何文件。${RESET}"
+            return
+        fi
+    else
+        echo -e "\nℹ️ 未检测到已有配置，将直接新建配置文件..."
+    fi
+
+    # 4. 自动从 docker-compose.yml 提取主面板对外映射端口
+    local oci_port="9856" # 默认兜底端口
+    if [[ -f "$COMPOSE_FILE" ]]; then
+        # 提取 ports 下形如 XXXX:9856 前面的宿主机实际端口 XXXX
+        local port_extract=$(grep -A 2 "ports:" "$COMPOSE_FILE" 2>/dev/null | grep -oE '[0-9]+:9856' | cut -d':' -f1 | head -n 1)
+        [[ -n "$port_extract" ]] && oci_port="$port_extract"
+    fi
+    echo -e "ℹ️ 自动提取到主面板本地映射端口为: ${GREEN}${oci_port}${RESET}"
+
+    echo -e "⏳ 正在覆盖写入配置文件..."
+
+    # 5. 写入包含动态 Websockify 转发的配置模板
+    cat << EOF > "$CONF_PATH"
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    # ========================================================
+    # 1. 动态核心：VNC 远程桌面控制台 WebSocket 转发
+    # ========================================================
+    location ~ ^/websockify/(\d+)\$ {
+        proxy_pass http://127.0.0.1:\$1;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        
+        # 保持 VNC 桌面长时间不间断连接
+        proxy_read_timeout 86400;
+    }
+
+    # ========================================================
+    # 2. 默认核心：主程序控制面板（自动提取端口）
+    # ========================================================
+    location / {
+        client_max_body_size 200M;
+        proxy_pass http://127.0.0.1:${oci_port};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # 保证主程序中如有局部 WebSocket 也能正常运转
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+EOF
+
+    # 6. 自动确保激活软链接存在
+    if [[ ! -L "$ENABLED_PATH" ]]; then
+        ln -s "$CONF_PATH" "$ENABLED_PATH" 2>/dev/null
+    fi
+
+    # 7. 测试并重启 Nginx
+    echo -e "\n⏳ 正在验证 Nginx 配置并重载服务..."
+    if nginx -t &>/dev/null; then
+        systemctl reload nginx || systemctl restart nginx
+        echo -e "${GREEN}==================================================${RESET}"
+        echo -e "${GREEN}🎉 成功！已自动提取双端口并一键覆盖 Nginx 配置！${RESET}"
+        echo -e "${YELLOW}🌐 访问域名:${RESET} ${GREEN}https://${DOMAIN}${RESET}"
+        echo -e "${GREEN}==================================================${RESET}"
+    else
+        echo -e "${RED}❌ Nginx 语法测试失败！请检查证书是否已生成，或已有配置是否冲突。${RESET}"
+        nginx -t
+    fi
+}
+
 menu() {
     clear
     get_status_info
@@ -194,6 +314,7 @@ menu() {
     echo -e "${GREEN}6. 重启容器${RESET}"
     echo -e "${GREEN}7. 查看日志${RESET}"
     echo -e "${GREEN}8. 查看配置${RESET}"
+    echo -e "${GREEN}9. 反向代理${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
@@ -207,6 +328,7 @@ menu() {
         6) restart_utils ;;
         7) logs_utils ;;
         8) show_info ;;
+        9) setup_nginx_proxy ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
