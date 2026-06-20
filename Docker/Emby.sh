@@ -14,13 +14,16 @@ CONFIG_FILE="$APP_DIR/config.env"
 
 function menu() {
     clear
-    echo -e "${GREEN}=== Emby(amd)管理菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}     ◈  Emby   管理面板  ◈     ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 安装启动${RESET}"
     echo -e "${GREEN}2) 更新${RESET}"
     echo -e "${GREEN}3) 卸载(含数据)${RESET}"
     echo -e "${GREEN}4) 查看日志${RESET}"
     echo -e "${GREEN}5) 重启${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
     case $choice in
         1) install_app ;;
@@ -34,6 +37,27 @@ function menu() {
 }
 
 function install_app() {
+
+    # 🔍 核心逻辑：自动检测系统架构
+    local arch=$(uname -m)
+    local emby_image=""
+
+    if [[ "$arch" == "x86_64" ]]; then
+        emby_image="emby/embyserver:latest"
+        arch_title="AMD64 (x86_64)"
+    elif [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then
+        emby_image="emby/embyserver_arm64v8:latest"
+        arch_title="ARM64 (aarch64)"
+    else
+        echo -e "${RED}❌ 未知或不支持的系统架构: $arch${RESET}"
+        read -p "按回车返回菜单..."
+        menu
+        return
+    fi
+
+    echo -e "${GREEN}检测到系统架构为: ${YELLOW}$arch_title${RESET}"
+
+
     read -p "请输入 HTTP 端口 [默认:8096]: " input_port
     PORT=${input_port:-8096}
 
@@ -53,7 +77,7 @@ function install_app() {
     cat > "$COMPOSE_FILE" <<EOF
 services:
   emby:
-    image: emby/embyserver:latest
+    image: ${emby_image}
     container_name: emby
     restart: unless-stopped
     ports:
