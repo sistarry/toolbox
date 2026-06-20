@@ -215,6 +215,141 @@ show_config() {
 }
 
 # ======================
+# 9. Nginx 自动提取双端口并覆盖配置（带二次确认提示）
+# ======================
+setup_nginx_proxy() {
+    if ! command -v nginx &> /dev/null; then
+        echo -e "\n❌ 未检测到系统中安装了 Nginx，请先安装 Nginx！"
+        return
+    fi
+
+    echo -e "\n${YELLOW}================================${RESET}"
+    echo -e "${YELLOW}  自动提取双端口 & 覆盖 Nginx 配置  ${RESET}"
+    echo -e "${YELLOW}================================${RESET}"
+    
+    # 1. 引导输入域名
+    read -p "请输入你要覆盖的域名 (例如: oci.666666.xyz): " DOMAIN
+    if [[ -z "$DOMAIN" ]]; then
+        echo "❌ 域名不能为空！"
+        return
+    fi
+
+    # 2. 锁定标准的 Ubuntu/Debian 配置文件路径
+    local CONF_PATH="/etc/nginx/sites-available/${DOMAIN}"
+    local ENABLED_PATH="/etc/nginx/sites-enabled/${DOMAIN}"
+
+    # 3. 核心提示：如果文件存在，触发安全警告与二次确认
+    if [[ -f "$CONF_PATH" ]]; then
+        echo -e "\n${RED}⚠️  安全警告：检测到该域名的配置文件已存在！${RESET}"
+        echo -e "${RED}📂 文件路径: $CONF_PATH${RESET}"
+        echo -e "${RED}🕒 最后修改: $(date -r "$CONF_PATH" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "未知")${RESET}"
+        echo -e "${YELLOW}👉 继续操作将【彻底清空并覆盖】该文件的所有原配置！${RESET}"
+        
+        read -p "确定要覆盖吗？(y/N): " CONFIRM
+        if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+            echo -e "${GREEN}❌ 操作已安全取消，未修改任何文件。${RESET}"
+            return
+        fi
+    else
+        echo -e "\nℹ️ 未检测到已有配置，将直接新建配置文件..."
+    fi
+
+    # 4. 自动从 docker-compose.yml 提取主面板与 VNC 的实际外部映射端口
+    local oci_port="8818" # 主面板默认兜底端口
+    local vnc_port="6080" # VNC默认兜底端口
+    
+    if [[ -f "$COMPOSE_FILE" ]]; then
+        # 提取主面板映射端口（通常对应容器内的 8818 或 5285）
+        local oci_extract=$(grep -A 2 "ports:" "$COMPOSE_FILE" 2>/dev/null | grep -oE '[0-9]+:8818|[0-9]+:5285' | cut -d':' -f1 | head -n 1)
+        [[ -n "$oci_extract" ]] && oci_port="$oci_extract"
+
+        # 提取 VNC 映射端口（通常对应容器内的 6080）
+        local vnc_extract=$(grep -A 2 "ports:" "$COMPOSE_FILE" 2>/dev/null | grep -oE '[0-9]+:6080' | cut -d':' -f1 | head -n 1)
+        [[ -n "$vnc_extract" ]] && vnc_port="$vnc_extract"
+    fi
+    
+    echo -e "ℹ️ 自动提取主面板映射端口为: ${GREEN}${oci_port}${RESET}"
+    echo -e "ℹ️ 自动提取 VNC 桌面映射端口为: ${GREEN}${vnc_port}${RESET}"
+
+    echo -e "⏳ 正在覆盖写入配置文件..."
+
+    # 5. 写入配置模板（两个 proxy_pass 全部采用动态提取的端口变量）
+    cat << EOF > "$CONF_PATH"
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    # ========================================================
+    # 1. 独立代理 VNC 远程桌面组件（自动提取端口）
+    # ========================================================
+    location /myvnc/ {
+        proxy_pass http://127.0.0.1:${vnc_port}/; # 动态提取的 VNC 宿主机端口
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        
+        # 延长 VNC 桌面连接超时时间（3小时），防止桌面频繁断开
+        send_timeout 10800;
+        proxy_read_timeout 10800;
+        proxy_send_timeout 10800;
+    }
+
+    # ========================================================
+    # 2. 默认代理主程序面板（自动提取端口）
+    # ========================================================
+    location / {
+        client_max_body_size 200M;
+        add_header Cache-Control no-cache; # 禁用浏览器缓存，确保面板状态实时刷新
+
+        proxy_pass http://127.0.0.1:${oci_port}; # 动态提取的主面板宿主机端口
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # 保持 WebSocket 握手配置，用于实时查看容器日志流
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade"; 
+
+        # 延长主面板连接超时时间（3小时），防止看实时日志时被 Nginx 掐断
+        send_timeout 10800;
+        proxy_read_timeout 10800;
+        proxy_send_timeout 10800;
+    }
+}
+EOF
+
+    # 6. 自动确保激活软链接存在
+    if [[ ! -L "$ENABLED_PATH" ]]; then
+        ln -s "$CONF_PATH" "$ENABLED_PATH" 2>/dev/null
+    fi
+
+    # 7. 测试并重启 Nginx
+    echo -e "\n⏳ 正在验证 Nginx 配置并重载服务..."
+    if nginx -t &>/dev/null; then
+        systemctl reload nginx || systemctl restart nginx
+        echo -e "${GREEN}==================================================${RESET}"
+        echo -e "${GREEN}🎉 成功！已自动提取双端口并一键覆盖 Nginx 配置！${RESET}"
+        echo -e "${YELLOW}🌐 访问域名:${RESET} ${GREEN}https://${DOMAIN}${RESET}"
+        echo -e "${GREEN}==================================================${RESET}"
+    else
+        echo -e "${RED}❌ Nginx 语法测试失败！请检查证书是否已生成，或已有配置是否冲突。${RESET}"
+        nginx -t
+    fi
+}
+
+# ======================
 # 主循环体面板
 # ======================
 while true; do
@@ -235,6 +370,7 @@ while true; do
     echo -e "${GREEN}6. 重启容器${RESET}"
     echo -e "${GREEN}7. 查看日志${RESET}"
     echo -e "${GREEN}8. 查看配置${RESET}"
+    echo -e "${GREEN}9. 反向代理${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
@@ -252,6 +388,7 @@ while true; do
             docker logs -f oci-helper
             ;;
         8)  show_config ;;
+        9)  setup_nginx_proxy ;;
         0)  exit 0 ;;
         *)  echo -e "\n❌ 无效的选项，请重新选择。" ;;
     esac
