@@ -126,6 +126,7 @@ EOF
     echo -e "${GREEN}         Lucky 部署成功！        ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${YELLOW}默认后台访问地址 : http://${DETECT_IP}:16601${RESET}"
+    echo -e "${YELLOW}默认账号/密码    : 666/666${RESET}"
     echo -e "${YELLOW}本地配置存储路径 : ${real_path_conf}${RESET}"
     echo -e "${YELLOW}Docker 守护进程  : 已挂载挂载 /var/run/docker.sock${RESET}"
     echo -e "${YELLOW}配置文件路径     : $COMPOSE_FILE${RESET}"
