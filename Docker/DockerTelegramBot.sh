@@ -27,7 +27,7 @@ pause() {
 menu() {
     clear
     echo -e "${GREEN}=================================${RESET}"
-    echo -e "${GREEN}    Docker TelegramBot 管理      ${RESET}"
+    echo -e "${GREEN}  ◈  Docker TelegramBot管理  ◈   ${RESET}"
     echo -e "${GREEN}=================================${RESET}"
     echo -e "${GREEN} 1) 部署单机版${RESET}"
     echo -e "${GREEN} 2) 部署多机版${RESET}"
