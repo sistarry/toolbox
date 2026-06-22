@@ -1,7 +1,7 @@
 
 #!/bin/bash
 # ==========================================
-# Poste.io 一键管理脚本 (Docker)
+# Poste.io 一键管理脚本 
 # ==========================================
 
 GREEN="\033[32m"
@@ -167,10 +167,12 @@ EOF
     # 默认管理员账号提示
     SERVER_IP=$(get_public_ip)
     admin_email="admin@${domain#mail.}"
-    echo -e "${YELLOW}访问 Web 邮局: https://${domain}${RESET}"
-    echo -e "${YELLOW}访问管理后台: https://${domain}/admin${RESET}"
+    echo -e "${YELLOW}=======================================${RESET}"
+    echo -e "${YELLOW}访问 Web 邮局 : https://${domain}${RESET}"
+    echo -e "${YELLOW}访问管理后台  : https://${domain}/admin${RESET}"
     echo -e "${YELLOW}默认管理员邮箱: ${admin_email}${RESET}"
-    echo -e "${YELLOW}访问地址: http://${SERVER_IP}:${WEB_PORT}${RESET}"
+    echo -e "${YELLOW}访问地址      : http://${SERVER_IP}:${WEB_PORT}${RESET}"
+    echo -e "${YELLOW}=======================================${RESET}"
     read -p "按回车返回菜单..."
 }
 
@@ -226,13 +228,16 @@ uninstall_app() {
 
 menu() {
     clear
-    echo -e "${GREEN}=== Poste.io 邮件服务器管理菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}◈ Poste.io  邮件服务器管理面板 ◈${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 安装启动${RESET}"
-    echo -e "${GREEN}2) 更新${RESET}"
+    echo -e "${GREEN}2) 更新容器${RESET}"
     echo -e "${GREEN}3) 查看日志${RESET}"
-    echo -e "${GREEN}4) 卸载(含数据)${RESET}"
+    echo -e "${GREEN}4) 卸载容器${RESET}"
     echo -e "${GREEN}5) 端口检测${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
     case $choice in
         1) install_app ;;
