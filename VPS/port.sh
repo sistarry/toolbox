@@ -138,7 +138,7 @@ while true; do
     if [ "$REFRESH" -eq 1 ]; then
         clear
         run_monitor
-        echo -e "\n${GREEN}输入 ${RED}0${GREEN}退出实时刷新，回车继续刷新...${RESET}"
+        echo -e "\n${GREEN}输入 ${RED}0${GREEN} 退出实时刷新，回车继续刷新...${RESET}"
         read -r input
         if [ "$input" = "0" ]; then
             break
