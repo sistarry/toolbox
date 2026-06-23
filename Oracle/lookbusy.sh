@@ -215,12 +215,12 @@ while true; do
     echo -e "${GREEN}◈LookBusy防回收保活  管理面板◈  ${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     # 状态栏拆分，严格每行一个指标
-    echo -e "${CYAN}容器状态:${RESET} $status"
+    echo -e "${GREEN}容器状态:${RESET} $status"
     if [ "$cpu_util" != "N/A" ] && [ -n "$cpu_util" ]; then
-    echo -e "${CYAN}CPU核心 :${RESET} ${YELLOW}${cpu_core}核${RESET}"
-    echo -e "${CYAN}目标负载:${RESET} ${YELLOW}${cpu_util}%${RESET}"
-    echo -e "${CYAN}内存占用:${RESET} ${YELLOW}${mem_util}%${RESET}"
-    echo -e "${CYAN}测速频率:${RESET} ${YELLOW}${speed_int}分钟/次${RESET}"
+    echo -e "${GREEN}CPU核心 :${RESET} ${YELLOW}${cpu_core}核${RESET}"
+    echo -e "${GREEN}目标负载:${RESET} ${YELLOW}${cpu_util}%${RESET}"
+    echo -e "${GREEN}内存占用:${RESET} ${YELLOW}${mem_util}%${RESET}"
+    echo -e "${GREEN}测速频率:${RESET} ${YELLOW}${speed_int}分钟/次${RESET}"
     fi
     echo -e "${GREEN}==============================${RESET}"
     echo -e "${GREEN}1. 部署启动${RESET}"
