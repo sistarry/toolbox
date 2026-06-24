@@ -181,12 +181,7 @@ docker_compose_install_update() {
     echo -e "${GREEN}Docker Compose 已安装/更新到版本 $latest${RESET}"
 }
 
-# -----------------------------
-# Docker IPv6
-# -----------------------------
-# -----------------------------
-# Docker IPv6
-# -----------------------------
+
 # -----------------------------
 # Docker IPv6
 # -----------------------------
@@ -446,7 +441,7 @@ docker_network() {
 # Docker 备份/恢复菜单
 # -----------------------------
 # -----------------------------
-# Docker 备份/恢复菜单（增强版）
+# Docker 备份/恢复菜单
 # -----------------------------
 docker_backup_menu() {
     root_use
@@ -762,7 +757,8 @@ set_docker_mirror() {
     echo -e "${GREEN}1. 使用默认高速代理${RESET}"
     echo -e "${GREEN}2. 输入自定义加速源${RESET}"
     echo -e "${GREEN}3. 恢复默认设置(清空加速源)${RESET}"
-    read -p "请输入选项 (默认 1): " mirror_choice
+    echo -ne "${GREEN}请选择或输入镜像加速源选项 (默认 1): ${RESET}"
+    read mirror_choice
     mirror_choice=${mirror_choice:-1}
 
     local mirrors=""
@@ -811,6 +807,53 @@ set_docker_mirror() {
     restart_docker
 }
 
+# -----------------------------
+# Docker 日志管理子菜单
+# -----------------------------
+docker_log_menu() {
+    root_use
+    mkdir -p /etc/docker
+
+    while true; do
+        echo -e "${CYAN}===== Docker 日志大小限制管理 =====${RESET}"
+        echo -e "${GREEN}1. 开启日志大小限制${RESET}"
+        echo -e "${GREEN}2. 关闭日志大小限制 (恢复默认无限制)${RESET}"
+        echo -e "${GREEN}0. 返回主菜单${RESET}"
+        echo -ne "${GREEN}请选择操作: ${RESET}"
+        read log_choice
+
+        case $log_choice in
+            1)
+                echo -e "${CYAN}正在配置日志限制...${RESET}"
+                if [ ! -f /etc/docker/daemon.json ]; then echo '{}' > /etc/docker/daemon.json; fi
+                jq '. + {"log-driver": "json-file", "log-opts": {"max-size": "20m", "max-file": "3"}}' /etc/docker/daemon.json > /etc/docker/daemon.json.tmp 2>/dev/null
+                mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json
+                echo -e "${GREEN}✅ 日志大小限制开启成功！${RESET}"
+                echo -e "${YELLOW}注意: 此限制仅对【新创建】的容器生效，老容器需重建方能生效。${RESET}"
+                restart_docker
+                read -p "$(echo -e ${GREEN}按回车继续...${RESET})"
+                ;;
+            2)
+                echo -e "${YELLOW}正在解除日志限制...${RESET}"
+                if [ -f /etc/docker/daemon.json ]; then
+                    jq 'del(."log-driver") | del(."log-opts")' /etc/docker/daemon.json > /etc/docker/daemon.json.tmp 2>/dev/null
+                    mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json
+                    echo -e "${GREEN}✅ 已关闭日志大小限制（恢复系统默认）。${RESET}"
+                else
+                    echo -e "${YELLOW}配置文件不存在，无需关闭。${RESET}"
+                fi
+                restart_docker
+                read -p "$(echo -e ${GREEN}按回车继续...${RESET})"
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo -e "${RED}无效选择${RESET}" && sleep 1
+                ;;
+        esac
+    done
+}
 
 # -----------------------------
 # 主菜单显示状态
@@ -819,12 +862,14 @@ main_menu() {
     root_use
     while true; do
         clear
-        echo -e "\033[36m"
-        echo "  ____             _             "
-        echo " |  _ \  ___   ___| | _____ _ __ "
-        echo " | | |/ _ \ / __| |/ / _ \ '__|"
-        echo " | |_| | (_) | (__|   <  __/ |   "
-        echo " |____/ \___/ \___|_|\_\___|_|   "
+        echo -e "${CYAN}"
+        echo "  ____             _               "
+        echo " |  _ \  ___   ___| | _____ _ __   "
+        echo " | | | |/ _ \ / __| |/ / _ \ '__|  "
+        echo " | |_| | (_) | (__|   <  __/ |     "
+        echo " |____/ \___/ \___|_|\_\___|_|     "
+        echo -e "${RESET}"
+        echo -e "${GREEN}===========================================${RESET}"
         # 检测 Docker 状态
         if command -v docker &>/dev/null; then
             docker_status=$(docker info &>/dev/null && echo "运行中" || echo "未运行")
@@ -835,7 +880,7 @@ main_menu() {
             # Docker 未安装时只显示 iptables 状态
             echo -e "${YELLOW}🐳 iptables: $(current_iptables)${RESET}"
         fi
-
+        echo -e "${GREEN}===========================================${RESET}"
         echo -e "${GREEN}01. 安装/更新 Docker${RESET}"
         echo -e "${GREEN}02. 安装/更新 Docker Compose${RESET}"
         echo -e "${GREEN}03. 卸载 Docker & Compose${RESET}"
@@ -851,9 +896,11 @@ main_menu() {
         echo -e "${GREEN}13. 重启 Docker${RESET}"
         echo -e "${GREEN}14. 卷管理 ${RESET}"
         echo -e "${GREEN}15. 设置Docker镜像加速源${RESET}"
-        echo -e "${GREEN}16.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
-        echo -e "${GREEN}17. Docker监控${RESET}"
-        echo -e "${GREEN} 0. 退出${RESET}"
+        echo -e "${GREEN}16. 设置Docker日志限制${RESET}"
+        echo -e "${GREEN}17.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
+        echo -e "${GREEN}18. Docker监控${RESET}"
+        echo -e "${GREEN}00. 退出${RESET}"
+        echo -e "${GREEN}===========================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case $choice in
             01|1) docker_install_update ;;
@@ -871,8 +918,9 @@ main_menu() {
             13|13) check_docker_running && restart_docker ;;
             14|14) check_docker_running && docker_volume ;;
             15|15) check_docker_running && set_docker_mirror ;;
-            16|16) check_docker_running && docker_cleanup ;;
-            17|17) monitor_docker_containers ;;
+            16|16) docker_log_menu ;;
+            17|17) check_docker_running && docker_cleanup ;;
+            18|18) monitor_docker_containers ;;
              00|0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ;;
         esac
