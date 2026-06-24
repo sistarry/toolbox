@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# FlareSolverr 代理服务 Docker Compose 独立管理面板 (自定义端口版)
+# FlareSolverr 代理服务 Docker Compose 独立管理面板
 # =================================================================
 
 # 颜色
@@ -115,8 +115,6 @@ EOF
     echo -e "${GREEN}================================${RESET}"
     echo -e "${YELLOW}API 测试/访问地址  : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "${YELLOW}配置文件路径       : $COMPOSE_FILE${RESET}"
-    echo -e "${GREEN}--------------------------------${RESET}"
-    echo -e "${CYAN}💡 提示: 请将上述 API 地址填入 Prowlarr/Jackett 的 FlareSolverr 配置项中。${RESET}"
     echo -e "${GREEN}================================${RESET}"
 }
 
