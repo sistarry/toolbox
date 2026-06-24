@@ -393,26 +393,45 @@ EOF
     pause_to_menu
 }
 
+# 3. 手机端纵向块状输出
 _print_rules_list() {
-    echo -e "${GREEN}序号  协议  本机端口  目标地址/域名  备注${RESET}"
-    echo -e "${GREEN}=====================================${RESET}"
     local idx=1 rule lport target dport note proto type label proto_label
     for rule in "${RULES[@]}"; do
         IFS='|' read -r lport target dport note proto <<< "$rule"
         proto="${proto:-ALL}"
         type=$(detect_ip_type "$target")
-        if [[ "$type" == "2" ]]; then label="域名"; else [[ "$type" == "6" ]] && label="IPv6" || label="IPv4"; fi
-        if [[ "$proto" == "ALL" ]]; then proto_label="TCP+UDP"; else proto_label="$proto"; fi
-        proto_label="${proto_label} (${label})"
-
-        if [[ "$type" == "6" ]]; then
-            printf "%-6s %-12s %-10s -> %-35s %s\n" "$idx" "$proto_label" "$lport" "[${target}]:${dport}" "${note:--}"
-        else
-            printf "%-6s %-12s %-10s -> %-35s %s\n" "$idx" "$proto_label" "$lport" "${target}:${dport}" "${note:--}"
+        
+        if [[ "$type" == "2" ]]; then 
+            label="域名"
+        elif [[ "$type" == "6" ]]; then 
+            label="IPv6" 
+        else 
+            label="IPv4"
         fi
+        
+        if [[ "$proto" == "ALL" ]]; then 
+            proto_label="TCP+UDP" 
+        else 
+            proto_label="$proto"
+        fi
+
+        local target_display
+        if [[ "$type" == "6" ]]; then
+            target_display="[${target}]:${dport}"
+        else
+            target_display="${target}:${dport}"
+        fi
+
+        echo -e "${YELLOW}◈ 规则序号: ${RESET}${YELLOW}[${idx}]${RESET}"
+        echo -e "  ├─ ${YELLOW}转发协议: ${RESET}${CYAN}${proto_label} (${label})${RESET}"
+        echo -e "  ├─ ${YELLOW}本机端口: ${RESET}${GREEN}${lport}${RESET}"
+        echo -e "  ├─ ${YELLOW}目标地址: ${RESET}${BLUE}${target_display}${RESET}"
+        echo -e "  └─ ${YELLOW}备注信息: ${RESET}${note:--}"
+        echo -e "${YELLOW}----------------------------------------${RESET}"
         ((idx++))
     done
 }
+
 
 do_list() {
     load_rules
