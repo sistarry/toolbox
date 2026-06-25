@@ -11,7 +11,7 @@ warn() { echo -e "${YELLOW}[警告] $*${RESET}"; }
 err() { echo -e "${RED}[错误] $*${RESET}" >&2; }
 require_root() { [[ "$(id -u)" -eq 0 ]] || { err '请用 root 运行'; exit 1; }; }
 require_debian_ubuntu() { [[ -f /etc/os-release ]] || { err '无法识别系统，只支持 Debian/Ubuntu'; exit 1; }; . /etc/os-release; case "${ID:-}" in debian|ubuntu) ;; *) [[ "${ID_LIKE:-}" == *debian* ]] || { err "只支持 Debian/Ubuntu，当前: ${PRETTY_NAME:-unknown}"; exit 1; } ;; esac; }
-install_deps() { info '安装依赖...'; apt-get update; apt-get install -y python3 curl ca-certificates; if ! command -v docker >/dev/null 2>&1; then warn '未检测到 docker。脚本不会自动安装 Docker，请先自行安装 Docker 和 docker compose 插件。'; fi; }
+install_deps() { info '安装依赖...'; apt-get update; apt-get install -y python3 curl ca-certificates; if ! command -v docker >/dev/null 2>&1; then warn '未检测到 docker，请先自行安装 Docker 和 docker compose 插件。'; fi; }
 get_public_ip() {
   local ip=''
   for url in https://api.ipify.org https://ip.sb https://checkip.amazonaws.com; do
@@ -730,7 +730,42 @@ chmod 600 "$ENV_FILE"; write_service; systemctl daemon-reload; systemctl enable 
 uninstall_app() { require_root; systemctl disable --now "$APP_NAME" >/dev/null 2>&1 || true; rm -f "$SERVICE_FILE" "$ENV_FILE"; systemctl daemon-reload; rm -rf "$INSTALL_DIR"; info '已卸载'; }
 status_app() { systemctl --no-pager status "$APP_NAME" || true; [[ -f "$ENV_FILE" ]] && echo && grep -E '^(MASTER_PUBLIC_URL|PAIR_CODE)=' "$ENV_FILE" || true; }
 restart_app() { require_root; systemctl restart "$APP_NAME"; info '已重启'; }
-show_menu() { echo; echo '====== Docker Fleet 主控 ======'; echo '1. 安装'; echo '2. 卸载'; echo '3. 查看状态'; echo '4. 重启服务'; echo '0. 退出'; }
-pause_return() { echo; read -rp '按回车返回菜单...' _; }
-menu_loop() { while true; do show_menu; read -rp '请输入选项: ' choice; case "$choice" in 1) install_app; pause_return ;; 2) uninstall_app; pause_return ;; 3) status_app; pause_return ;; 4) restart_app; pause_return ;; 0) exit 0 ;; *) err '无效选项'; pause_return ;; esac; done; }
+
+show_menu() {
+  clear
+  echo -e "${GREEN}========================${RESET}"
+  echo -e "${GREEN} ◈ Docker  TGBot管理 ◈  ${RESET}"
+  echo -e "${GREEN}========================${RESET}"
+  echo -e "${GREEN}1. 安装${RESET}"
+  echo -e "${GREEN}2. 卸载${RESET}"
+  echo -e "${GREEN}3. 查看状态${RESET}"
+  echo -e "${GREEN}4. 重启服务${RESET}"
+  echo -e "${GREEN}0. 退出${RESET}"
+  echo -e "${GREEN}========================${RESET}"
+}
+
+pause_return() {
+
+  echo -ne "${GREEN}按回车返回菜单...${RESET}"
+  read -r _
+
+}
+
+
+menu_loop() {
+  while true; do
+    show_menu
+    echo -ne "${GREEN}请输入选项: ${RESET}"
+    read -r choice
+    case "$choice" in
+      1) install_app; pause_return ;;
+      2) uninstall_app; pause_return ;;
+      3) status_app; pause_return ;;
+      4) restart_app; pause_return ;;
+      0) exit 0 ;;
+      *) err '无效选项'; pause_return ;;
+    esac
+  done
+}
+
 case "${1:-menu}" in install) install_app ;; uninstall) uninstall_app ;; status) status_app ;; restart) restart_app ;; menu) menu_loop ;; *) menu_loop ;; esac
