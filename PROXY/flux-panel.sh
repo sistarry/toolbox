@@ -170,11 +170,11 @@ menu() {
         echo -e "${GREEN}数据状态:${RESET} ${mysql_status}"
         echo -e "${GREEN}============================${RESET}"
         echo -e "${GREEN}1) 安装启动${RESET}"
-        echo -e "${GREEN}2) 更新${RESET}"
-        echo -e "${GREEN}3) 重启${RESET}"
+        echo -e "${GREEN}2) 更新容器${RESET}"
+        echo -e "${GREEN}3) 重启容器${RESET}"
         echo -e "${GREEN}4) 查看日志${RESET}"
         echo -e "${GREEN}5) 查看状态${RESET}"
-        echo -e "${GREEN}6) 卸载(含数据)${RESET}"
+        echo -e "${GREEN}6) 卸载容器${RESET}"
         echo -e "${GREEN}7)${RESET} ${YELLOW}节点管理${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
         echo -e "${GREEN}============================${RESET}"
@@ -197,11 +197,16 @@ menu() {
 install_app() {
     check_docker
     mkdir -p "$APP_DIR"
-
     cd "$APP_DIR" || exit
 
-    
-    # 下载数据库初始化文件
+    # 1. 选择数据库模式
+    echo -e "${GREEN}请选择数据库部署模式:${RESET}"
+    echo "1) 使用本地 Docker 自动安装 MySQL"
+    echo "2) 连接已有的远程外部 MySQL 数据库 (自动导入结构)"
+    read -p "请输入编号 [默认 1]: " db_mode
+    db_mode=${db_mode:-1}
+
+    # 无论哪种模式，都需要下载数据库初始化文件
     echo "📡 准备下载数据库初始化文件..."
     if [ ! -f gost.sql ] || [ ! -s gost.sql ]; then
         if ! download_file "$GOST_SQL_URL" "gost.sql"; then
@@ -212,7 +217,17 @@ install_app() {
     fi
     echo -e "${GREEN}✅ 数据库文件准备完成${RESET}"
 
-    # 设置端口
+    if [ "$db_mode" == "2" ]; then
+        # 远程数据库配置输入
+        read -p "请输入远程数据库 IP/域名: " DB_HOST
+        read -p "请输入远程数据库端口 [默认:3306]: " DB_PORT
+        DB_PORT=${DB_PORT:-3306}
+    else
+        DB_HOST="mysql" # 本地容器模式
+        DB_PORT="3306"
+    fi
+
+    # 2. 设置通用端口与账户
     read -p "请输入前端端口 [默认:6366]: " input_front
     FRONTEND_PORT=${input_front:-6366}
     check_port "$FRONTEND_PORT" || return
@@ -221,7 +236,6 @@ install_app() {
     BACKEND_PORT=${input_back:-6365}
     check_port "$BACKEND_PORT" || return
 
-    # 设置数据库账户
     read -p "请输入数据库用户名 [默认:gost]: " input_user
     DB_USER=${input_user:-gost}
     read -p "请输入数据库名 [默认:gost]: " input_db
@@ -229,12 +243,33 @@ install_app() {
     read -p "请输入数据库密码 [默认:123456]: " input_pass
     DB_PASSWORD=${input_pass:-123456}
 
+    # 3. 如果是远程模式，执行自动导入
+    if [ "$db_mode" == "2" ]; then
+        echo -e "${YELLOW}🔄 正在尝试连接远程数据库并自动导入结构...${RESET}"
+        
+        # 启动一个临时的 mysql 容器来执行导入命令，执行完后自动销毁 (--rm)
+        docker run --rm -i \
+            --net=host \
+            mysql:5.7 \
+            mysql -h"${DB_HOST}" -P"${DB_PORT}" -u"${DB_USER}" -p"${DB_PASSWORD}" "${DB_NAME}" < gost.sql 2>/tmp/gost_db_err.log
+
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✅ 远程数据库结构自动导入成功！${RESET}"
+        else
+            echo -e "${RED}❌ 远程数据库导入失败！错误信息如下：${RESET}"
+            cat /tmp/gost_db_err.log
+            echo -e "${YELLOW}请检查：1. 远程数据库是否开通外网访问；2. 账号密码是否正确；3. 数据库[${DB_NAME}]是否已提前创建。${RESET}"
+            read -p "按回车返回菜单..."
+            return
+        fi
+    fi
+
     # JWT secret
     JWT_SECRET=$(openssl rand -hex 16)
 
     # 检测 IPv6
     if check_ipv6_support; then
-        echo -e "${GREEN}🚀 系统支持 IPv6，自动启用 IPv6 配置...${RESET}"
+        echo -e "${GREEN}🚀 系统支持 IPv6，自动启用 IPv6配置...${RESET}"
         configure_docker_ipv6
     else
         echo -e "${YELLOW}⚠️ 系统不支持 IPv6，跳过配置${RESET}"
@@ -242,6 +277,8 @@ install_app() {
 
     # 生成 .env
     cat > .env <<EOF
+DB_HOST=$DB_HOST
+DB_PORT=$DB_PORT
 DB_NAME=$DB_NAME
 DB_USER=$DB_USER
 DB_PASSWORD=$DB_PASSWORD
@@ -251,16 +288,19 @@ BACKEND_PORT=$BACKEND_PORT
 EOF
     echo -e "${GREEN}✅ .env 文件生成完成${RESET}"
 
-        # IPv6 设置
     read -p "是否启用 Docker IPv6 网络? [Y/n] (默认开启): " ipv6_input
     if [[ "$ipv6_input" =~ ^[Nn]$ ]]; then
         ENABLE_IPV6=false
     fi
 
-    # 生成 docker-compose.yml
+    # 4. 动态生成 docker-compose.yml
     cat > "$COMPOSE_FILE" <<EOF
-
 services:
+EOF
+
+    # 如果是本地模式，才写入 mysql 服务
+    if [ "$db_mode" == "1" ]; then
+    cat >> "$COMPOSE_FILE" <<EOF
   mysql:
     image: mysql:5.7
     container_name: gost-mysql
@@ -286,13 +326,19 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
+EOF
+    fi
+
+    # 写入后端和前端配置
+    cat >> "$COMPOSE_FILE" <<EOF
 
   backend:
     image: bqlpfy/springboot-backend:1.4.3
     container_name: springboot-backend
     restart: unless-stopped
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -303,9 +349,9 @@ services:
       - "${BACKEND_PORT}:6365"
     volumes:
       - backend_logs:/app/logs
-    depends_on:
+$( [ "$db_mode" == "1" ] && echo "    depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_healthy" )
     networks:
       - gost-network
     healthcheck:
@@ -321,23 +367,23 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT}:80"
-    depends_on:
+$( [ "$db_mode" == "1" ] && echo "    depends_on:
       backend:
-        condition: service_healthy
+        condition: service_healthy" )
     networks:
       - gost-network
 
 volumes:
-  mysql_data:
+$( [ "$db_mode" == "1" ] && echo "  mysql_data:
     name: mysql_data
-    driver: local
+    driver: local" )
   backend_logs:
     name: backend_logs
     driver: local
 EOF
 
-# 添加 IPv6 网络
-if [ "$ENABLE_IPV6" = true ]; then
+    # 添加网络配置
+    if [ "$ENABLE_IPV6" = true ]; then
 cat >> "$COMPOSE_FILE" <<EOF
 
 networks:
@@ -350,7 +396,7 @@ networks:
         - subnet: 172.20.0.0/16
         - subnet: fd00:dead:beef::/48
 EOF
-else
+    else
 cat >> "$COMPOSE_FILE" <<EOF
 
 networks:
@@ -358,21 +404,24 @@ networks:
     name: gost-network
     driver: bridge
 EOF
-fi
+    fi
 
     cd "$APP_DIR" || exit
     docker compose up -d
 
     SERVER_IP=$(get_public_ip)
 
+    echo -e "${GREEN}============================${RESET}"
     echo -e "${GREEN}✅ 哆啦A梦转发面板 已启动${RESET}"
     echo -e "${YELLOW}🌐 前端访问: http://${SERVER_IP}:${FRONTEND_PORT}${RESET}"
     echo -e "${YELLOW}🌐 后端访问: http://${SERVER_IP}:${BACKEND_PORT}${RESET}"
     echo -e "${YELLOW}🌐 默认账号: admin_user${RESET}"
     echo -e "${YELLOW}🌐 默认密码: admin_user${RESET}"
-    echo -e "${GREEN}📂 安装目录: $APP_DIR${RESET}"
+    echo -e "${YELLOW}📂 安装目录: $APP_DIR${RESET}"
+    echo -e "${GREEN}============================${RESET}"
     read -p "按回车返回菜单..."
 }
+
 
 update_app() {
     cd "$APP_DIR" || return
@@ -420,10 +469,29 @@ manage_nodes() {
 }
 
 uninstall_app() {
-    cd "$APP_DIR" || return
-    docker compose down -v
-    rm -rf "$APP_DIR"
-    echo -e "${RED}✅  哆啦A梦转发面板 已彻底卸载${RESET}"
+    echo -e "${RED}确定要停用并删除 哆啦A梦转发面板 容器吗？(y/n)${RESET}"
+    read -r confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        return
+    fi
+
+    # 1. 删容器
+    if [ -f "$COMPOSE_FILE" ]; then
+        cd "$APP_DIR" && docker compose down
+    else
+        docker rm -f vite-frontend springboot-backend gost-mysql 2>/dev/null
+    fi
+    echo -e "${GREEN}✅ 容器已删除。${RESET}"
+
+    # 2. 删数据
+    echo -ne "${RED}是否同时彻底删除本地数据卷和安装目录？(y/n): ${RESET}"
+    read -r clean_data
+    if [[ "$clean_data" =~ ^[Yy]$ ]]; then
+        [ -f "$COMPOSE_FILE" ] && cd "$APP_DIR" && docker compose down -v &>/dev/null
+        [ -d "$APP_DIR" ] && cd / && rm -rf "$APP_DIR"
+        echo -e "${GREEN}✅ 本地数据已彻底清理。${RESET}"
+    fi
+
     read -p "按回车返回菜单..."
 }
 
