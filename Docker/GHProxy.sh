@@ -243,13 +243,13 @@ logs_utils() {
 menu() {
     clear
     get_status_info
-    echo -e "${GREEN}===============================================${RESET}"
-    echo -e "${GREEN}     ◈  ghproxy & Smart-Git 管理面板  ◈     ${RESET}"
-    echo -e "${GREEN}===============================================${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN} ◈  ghproxy & Smart-Git 管理面板  ◈     ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}ghproxy 状态   :${RESET} $gh_status"
     echo -e "${GREEN}Smart-Git 状态 :${RESET} $git_status"
     echo -e "${GREEN}ghproxy 映射口 :${RESET} ${YELLOW}${port_display}${RESET}"
-    echo -e "${GREEN}===============================================${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN}1. 部署启动${RESET}"
     echo -e "${GREEN}2. 更新容器${RESET}"
     echo -e "${GREEN}3. 卸载容器${RESET}"
@@ -258,7 +258,7 @@ menu() {
     echo -e "${GREEN}6. 重启容器${RESET}"
     echo -e "${GREEN}7. 查看日志${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
-    echo -e "${GREEN}===============================================${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
     read -r choice
     case "$choice" in
