@@ -28,40 +28,35 @@ get_public_ip() {
     local ip=""
     
     if [[ "$mode" == "v4" ]]; then
-        # 强制获取 IPv4
         for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
             ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
     elif [[ "$mode" == "v6" ]]; then
-        # 强制获取 IPv6
         for url in "https://api64.ipify.org" "https://6.ip.sb"; do
             ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
         done
     else
-        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
         for url in "https://api.ipify.org" "https://4.ip.sb"; do
             ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
         done
-        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
         for url in "https://api64.ipify.org" "https://6.ip.sb"; do
             ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
         done
     fi
-
-    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
     echo "127.0.0.1" && return 0
 }
+
 # 动态获取容器整体状态和端口
 get_status_info() {
     if [ -f "$COMPOSE_FILE" ]; then
         if [ "$(docker ps -q -f name=new-api)" ]; then
-            status="${GREEN}运行中${RESET}"
+            status="${YELLOW}运行中${RESET}"
             web_port=$(docker ps -f name=new-api --format "{{.Ports}}" | sed -E 's/.*:([0-9]+)->.*/\1/' | head -n 1)
             if ! [[ "$web_port" =~ ^[0-9]+$ ]]; then
                 web_port=$(sed -n '/new-api:/,/^[[:space:]]*[a-zA-Z]/p' "$COMPOSE_FILE" | grep -E '\-[[:space:]]*["'\'']?[0-9]+:' | head -n 1 | awk -F ':' '{print $1}' | tr -d '[:space:]"''-')
             fi
         elif [ "$(docker ps -aq -f name=new-api)" ]; then
-            status="${YELLOW}已停止${RESET}"
+            status="${RED}已停止${RESET}"
             web_port=$(docker inspect --format='{{range $p, $conf := .HostConfig.PortBindings}}{{(index $conf 0).HostPort}}{{end}}' new-api 2>/dev/null)
         else
             status="${RED}未部署${RESET}"
@@ -88,13 +83,10 @@ install_newapi() {
     read -r node_name
     [[ -z "$node_name" ]] && node_name="default"
 
-    # 自动生成本地缓存 Redis 高强度密码
-    local redis_pass=$(openssl rand -hex 16)
-
     # 2. 数据库运行模式选择
     echo -e "\n${CYAN}====== PostgreSQL 数据库运行模式选择 ======${RESET}"
-    echo -e " 1) 直接部署全新的 PostgreSQL 15 容器 (包含本地持久化卷)"
-    echo -e " 2) 使用已有的外部/远程 PostgreSQL 数据库 (需提前手动建好空库)"
+    echo -e "${GREEN} 1) 直接部署全新的 PostgreSQL 15 容器 (包含本地持久化卷)${RESET}"
+    echo -e "${GREEN} 2) 使用已有的外部/远程 PostgreSQL 数据库 (需提前手动建好空库)${RESET}"
     echo -ne "${YELLOW}请选择数据库模式 [默认: 1]: ${RESET}"
     read -r db_mode
     [[ -z "$db_mode" ]] && db_mode="1"
@@ -125,38 +117,81 @@ install_newapi() {
         read -r db_name
         [[ -z "$db_name" ]] && db_name="new-api"
         
-        # 兼容本地宿主机回环网关
         if [[ "$ext_db_ip" == "127.0.0.1" || "$ext_db_ip" == "localhost" ]]; then
             db_host="172.17.0.1"
         fi
     fi
 
-    # 3. 动态拼接生成强连接串 DSN
-    local sql_dsn="postgresql://${db_user}:${db_pass}@${db_host}:${db_port}/${db_name}"
-    local redis_conn="redis://:${redis_pass}@redis:6379"
+    # 3. Redis 运行模式与分区选择
+    echo -e "\n${CYAN}====== Redis 缓存运行模式选择 ======${RESET}"
+    echo -e "${GREEN} 1) 直接部署全新的 Redis 容器 (自动生成高强度密码)${RESET}"
+    echo -e "${GREEN} 2) 使用已有的外部/远程 Redis 服务${RESET}"
+    echo -ne "${YELLOW}请选择 Redis 模式 [默认: 1]: ${RESET}"
+    read -r redis_mode
+    [[ -z "$redis_mode" ]] && redis_mode="1"
 
-    # 4. 备份保留凭证配置文件 newapi.env (全双引号死锁防截断)
+    local redis_host="redis"
+    local redis_port="6379"
+    local redis_pass=""
+    local redis_db="0"
+
+    if [[ "$redis_mode" == "1" ]]; then
+        echo -e "${YELLOW}使用全新内置 Redis 容器，正在生成高强度随机密码...${RESET}"
+        redis_pass=$(openssl rand -hex 16)
+    else
+        echo -ne "${YELLOW}请输入远程 Redis 的 IP 或域名: ${RESET}"
+        read -r ext_redis_ip
+        echo -ne "${YELLOW}请输入远程 Redis 端口 [默认: 6379]: ${RESET}"
+        read -r ext_redis_port
+        [[ -z "$ext_redis_port" ]] && ext_redis_port="6379"
+        redis_host="$ext_redis_ip"
+        redis_port="$ext_redis_port"
+        echo -ne "${YELLOW}请输入远程 Redis 密码 (若无密码请直接回车): ${RESET}"
+        read -r redis_pass
+        
+        if [[ "$ext_redis_ip" == "127.0.0.1" || "$ext_redis_ip" == "localhost" ]]; then
+            redis_host="172.17.0.1"
+        fi
+    fi
+
+    echo -ne "${YELLOW}请输入 Redis 分区编号 (DB Index) [0-15] [默认: 0]: ${RESET}"
+    read -r redis_db
+    [[ -z "$redis_db" || ! "$redis_db" =~ ^[0-9]+$ ]] && redis_db="0"
+
+    # 4. 动态拼接生成强连接串 DSN 和 Redis 连接串
+    local sql_dsn="postgresql://${db_user}:${db_pass}@${db_host}:${db_port}/${db_name}"
+    local redis_conn="redis://:${redis_pass}@${redis_host}:${redis_port}/${redis_db}"
+    # 如果远程 Redis 没有密码，格式化连接串
+    if [[ "$redis_mode" == "2" && -z "$redis_pass" ]]; then
+        redis_conn="redis://${redis_host}:${redis_port}/${redis_db}"
+    fi
+
+    # 5. 备份保留凭证配置文件 newapi.env
     cat << EOF > "$CONFIG_FILE"
 PORT="${custom_port}"
 NODE_NAME="${node_name}"
+REDIS_MODE="${redis_mode}"
+REDIS_HOST="${redis_host}"
+REDIS_PORT="${redis_port}"
 REDIS_PASS="${redis_pass}"
+REDIS_DB="${redis_db}"
 DB_HOST="${db_host}"
 DB_PORT="${db_port}"
 PG_USER="${db_user}"
 PG_PASS="${db_pass}"
 PG_DB="${db_name}"
 SQL_DSN="${sql_dsn}"
+REDIS_CONN="${redis_conn}"
 EOF
 
-    # 5. 创建基础持久化目录
+    # 6. 创建基础持久化目录
     mkdir -p "$BASE_DIR/data" "$BASE_DIR/logs"
 
-    # 6. 生成规范化 Docker Compose 配置文件
+    # 7. 生成规范化 Docker Compose 配置文件
     echo -e "${YELLOW}正在生成规范化 Docker Compose 配置文件...${RESET}"
-    if [[ "$db_mode" == "1" ]]; then
-        # 模式 1：本地完整三容器拓扑 (包含本地 PG)
-        mkdir -p "$BASE_DIR/pg_data"
-        cat << EOF > "$COMPOSE_FILE"
+    
+    # 初始化 compose 内容
+    cat << EOF > "$COMPOSE_FILE"
 networks:
   new-api-network:
     driver: bridge
@@ -168,7 +203,7 @@ services:
     restart: always
     command: --log-dir /app/logs
     ports:
-      - "127.0.0.1:${custom_port}:3000"
+      - "${custom_port}:3000"
     volumes:
       - ./data:/data
       - ./logs:/app/logs
@@ -180,10 +215,29 @@ services:
       - BATCH_UPDATE_ENABLED=true
       - NODE_NAME=${node_name}
     depends_on:
-      - redis
-      - postgres
+EOF
+
+    # 根据依赖动态追加 depends_on 声明
+    if [[ "$redis_mode" == "1" ]]; then
+        echo "      - redis" >> "$COMPOSE_FILE"
+    fi
+    if [[ "$db_mode" == "1" ]]; then
+        echo "      - postgres" >> "$COMPOSE_FILE"
+    fi
+    # 如果都是外部服务，移除没有子项的 depends_on:
+    if [[ "$redis_mode" == "2" && "$db_mode" == "2" ]]; then
+        sed -i '/depends_on:/d' "$COMPOSE_FILE"
+    fi
+
+    # 追加网络模块到 new-api
+    cat << EOF >> "$COMPOSE_FILE"
     networks:
       - new-api-network
+EOF
+
+    # 如果是内置 Redis，追加 Redis 容器拓扑
+    if [[ "$redis_mode" == "1" ]]; then
+        cat << EOF >> "$COMPOSE_FILE"
 
   redis:
     image: redis:latest
@@ -192,6 +246,13 @@ services:
     command: ["redis-server", "--requirepass", "${redis_pass}"]
     networks:
       - new-api-network
+EOF
+    fi
+
+    # 如果是内置 Postgres，追加 Postgres 容器拓扑
+    if [[ "$db_mode" == "1" ]]; then
+        mkdir -p "$BASE_DIR/pg_data"
+        cat << EOF >> "$COMPOSE_FILE"
 
   postgres:
     image: postgres:15
@@ -206,47 +267,9 @@ services:
     networks:
       - new-api-network
 EOF
-    else
-        # 模式 2：远程 PG 模式，移除本地 postgres 容器与节点依赖，但保留本地 redis 与网络
-        cat << EOF > "$COMPOSE_FILE"
-networks:
-  new-api-network:
-    driver: bridge
-
-services:
-  new-api:
-    image: ${DEFAULT_IMAGE}
-    container_name: new-api
-    restart: always
-    command: --log-dir /app/logs
-    ports:
-      - "127.0.0.1:${custom_port}:3000"
-    volumes:
-      - ./data:/data
-      - ./logs:/app/logs
-    environment:
-      - SQL_DSN=${sql_dsn}
-      - REDIS_CONN_STRING=${redis_conn}
-      - TZ=Asia/Shanghai
-      - ERROR_LOG_ENABLED=true
-      - BATCH_UPDATE_ENABLED=true
-      - NODE_NAME=${node_name}
-    depends_on:
-      - redis
-    networks:
-      - new-api-network
-
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    command: ["redis-server", "--requirepass", "${redis_pass}"]
-    networks:
-      - new-api-network
-EOF
     fi
 
-    # 7. 清理残余并重新拉起集群
+    # 8. 清理残余并重新拉起集群
     echo -e "${YELLOW}正在通过 Docker Compose 部署聚合系统...${RESET}"
     cd "$BASE_DIR"
     docker compose down -v 2>/dev/null
@@ -259,13 +282,17 @@ EOF
 
     DETECT_IP=$(get_public_ip)
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${GREEN}             New-API 系统部署成功！                   ${RESET}"
+    echo -e "${GREEN}           New-API 系统部署成功！                    ${RESET}"
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${YELLOW}内部提取端口   : ${custom_port} (绑定在 127.0.0.1)${RESET}"
-    echo -e "${YELLOW}本地 Nginx 反代: http://127.0.0.1:${custom_port}${RESET}"
+    echo -e "${YELLOW}访问地址 : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "----------------------------------------------------"
-    echo -e "${CYAN}[数据库与中间件凭据回显]${RESET}"
-    echo -e "${YELLOW}本地 Redis 状态: ${GREEN}独立运行 (密码已锁固)${RESET}"
+    echo -e "${CYAN}[中间件凭据回显]${RESET}"
+    if [[ "$redis_mode" == "1" ]]; then
+        echo -e "${YELLOW}Redis 运行模式 : ${GREEN}全新内置容器 (DB: ${redis_db})${RESET}"
+    else
+        echo -e "${YELLOW}Redis 运行模式 : ${CYAN}外部远程连接 (目标: ${redis_host}:${redis_port} / DB: ${redis_db})${RESET}"
+    fi
+
     if [[ "$db_mode" == "1" ]]; then
         echo -e "${YELLOW}PGSQL 运行模式 : ${GREEN}全新内置容器 (PostgreSQL 15)${RESET}"
         echo -e "${YELLOW}分配实例密码   : ${GREEN}${db_pass}${RESET}"
@@ -288,21 +315,37 @@ update_newapi() {
     echo -e "${YELLOW}正在拉取最新 New-API 镜像...${RESET}"
     cd "$BASE_DIR" && docker compose pull
     docker compose up -d --remove-orphans
-    echo -e "${GREEN}升级完成！${RESET}"
+    echo -e "${GREEN}更新完成！${RESET}"
 }
 
 # 卸载服务
+# 卸载服务
 uninstall_newapi() {
-    echo -ne "${RED}确定要完全卸载并删除 New-API 服务吗？(y/n): ${RESET}"
+    echo -ne "${RED}确定要卸载并删除 New-API 相关的容器吗？(y/n): ${RESET}"
     read -r confirm
     if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
         if [ -f "$COMPOSE_FILE" ]; then
-            cd "$BASE_DIR" && docker compose down -v
-            rm -rf "$BASE_DIR"
+            echo -e "${YELLOW}正在停止并移除 Docker Compose 关联的容器及网络...${RESET}"
+            cd "$BASE_DIR" && docker compose down
+            echo -e "${GREEN}容器已停止并移除。${RESET}"
+            
+            # 交互提示：是否清理本地持久化数据
+            echo -ne "${YELLOW}是否同时删除本地所有配置文件和持久化数据目录 (包含本地数据库/日志)？(y/n): ${RESET}"
+            read -r clean_data
+            if [ "$clean_data" = "y" ] || [ "$clean_data" = "Y" ]; then
+                cd /opt # 先切出目录，防止在目录内删除导致行为异常
+                rm -rf "$BASE_DIR"
+                echo -e "${GREEN}安装目录 $BASE_DIR 已彻底清理，数据已完全卸载。${RESET}"
+            else
+                echo -e "${YELLOW}已保留本地配置文件及持久化数据，后续可通过相同配置重新拉起。${RESET}"
+            fi
         else
+            # 兜底：如果 compose 文件丢失，尝试强制删除可能残留的内置容器名称
+            echo -e "${YELLOW}未检测到 Docker Compose 配置文件，尝试强制清理可能残留的内置容器...${RESET}"
             docker rm -f new-api redis postgres 2>/dev/null
+            echo -e "${GREEN}清理残余容器完成。${RESET}"
         fi
-        echo -e "${GREEN}完全卸载成功，数据已彻底清理。${RESET}"
+        echo -e "${GREEN}卸载流程执行完毕！${RESET}"
     fi
 }
 
@@ -313,10 +356,16 @@ logs_newapi() { cd "$BASE_DIR" && docker compose logs -f --tail=100; }
 
 show_info() {
     get_status_info
+    DETECT_IP=$(get_public_ip)
     echo -e "${GREEN}====================================================${RESET}"
     echo -e "${YELLOW}当前运行状态   : $status"
-    echo -e "${YELLOW}外部提取端口   : ${web_port}${RESET}"
+    echo -e "${YELLOW}访问地址 : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "${YELLOW}安装绝对路径   : ${BASE_DIR}${RESET}"
+    if [ -f "$CONFIG_FILE" ]; then
+        source "$CONFIG_FILE"
+        echo -e "${YELLOW}Redis 连接串   : ${CYAN}${REDIS_CONN}${RESET}"
+        echo -e "${YELLOW}SQL DSN 串     : ${CYAN}${SQL_DSN}${RESET}"
+    fi
     echo -e "${GREEN}====================================================${RESET}"
 }
 
@@ -325,7 +374,7 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}====================================${RESET}"
-    echo -e "${GREEN}       ◈  New-API 管理面板  ◈        ${RESET}"
+    echo -e "${GREEN}        ◈ New-API 管理面板 ◈        ${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -e "${GREEN} 当前状态 :${RESET} $status"
     echo -e "${GREEN} 映射端口 :${RESET} ${YELLOW}${web_port}${RESET}"
