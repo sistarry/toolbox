@@ -170,7 +170,7 @@ EOF
     DETECT_IP=$(get_public_ip)
 
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}    LLBot & PMHQ 部署指令下发！ ${RESET}"
+    echo -e "${GREEN}      LLBot & PMHQ 部署完成      ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${YELLOW}WebUI 访问地址 : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "${YELLOW}LLBot 配置路径 : $llbot_config${RESET}"
