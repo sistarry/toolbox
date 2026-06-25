@@ -368,7 +368,7 @@ function delete_multiple_projects() {
         echo -e "${GREEN}$((i+1))) ${PROJECT_NAMES[$i]}${RESET}"
     done
     echo -e "${GREEN}========================================${RESET}"
-    echo -e "${GREEN}输入要删除的项目编号，用空格分隔（例如: 1 3 5），0 返回主菜单${RESET}"
+    echo -e "${GREEN}输入要删除的项目编号，用空格分隔（例如: 1 3 5）${RESET}"
     read -p "$(echo -e ${GREEN}请选择:${RESET}) " choices
 
     if [[ "$choices" == "0" ]]; then
