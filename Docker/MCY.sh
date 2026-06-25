@@ -129,7 +129,7 @@ mcy_install() {
 # ================== 环境检查中间件 ==================
 ensure_installed() {
     if ! command -v mcy &>/dev/null && [ ! -f "bin" ]; then
-        echo -e "${RED}错误: 检测到程序尚未安装，请先选择选项 1 进行安装！${RESET}"
+        echo -e "${RED}错误: 检测到程序尚未安装，请先选择选项 66 进行安装！${RESET}"
         return 1
     fi
     return 0
