@@ -252,7 +252,7 @@ monitor_docker_containers() {
             printf "%s\n" "${stats_list[@]}" | sort -k3 -hr | while IFS=$'\t' read -r service cpu mem net ports raw_status; do
                 local uptime=$(translate_status "$raw_status")
                 local status_icon="${RED}❌${RESET}"
-                [[ "$raw_status" == *"Up"* ]] && status_icon="${GREEN}✅${RESET}"
+                [[ "$raw_status" == *"Up"* ]] && status_icon="${GREEN}✔${RESET}"
 
                 echo -e "${YELLOW}◈ 服务: ${RESET}${YELLOW}${service}${RESET} ${status_icon}"
                 echo -e "  ├─ ${YELLOW}运行状态: ${RESET}${uptime}"
@@ -481,7 +481,7 @@ function project_menu() {
                 
                 local uptime=$(translate_status "$raw_status")
                 local status_icon="${RED}❌${RESET}"
-                [[ "$raw_status" == *"Up"* ]] && status_icon="${GREEN}✅${RESET}"
+                [[ "$raw_status" == *"Up"* ]] && status_icon="${GREEN}✔${RESET}"
                 
                 echo -e "  ${YELLOW}◈ $service${RESET} $status_icon ${YELLOW}-> $uptime${RESET}"
                 echo -e "    ${YELLOW}└─ 端口:${RESET} ${GREEN}$ports${RESET}"
