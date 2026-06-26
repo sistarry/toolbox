@@ -11,9 +11,44 @@ Y='\033[1;33m'   # 黄色 (Yellow)
 B='\033[0;34m'   # 蓝色 (Blue)
 NC='\033[0m'     # 无颜色 (No Color)
 
+# 为 Code Whale 模块兼容你代码中的颜色变量名
+GREEN="${G}"
+RED="${R}"
+YELLOW="${Y}"
+RESET="${NC}"
+
 echo -e "${Y}========================================${NC}"
 echo -e "${Y}       ◈      AI 工具检测      ◈       ${NC}"
 echo -e "${Y}========================================${NC}"
+
+# ==========================================
+# 环境变量与路径补全
+# ==========================================
+ensure_env_path() {
+    local common_paths=(
+        "/usr/local/bin"
+        "/usr/local/sbin"
+        "/usr/bin"
+        "/bin"
+        "$HOME/.local/bin"
+        "$HOME/.npm-global/bin"
+        "$HOME/.yarn/bin"
+        "$HOME/.cargo/bin"
+    )
+
+    for path in "${common_paths[@]}"; do
+        if [[ ":$PATH:" != *":$path:"* ]] && [ -d "$path" ]; then
+            export PATH="$PATH:$path"
+        fi
+    done
+}
+
+# 立即执行确保后续 command -v 正常识别
+ensure_env_path
+
+# ==========================================
+# 辅助函数
+# ==========================================
 
 # 树状格式化输出函数
 print_result() {
@@ -47,20 +82,20 @@ print_result() {
     echo -e "${B}----------------------------------------${NC}"
 }
 
-# 升级后的安全获取命令版本函数（解决非交互命令下的捕获空值 Bug）
+# 安全获取命令版本函数
 get_version() {
     local cmd=$1
     local args=$2
     local raw_out=""
     
     if command -v timeout &> /dev/null; then
-        # 允许命令在 2 秒内自然执行完毕并捕获全部输出，避免 head 提前截断导致管道破裂
-        raw_out=$(timeout 2s $cmd $args 2>&1)
-    else
-        raw_out=$($cmd $args 2>&1)
+        raw_out=$(timeout 2s "$cmd" $args 2>&1)
     fi
     
-    # 从捕获的输出中提取第一行非空行
+    if [ -z "$raw_out" ]; then
+        raw_out=$("$cmd" $args 2>&1)
+    fi
+    
     echo "$raw_out" | grep -v '^$' | head -n 1
 }
 
@@ -68,7 +103,6 @@ get_version() {
 check_docker_container() {
     local keyword=$1
     if command -v docker &> /dev/null && systemctl is-active --quiet docker; then
-        # 寻找匹配的、处于运行状态的容器
         local container_info=$(docker ps --format "{{.ID}} [{{.Names}}] ({{.Image}})" | grep -i "$keyword" | head -n 1)
         if [ -n "$container_info" ]; then
             echo "$container_info"
@@ -103,7 +137,7 @@ print_result "Codex CLI" "$loc" "$ver" "$status"
 # 3. Gemini CLI 检测
 if command -v gemini &> /dev/null; then
     loc=$(which gemini)
-    ver=$(/usr/bin/gemini --version 2>&1 | grep -E '[0-9]+\.[0-9]' | head -n 1)
+    ver=$( "$loc" --version 2>&1 | grep -E '[0-9]+\.[0-9]' | head -n 1 )
     if pgrep -f "gemini" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
 else
     loc="未安装"; ver=""; status=""
@@ -153,7 +187,8 @@ if [ -n "$docker_res" ]; then
     status="运行中 (Running)"
 elif command -v hermes &> /dev/null || command -v hermes-agent &> /dev/null; then
     loc=$(which hermes 2>/dev/null || which hermes-agent)
-    ver=$(get_version "$loc" "--version")
+    raw_ver=$(get_version "$loc" "--version")
+    ver=$(echo "$raw_ver" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "$raw_ver")
     if pgrep -f "hermes" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
 elif command -v npm &> /dev/null && npm list -g --depth=0 hermes-agent &> /dev/null; then
     loc="NPM Global Module"
@@ -167,3 +202,22 @@ else
     loc="未安装"; ver=""; status=""
 fi
 print_result "Hermes Agent" "$loc" "$ver" "$status"
+
+# 7. Code Whale 检测
+echo -e "${B}◈ 工具: ${NC}${Y}Code Whale${NC}"
+if command -v codewhale &> /dev/null; then
+    status="${GREEN}已安装${RESET}"
+    version_info=$(codewhale --version 2>/dev/null | head -n 1)
+    [ -z "$version_info" ] && version_info="已就绪"
+    codewhale_version="${YELLOW}${version_info}${RESET}"
+    
+    loc=$(which codewhale)
+    echo -e "  ├─ ${G}安装路径: ${NC}${loc}"
+    echo -e "  ├─ ${G}当前版本: ${NC}${codewhale_version}"
+    echo -e "  └─ ${G}活跃状态: ${NC}${status}"
+else
+    status="${RED}未安装${RESET}"
+    codewhale_version="${RED}-${RESET}"
+    echo -e "  └─ ${R}安装状态: ${status}${NC}"
+fi
+echo -e "${B}----------------------------------------${NC}"
