@@ -4,7 +4,7 @@
 # VPS AI 工具与 Agent 检测
 # ==========================================
 
-# 颜色定义
+# 颜色定义 (已修正缺失的 [ 符号)
 G='\033[0;32m'   # 绿色 (Green)
 R='\033[0;31m'   # 红色 (Red)
 Y='\033[1;33m'   # 黄色 (Yellow)
@@ -18,7 +18,7 @@ YELLOW="${Y}"
 RESET="${NC}"
 
 echo -e "${Y}========================================${NC}"
-echo -e "${Y}       ◈      AI 工具检测      ◈       ${NC}"
+echo -e "${Y}        ◈      AI 工具检测      ◈        ${NC}"
 echo -e "${Y}========================================${NC}"
 
 # ==========================================
@@ -99,10 +99,20 @@ get_version() {
     echo "$raw_out" | grep -v '^$' | head -n 1
 }
 
-# 检查 Docker 容器状态的辅助函数
+# 检查 Docker 容器状态的辅助函数 (保持免 systemctl 报错设计)
 check_docker_container() {
     local keyword=$1
-    if command -v docker &> /dev/null && systemctl is-active --quiet docker; then
+    if command -v docker &> /dev/null; then
+        if command -v systemctl &> /dev/null; then
+            if ! systemctl is-active --quiet docker; then
+                return 1
+            fi
+        else
+            if ! docker info &> /dev/null; then
+                return 1
+            fi
+        fi
+
         local container_info=$(docker ps --format "{{.ID}} [{{.Names}}] ({{.Image}})" | grep -i "$keyword" | head -n 1)
         if [ -n "$container_info" ]; then
             echo "$container_info"
@@ -144,15 +154,13 @@ else
 fi
 print_result "Gemini CLI" "$loc" "$ver" "$status"
 
-# 4. OpenCode 检测
-if command -v opencode &> /dev/null; then
-    loc=$(which opencode)
-    ver=$(get_version "opencode" "--version")
+# 4. Open Code 检测 (精准定位绝对路径)
+if [ -f "/root/.opencode/bin/opencode" ]; then
+    loc="/root/.opencode/bin/opencode"
+    # 优先使用 -v 获取版本
+    ver=$($loc -v 2>/dev/null || $loc --version 2>/dev/null | head -n 1)
+    # 检查进程是否在后台运行
     if pgrep -f "opencode" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
-elif command -v open-code &> /dev/null; then
-    loc=$(which open-code)
-    ver=$(get_version "open-code" "--version")
-    if pgrep -f "open-code" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
 else
     loc="未安装"; ver=""; status=""
 fi
@@ -204,20 +212,12 @@ fi
 print_result "Hermes Agent" "$loc" "$ver" "$status"
 
 # 7. Code Whale 检测
-echo -e "${B}◈ 工具: ${NC}${Y}Code Whale${NC}"
 if command -v codewhale &> /dev/null; then
-    status="${GREEN}已安装${RESET}"
-    version_info=$(codewhale --version 2>/dev/null | head -n 1)
-    [ -z "$version_info" ] && version_info="已就绪"
-    codewhale_version="${YELLOW}${version_info}${RESET}"
-    
     loc=$(which codewhale)
-    echo -e "  ├─ ${G}安装路径: ${NC}${loc}"
-    echo -e "  ├─ ${G}当前版本: ${NC}${codewhale_version}"
-    echo -e "  └─ ${G}活跃状态: ${NC}${status}"
+    ver=$(codewhale --version 2>/dev/null | head -n 1)
+    [ -z "$ver" ] && ver="已就绪"
+    if pgrep -f "codewhale" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
 else
-    status="${RED}未安装${RESET}"
-    codewhale_version="${RED}-${RESET}"
-    echo -e "  └─ ${R}安装状态: ${status}${NC}"
+    loc="未安装"; ver=""; status=""
 fi
-echo -e "${B}----------------------------------------${NC}"
+print_result "Code Whale" "$loc" "$ver" "$status"
