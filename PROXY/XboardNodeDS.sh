@@ -291,7 +291,7 @@ menu() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}当前管理节点 :${RESET} ${CYAN}${CURRENT_INSTANCE}${RESET}"
     echo -e "${GREEN}当前节点状态 :${RESET} $status"
-    echo -e "${GREEN}当前绑节点ID :${RESET}  ${YELLOW}[ ${node_id} ]${RESET}"
+    echo -e "${GREEN}当前绑节点ID :${RESET} ${YELLOW}[ ${node_id} ]${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 部署当前节点${RESET}"
     echo -e "${GREEN}2. 更新当前节点${RESET}"
