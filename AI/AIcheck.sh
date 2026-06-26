@@ -156,7 +156,7 @@ elif command -v open-code &> /dev/null; then
 else
     loc="未安装"; ver=""; status=""
 fi
-print_result "OpenCode" "$loc" "$ver" "$status"
+print_result "Open Code" "$loc" "$ver" "$status"
 
 # 5. OpenClaw 检测 (加入 Docker 联动)
 docker_res=$(check_docker_container "openclaw\|clawdbot")
@@ -172,7 +172,7 @@ elif command -v openclaw &> /dev/null || command -v clawdbot &> /dev/null; then
 elif command -v pip &> /dev/null && pip show openclaw &> /dev/null; then
     loc="Python Pip Package"
     ver=$(pip show openclaw | grep -i "^Version:" | cut -d' ' -f2)
-    if pgrep -f "openclaw" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
+    if pgrep -f "open claw" > /dev/null; then status="运行中"; else status="已安装/闲置"; fi
 else
     loc="未安装"; ver=""; status=""
 fi
