@@ -40,11 +40,14 @@ show_menu() {
     echo -e "${GREEN}模型 :${RESET} $api_status"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 安装${RESET}"
-    echo -e "${GREEN}2. 配置API密钥${RESET}"
-    echo -e "${GREEN}3. 调整模型与核心参数${RESET}"
-    echo -e "${GREEN}4. 查看配置列表${RESET}"
-    echo -e "${GREEN}5. 运行帮助命令${RESET}"
-    echo -e "${GREEN}6. 卸载${RESET}"
+    echo -e "${GREEN}2. 当前目录启动${RESET}"
+    echo -e "${GREEN}3. 指定路径启动${RESET}"
+    echo -e "${GREEN}4. 配置API密钥${RESET}"
+    echo -e "${GREEN}5. 调整模型与核心参数${RESET}"
+    echo -e "${GREEN}6. 查看配置列表${RESET}"
+    echo -e "${GREEN}7. 运行帮助命令${RESET}"
+    echo -e "${GREEN}8. 更新${RESET}"
+    echo -e "${GREEN}9. 卸载${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
@@ -195,6 +198,28 @@ show_help() {
     echo -ne "\n${GREEN}按回车键返回主菜单...${RESET}" && read
 }
 
+
+# 6. 更新功能
+update_gemini() {
+    if ! command -v gemini &> /dev/null; then
+        echo -e "\n${RED}❌ 未检测到已安装的 Gemini CLI，请先执行选项 1 进行安装！${RESET}"
+        echo -ne "\n${GREEN}按回车键返回主菜单...${RESET}" && read
+        return
+    fi
+
+    echo -e "\n${YELLOW}正在检查并更新 @google/gemini-cli 至最新稳定版...${RESET}"
+    npm install -g @google/gemini-cli@latest
+
+    if [ $? -eq 0 ]; then
+        echo -e "\n${GREEN}✔ Gemini CLI 更新成功！当前最新版本为：${RESET}"
+        echo -e "${YELLOW}$(gemini --version 2>/dev/null || echo "已就绪")${RESET}"
+    else
+        echo -e "\n${RED}❌ 更新失败，请检查网络连接或 npm 全局权限。${RESET}"
+    fi
+    echo -ne "\n${GREEN}按回车键返回主菜单...${RESET}" && read
+}
+
+
 # 6. 整合卸载（包含配置与环境清理）
 uninstall_gemini_flow() {
     echo -e "\n${RED}准备进入卸载流程...${RESET}"
@@ -231,11 +256,21 @@ while true; do
     read choice
     case $choice in
         1) install_gemini ;;
-        2) config_api_key ;;
-        3) config_params ;;
-        4) view_config ;;
-        5) show_help ;;
-        6) uninstall_gemini_flow ;;
+        2) start_gemini "$(pwd)" ;;
+        3) 
+            echo -e "\n${YELLOW}请输入你想要启动 Gemini 的绝对路径或相对路径:${RESET}"
+            echo -ne " 路径: "
+            read input_path
+            # 如果输入为空，则使用当前工作目录
+            [ -z "$input_path" ] && input_path="$(pwd)"
+            start_gemini "$input_path"
+            ;;
+        4) config_api_key ;;
+        5) config_params ;;
+        6) view_config ;;
+        7) show_help ;;
+        8) update_gemini ;;
+        9) uninstall_gemini_flow ;;
         0) clear; exit 0 ;;
         *) echo -e "${RED}无效选项，请重新选择！${RESET}"; sleep 1 ;;
     esac
