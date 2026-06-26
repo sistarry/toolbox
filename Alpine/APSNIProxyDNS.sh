@@ -529,6 +529,40 @@ run_dns() {
     fi
 }
 
+# ==================== GitHub 代理下载核心函数 ====================
+run_AKdns() {
+    clear
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/akile-network/aktools/main/akdns.sh"
+    local TEMP_SCRIPT="/tmp/nginx_backup_restore_temp.sh"
+    local success=false
+
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${NC}"
+    done
+
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        chmod +x "$TEMP_SCRIPT"
+        bash "$TEMP_SCRIPT"
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${NC}"
+    fi
+}
+
 # ==================== 主控控制面板 ====================
 main() {
     local my_ip=$(get_public_ip)
@@ -538,7 +572,7 @@ main() {
     local current_sdns_ver="${RED}未安装${NC}"
 
     refresh_local_status() {
-        # 💥 核心改进：改为用硬核的进程与服务端口活体探针，不再被 OpenRC 的状态同步漏洞欺骗
+    
         if pgrep -f "sniproxy" >/dev/null || (command -v ss &>/dev/null && ss -tulnp | grep -q ":$LISTEN_PORT ") || (command -v netstat &>/dev/null && netstat -tuln | grep -q ":$LISTEN_PORT "); then
             sni_installed="true"
             [ -f "$VERSION_FILE" ] && current_sni_ver=$(cat "$VERSION_FILE") || current_sni_ver="v1.0.7"
@@ -591,7 +625,8 @@ main() {
         echo -e "${GREEN}  7. 重启 解锁服务${NC}"
         echo -e "${GREEN}  8. 查看日志${NC}"
         echo -e "${GREEN}  9. 查看配置${NC}"
-        echo -e "${GREEN} 10.${NC} ${YELLOW}自定义DNS解锁${NC}"
+        echo -e "${GREEN} 10. DNS解锁${NC} ${YELLOW}← Akile${NC}"
+        echo -e "${GREEN} 11. DNS解锁${NC} ${YELLOW}← 自定义${NC}"
         echo -e "${GREEN}  0. 退出${NC}"
         echo -e "${GREEN}=============================================${NC}"
         
@@ -620,7 +655,8 @@ main() {
             7) rc-service sniproxy restart 2>/dev/null; rc-service smartdns restart 2>/dev/null; print_success "服务已重启。"; sleep 1.5 ;;
             8) view_service_logs; echo -n "按回车键返回面板..."; read -r _ ;;
             9) view_smartdns_config; echo -n "按回车键返回面板..."; read -r _ ;;
-            10) run_dns ;;
+            10) run_AKdns ;;
+            11) run_dns ;;
             0) exit 0 ;;
             *) print_error "无效选项。"; sleep 1.5 ;;
         esac
