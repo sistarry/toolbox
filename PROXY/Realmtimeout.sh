@@ -14,21 +14,20 @@ gl_hong='\033[1;31m'  # 红色
 # =============================================================================
 realm_fix_timeout() {
     clear
-    echo -e "${gl_kjlan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${gl_bai}"
-    echo -e "${gl_kjlan}            Realm 转发首连超时修复                 ${gl_bai}"
-    echo -e "${gl_kjlan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${gl_bai}"
-    echo ""
-    echo -e "${gl_huang}功能说明：${gl_bai}"
-    echo "  • 连接跟踪模块加载 + 容量扩展（转发必需）"
-    echo "  • 强制 IPv4 + nodelay + reuse_port（优化 Realm 配置）"
-    echo "  • 提升 Realm 进程文件句柄限制 (Systemd/OpenRC)"
-    echo ""
+    echo -e "${gl_lv}================================${gl_bai}"
+    echo -e "${gl_lv}   ◈ Realm 转发首连超时修复 ◈   ${gl_bai}"
+    echo -e "${gl_lv}================================${gl_bai}"
+    echo -e "${gl_lv}功能说明：${gl_bai}"
+    echo -e "${gl_huang}连接跟踪模块加载 + 容量扩展（转发必需）${gl_bai}"
+    echo -e "${gl_huang}强制 IPv4 + nodelay + reuse_port（优化 Realm 配置）${gl_bai}"
+    echo -e "${gl_huang}提升 Realm 进程文件句柄限制 (Systemd/OpenRC)${gl_bai}"
+    echo -e "${gl_lv}================================${gl_bai}"
     
     # 检测是否为非交互式环境
     if [ "$AUTO_MODE" = "1" ] || [ ! -t 0 ]; then
         confirm=y
     else
-        read -e -p "是否继续执行修复？(y/n): " confirm
+        read -e -p "$(echo -e "${gl_lv}是否继续执行修复？(y/n): ${gl_bai}")" confirm
     fi
 
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
@@ -155,19 +154,16 @@ OVR
     fi
 
     echo ""
-    echo -e "${gl_kjlan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${gl_bai}"
-    echo -e "${gl_lv}            ✅ Realm 优化完成！${gl_bai}"
-    echo -e "${gl_kjlan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${gl_bai}"
-    echo ""
-    echo -e "${gl_huang}📋 备份位置：${gl_bai}$BACKUP_DIR"
-    echo ""
-    echo -e "${gl_huang}🔍 快速验证：${gl_bai}"
-    echo "  • Realm 监听：   ss -tlnp | grep realm"
-    echo "  • conntrack：   sysctl net.netfilter.nf_conntrack_max"
-    echo "  • Realm 配置：   cat /etc/realm/config.json | grep -E 'resolve|nodelay|reuse_port'"
-    echo ""
-    echo -e "${gl_lv}💯 重启服务器后所有配置依然生效，无需重复执行！${gl_bai}"
-    echo ""
+    echo -e "${gl_lv}================================${gl_bai}"
+    echo -e "${gl_lv}    ◈  Realm 优化完成！ ◈      ${gl_bai}"
+    echo -e "${gl_lv}================================${gl_bai}"
+    echo -e "${gl_lv}📋 备份位置：$BACKUP_DIR${gl_bai}"
+    echo -e "${gl_huang}快速验证：${gl_bai}"
+    echo -e "${gl_huang}Realm 监听：   ss -tlnp | grep realm${gl_bai}"
+    echo -e "${gl_huang}conntrack：   sysctl net.netfilter.nf_conntrack_max${gl_bai}"
+    echo -e "${gl_huang}Realm 配置：   cat /etc/realm/config.json | grep -E 'resolve|nodelay|reuse_port'${gl_bai}"
+    echo -e "${gl_lv}重启服务器后所有配置依然生效，无需重复执行！${gl_bai}"
+    echo -e "${gl_lv}================================${gl_bai}"
 }
 
 # =============================================================================
