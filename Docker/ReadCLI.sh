@@ -37,7 +37,7 @@ get_status() {
             version_info=$($REAL_EXEC_PATH -v 2>/dev/null | head -n 1 | sed 's/ReadCLI //I')
         fi
         
-        [ -z "$version_info" ] && version_info="v0.3.5"
+        [ -z "$version_info" ] && version_info="0.3.5"
         readcli_version="${YELLOW}${version_info}${RESET}"
     else
         status="${RED}未安装${RESET}"
