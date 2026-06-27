@@ -161,9 +161,9 @@ status_check() {
     elif [[ $ipt_rules_count -gt 0 ]]; then
         # 检测是否是基于 nftables 后端的 iptables (iptables-nft)
         if iptables -V 2>/dev/null | grep -q "nf_tables"; then
-            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(nftables 兼容模式/iptables-nft)${RESET}"
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(兼容模式/iptables-nft)${RESET}"
         else
-            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(传统经典模式/legacy)${RESET}"
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(经典模式/legacy)${RESET}"
         fi
     fi
 
@@ -190,7 +190,7 @@ status_check() {
     if [[ -n "$front_ends" ]]; then
         echo -e "系统管理前端: ${YELLOW}${front_ends% }${RESET} (正在运行)"
     else
-        echo -e "系统管理前端: ${YELLOW}无 (直接通过原生命令或底层规则管理)${RESET}"
+        echo -e "系统管理前端: ${YELLOW}无 (原生命令或底层规则管理)${RESET}"
     fi
     echo ""
 
