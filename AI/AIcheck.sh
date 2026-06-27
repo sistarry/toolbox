@@ -4,14 +4,14 @@
 # VPS AI 工具与 Agent 检测
 # ==========================================
 
-# 颜色定义 (已修正缺失的 [ 符号)
+# 颜色定义
 G='\033[0;32m'   # 绿色 (Green)
 R='\033[0;31m'   # 红色 (Red)
 Y='\033[1;33m'   # 黄色 (Yellow)
 B='\033[0;34m'   # 蓝色 (Blue)
 NC='\033[0m'     # 无颜色 (No Color)
 
-# 为 Code Whale 模块兼容你代码中的颜色变量名
+
 GREEN="${G}"
 RED="${R}"
 YELLOW="${Y}"
@@ -99,7 +99,7 @@ get_version() {
     echo "$raw_out" | grep -v '^$' | head -n 1
 }
 
-# 检查 Docker 容器状态的辅助函数 (保持免 systemctl 报错设计)
+# 检查 Docker 容器状态的辅助函数
 check_docker_container() {
     local keyword=$1
     if command -v docker &> /dev/null; then
@@ -184,7 +184,7 @@ elif command -v pip &> /dev/null && pip show openclaw &> /dev/null; then
 else
     loc="未安装"; ver=""; status=""
 fi
-print_result "OpenClaw" "$loc" "$ver" "$status"
+print_result "Open Claw" "$loc" "$ver" "$status"
 
 # 6. Hermes Agent 检测 (加入 Docker 联动)
 docker_res=$(check_docker_container "hermes")
