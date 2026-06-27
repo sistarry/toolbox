@@ -674,30 +674,16 @@ check_domains_status() {
                 TYPE="托管 (Certbot)"
                 [[ "$CERT_PATH" =~ "$CUSTOM_SSL_BASE" ]] && TYPE="自定义证书"
 
-                # 💡 核心修复 1: 让 openssl 直接输出标准格式 (YYYYMMDDhhmmssZ)
-                # 例如: 20260922022350Z
+                
                 ASN1_TIME=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
                 
-                # 💡 核心修复 2: 使用 openssl 的 -dateopt 转换为 ISO 格式，或者用 awk 拼接成 BusyBox date 能认的格式
-                # 考虑到旧版本 openssl 兼容性，这里用更稳妥的 date 转换：将格式转化为 YYYY-MM-DD HH:MM:SS
-                # 既然 BusyBox date 认不出原格式，我们直接提取时间戳
-                
-                # 最完美的 BusyBox/Alpine 兼容方案：直接用 openssl 计算剩余秒数（如果 openssl 版本较新）
-                # 或者使用兼容 BusyBox 的格式：YYYY-MM-DD HH:MM:SS
-                # 下面采用对 BusyBox 最友好的通用转换：
-                
-                # 重新用 openssl 格式化输出 (部分老版本可能不支持 -dateopt，我们用通用解析)
-                # 既然已知输出是 'Sep 22 02:23:50 2026 GMT'，我们在 1.1+ 版本的 openssl 可以直接拿到标准时间
-                
-                # 终极兼容 Alpine/BusyBox 处理方式：
-                # 将 "Sep 22 02:23:50 2026 GMT" 转换为 BusyBox 认识的 "2026-09-22 02:23:50"
                 FORMATTED_DATE=$(echo "$ASN1_TIME" | awk '{
                     split("Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec", m, "|");
                     for(i=1;i<=12;i++) mm[m[i]]=sprintf("%02d", i);
                     print $4"-"mm[$1]"-"sprintf("%02d", $2)" "$3
                 }')
 
-                # 这样 BusyBox 的 date 就能轻松秒懂了！
+           
                 END_TS=$(date -d "$FORMATTED_DATE" +%s)
                 NOW_TS=$(date +%s)
                 DAYS_LEFT=$(( (END_TS - NOW_TS) / 86400 ))
