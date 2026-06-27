@@ -19,6 +19,11 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDQG.ya
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JDBJ.yaml
 ```
 
+### 机场订阅X
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/Subscription.yaml
+```
+
 ## 🚀 Egern小组件
 
 
@@ -145,4 +150,14 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/lottery
 ### 老黄历
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/LHL.js
+```
+
+### IPPure
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/EGIPPure.js
+```
+
+### 流媒体解锁
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/NetUnlock.js
 ```
