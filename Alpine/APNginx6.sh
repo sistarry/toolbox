@@ -567,7 +567,6 @@ check_cert() {
     pause
 }
 
-# 增加过期提示色彩的证书状态监控
 check_domains_status() {
     clear
     echo -e "${YELLOW}========================================${RESET}"
@@ -587,8 +586,19 @@ check_domains_status() {
                 TYPE="托管 (Certbot)"
                 [[ "$CERT_PATH" =~ "$CUSTOM_SSL_BASE" ]] && TYPE="自定义证书"
 
-                END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
-                END_TS=$(date -d "$END_DATE" +%s)
+             
+                ASN1_TIME=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
+                
+                # 终极兼容 Alpine/BusyBox 处理方式：
+                # 将 "Sep 22 02:23:50 2026 GMT" 转换为 BusyBox 认识的 "2026-09-22 02:23:50"
+                FORMATTED_DATE=$(echo "$ASN1_TIME" | awk '{
+                    split("Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec", m, "|");
+                    for(i=1;i<=12;i++) mm[m[i]]=sprintf("%02d", i);
+                    print $4"-"mm[$1]"-"sprintf("%02d", $2)" "$3
+                }')
+
+        
+                END_TS=$(date -d "$FORMATTED_DATE" +%s)
                 NOW_TS=$(date +%s)
                 DAYS_LEFT=$(( (END_TS - NOW_TS) / 86400 ))
 
@@ -605,7 +615,7 @@ check_domains_status() {
 
                 echo -e "${YELLOW}◈ 域名: ${RESET}${YELLOW}${DOMAIN}${RESET}"
                 echo -e "  ├─ ${YELLOW}证书类型: ${RESET}${TYPE}"
-                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}$(date -d "$END_DATE" +"%Y-%m-%d")"
+                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}${FORMATTED_DATE}"
                 echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
                 echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
                 echo -e "${YELLOW}----------------------------------------${RESET}"
