@@ -126,6 +126,76 @@ status_check() {
     echo ""
 
     # =============================
+    # 防火墙底层规则架构检测 (兼容 Alpine / 常用系统)
+    # =============================
+    echo -e "${YELLOW}▶ 防火墙状态与规则${RESET}"
+
+    fw_engine="${RED}未知 / 未启用${RESET}"
+    nft_rules_count=0
+    ipt_rules_count=0
+
+    # 1. 检测 nftables 规则数量
+    if command -v nft >/dev/null 2>&1; then
+        # 兼容 BusyBox grep，排除空行和注释
+        nft_rules_count=$(nft list ruleset 2>/dev/null | grep -v '^$' | grep -v '^[[:space:]]*#' | wc -l)
+    fi
+
+    # 2. 检测 iptables 规则数量 (同时计算 filter, nat, mangle 表)
+    if command -v iptables >/dev/null 2>&1; then
+        ipt_rules_count=$( (iptables -S 2>/dev/null; iptables -t nat -S 2>/dev/null; iptables -t mangle -S 2>/dev/null) | grep -v '^-P' | wc -l)
+    fi
+
+    # 3. 判定当前系统服务状态 (兼容 Systemd 和 OpenRC)
+    is_nft_service_active=0
+    if command -v systemctl >/dev/null 2>&1; then
+        # Systemd 环境
+        systemctl is-active nftables >/dev/null 2>&1 && is_nft_service_active=1
+    elif command -v rc-service >/dev/null 2>&1; then
+        # Alpine OpenRC 环境
+        rc-service nftables status 2>/dev/null | grep -q "started" && is_nft_service_active=1
+    fi
+
+    # 4. 判定主要依靠哪种规则引擎
+    if [[ $is_nft_service_active -eq 1 ]] || [[ $nft_rules_count -gt $ipt_rules_count && $nft_rules_count -gt 0 ]]; then
+        fw_engine="${GREEN}nftables${RESET}"
+    elif [[ $ipt_rules_count -gt 0 ]]; then
+        # 检测是否是基于 nftables 后端的 iptables (iptables-nft)
+        if iptables -V 2>/dev/null | grep -q "nf_tables"; then
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(nftables 兼容模式/iptables-nft)${RESET}"
+        else
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(传统经典模式/legacy)${RESET}"
+        fi
+    fi
+
+    # 5. 打印引擎及规则结果
+    echo -e "当前活动防火墙: $fw_engine"
+    echo -e "nftables 规则条数: ${YELLOW}${nft_rules_count}${RESET}"
+    echo -e "iptables 规则条数: ${YELLOW}${ipt_rules_count}${RESET}"
+    
+    # 6. 常见高级防火墙前端管理工具检测 (兼容 Systemd / OpenRC / 基础命令)
+    front_ends=""
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl is-active ufw >/dev/null 2>&1 && front_ends+="UFW "
+        systemctl is-active firewalld >/dev/null 2>&1 && front_ends+="Firewalld "
+    elif command -v rc-service >/dev/null 2>&1; then
+        rc-service ufw status 2>/dev/null | grep -q "started" && front_ends+="UFW "
+        rc-service firewalld status 2>/dev/null | grep -q "started" && front_ends+="Firewalld "
+    fi
+    
+    # Alpine 上经常直接用 awall (Alpine Wall) 作为前端
+    if command -v awall >/dev/null 2>&1; then
+        front_ends+="awall(AlpineWall) "
+    fi
+    
+    if [[ -n "$front_ends" ]]; then
+        echo -e "系统管理前端: ${YELLOW}${front_ends% }${RESET} (正在运行)"
+    else
+        echo -e "系统管理前端: ${YELLOW}无 (直接通过原生命令或底层规则管理)${RESET}"
+    fi
+    echo ""
+
+
+    # =============================
     # Realm
     # =============================
     echo -e "${YELLOW}▶ Realm${RESET}"
@@ -209,6 +279,82 @@ status_check() {
                 echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
             done
         fi
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+
+    # =============================
+    # EasyTier (兼容 Alpine / 常用系统)
+    # =============================
+    echo -e "${YELLOW}▶ EasyTier${RESET}"
+    
+    # 查找 Docker 容器名包含 easytier 的容器 (不区分大小写)
+    easytier_containers=""
+    if command -v docker >/dev/null 2>&1; then
+        easytier_containers=$(docker ps -a --format "{{.Names}}" | grep -i "easytier")
+    fi
+
+    # 1. 检测是否存在（原生命令、进程、容器、或服务文件）
+    has_easytier=0
+    if command -v easytier-core >/dev/null 2>&1 || command -v easytier-cli >/dev/null 2>&1 || pgrep -x easytier-core >/dev/null 2>&1 || [[ -n "$easytier_containers" ]]; then
+        has_easytier=1
+    fi
+
+    if [[ $has_easytier -eq 1 ]]; then
+        # 判定状态：检测 Systemd 或 OpenRC
+        status="stopped"
+        
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl is-active easytier >/dev/null 2>&1 && status="active"
+            systemctl is-active easytier-core >/dev/null 2>&1 && status="active"
+        elif command -v rc-service >/dev/null 2>&1; then
+            rc-service easytier status 2>/dev/null | grep -q "started" && status="active"
+            rc-service easytier-core 2>/dev/null | grep -q "started" && status="active"
+        fi
+
+        # 如果服务没开，但进程在运行，依然算 active
+        if [[ "$status" != "active" ]]; then
+            if pgrep -x easytier-core >/dev/null 2>&1; then
+                status="active"
+            elif [[ -n "$easytier_containers" ]]; then
+                for name in $easytier_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null) == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取逻辑 (统一使用标准重定向)
+        ver=""
+        if command -v easytier-core >/dev/null 2>&1; then
+            ver=$(easytier-core --version 2>/dev/null | awk '{print $2}')
+        elif command -v easytier-cli >/dev/null 2>&1; then
+            ver=$(easytier-cli --version 2>/dev/null | awk '{print $2}')
+        elif [[ -n "$easytier_containers" ]]; then
+            first_c=$(echo "$easytier_containers" | head -n1)
+            ver=$(docker exec "$first_c" easytier-core --version 2>/dev/null | awk '{print $2}')
+        fi
+        echo -e "版本: ${ver:-运行中(未知版本)}"
+
+        # 端口获取
+        ports=$(get_ports easytier-core 2>/dev/null)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 如果有 Docker 容器，列出所有相关容器名
+        if [[ -n "$easytier_containers" ]]; then
+            for name in $easytier_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
     else
         echo -e "状态: ${RED}未安装${RESET}"
     fi
