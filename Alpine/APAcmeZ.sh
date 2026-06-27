@@ -275,7 +275,7 @@ renew_all(){
 check_domains_status() {
     clear
     echo -e "${YELLOW}========================================${RESET}"
-    echo -e "${YELLOW}        ◈ 本地 ZeroSSL 证书状态实时监控 ◈            ${RESET}"
+    echo -e "${YELLOW}    ◈ 本地 ZeroSSL 证书状态实时监控 ◈    ${RESET}"
     echo -e "${YELLOW}========================================${RESET}"
 
     # Alpine 下使用 awk 安全提取域名列表
@@ -297,31 +297,43 @@ check_domains_status() {
         echo -e "  ├─ ${YELLOW}证书类型: ${RESET}${TYPE}"
 
         if [ -f "$CERT_PATH" ]; then
-            # 针对 Alpine BusyBox date 命令的局限性，改用 openssl 循环步进探测剩余天数
-            local days=0
-            while openssl x509 -checkend $((days * 86400)) -in "$CERT_PATH" >/dev/null 2>&1; do
-                days=$((days + 1))
-                if [ $days -gt 120 ]; then break; fi # 防止异常无限循环
-            done
-            local DAYS_LEFT=$((days - 1))
-            
-            # 提取原始到期时间文本显示
-            local END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
+            # 1. 提取原始英文到期时间文本
+            local RAW_END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
 
-            if [ $DAYS_LEFT -ge 30 ]; then
-                STATUS_COLOR="${GREEN}"
-                STATUS_TEXT="正常有效"
-            elif [ $DAYS_LEFT -ge 0 ]; then
-                STATUS_COLOR="${YELLOW}"
-                STATUS_TEXT="即将过期 (请注意)"
+            # 2. 💡 用 awk 转换为纯数字标准时间格式 (同时规避 BusyBox date 无法解析英文的问题)
+            local FORMATTED_DATE=$(echo "$RAW_END_DATE" | awk '{
+                split("Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec", m, "|");
+                for(i=1;i<=12;i++) mm[m[i]]=sprintf("%02d", i);
+                print $4"-"mm[$1]"-"sprintf("%02d", $2)" "$3
+            }')
+
+            # 3. 计算时间戳与剩余天数 (秒变毫秒级响应，告别 while 步进循环)
+            if END_TS=$(date -d "$FORMATTED_DATE" +%s 2>/dev/null); then
+                local NOW_TS=$(date +%s)
+                local DAYS_LEFT=$(( (END_TS - NOW_TS) / 86400 ))
+
+                if [ $DAYS_LEFT -ge 30 ]; then
+                    STATUS_COLOR="${GREEN}"
+                    STATUS_TEXT="正常有效"
+                elif [ $DAYS_LEFT -ge 0 ]; then
+                    STATUS_COLOR="${YELLOW}"
+                    STATUS_TEXT="即将过期 (请注意)"
+                else
+                    STATUS_COLOR="${RED}"
+                    STATUS_TEXT="已过期 (请立即更新)"
+                fi
+                
+                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}${FORMATTED_DATE}"
+                echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
+                echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
             else
-                STATUS_COLOR="${RED}"
-                STATUS_TEXT="已过期 (请立即更新)"
+                # 4. 极端极端情况下的兜底 (如果 date 转时间戳失败，降级回 openssl 原生检测)
+                if openssl x509 -checkend 2592000 -in "$CERT_PATH" >/dev/null 2>&1; then
+                    echo -e "  └─ ${YELLOW}运行状态: ${RESET}${GREEN}正常有效 (剩余 > 30天)${RESET}"
+                else
+                    echo -e "  └─ ${YELLOW}运行状态: ${RESET}${YELLOW}即将过期或已过期${RESET}"
+                fi
             fi
-            
-            echo -e "  ├─ ${YELLOW}到期时间: ${RESET}$END_DATE"
-            echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
-            echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
         else
             echo -e "  └─ ${YELLOW}运行状态: ${RESET}${RED}未在 $SSL_DIR 中找到导出的证书文件${RESET}"
         fi
