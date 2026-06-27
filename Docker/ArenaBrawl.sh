@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# Game-Collection (官方原生 Clone + 环境变量 Build) 自动化管理面板
+# Arena Brawl (官方稀疏 Clone + 环境变量 Build) 自动化管理面板
 # =================================================================
 
 # 颜色
@@ -11,9 +11,9 @@ CYAN="\033[36m"
 RESET="\033[0m"
 
 APP_NAME="arena-brawl"
-BASE_DIR="/opt/game-collection"
-# 直接将面板和源码放在一起
-SRC_DIR="$BASE_DIR" 
+BASE_DIR="/opt/arena-brawl"
+# 源码和构建实际所在的子目录路径
+SRC_DIR="$BASE_DIR/games/arena-brawl" 
 REPO_URL="https://github.com/kejilion/game-collection.git"
 
 # 检测依赖
@@ -30,7 +30,7 @@ check_dependencies() {
 
 # 动态获取服务端口与运行状态
 get_status_info() {
-    # 优先从根目录的 .env 文件中读取之前自定义过的端口
+    # 优先从子目录的 .env 文件中读取之前自定义过的端口
     if [ -f "$SRC_DIR/.env" ]; then
         webui_port=$(grep "GAME_PORT=" "$SRC_DIR/.env" | cut -d'=' -f2)
     fi
@@ -45,7 +45,7 @@ get_status_info() {
             [[ -z "$webui_port" ]] && webui_port="3000"
         fi
     else
-        if [ -d "$SRC_DIR/.git" ]; then
+        if [ -d "$BASE_DIR/.git" ]; then
             status="${RED}已停止${RESET}"
         else
             status="${RED}未部署${RESET}"
@@ -86,29 +86,31 @@ install_translate() {
     read -r custom_port
     [[ -z "$custom_port" ]] && custom_port="3000"
 
-    # 克隆官方仓库到当前工作目录
-    if [ ! -d "$SRC_DIR/.git" ]; then
-        echo -e "\n${YELLOW}正在克隆官方 GitHub 仓库...${RESET}"
-        git clone "$REPO_URL" "$SRC_DIR/tmp_repo"
-        if [ $? -eq 0 ]; then
-            mv "$SRC_DIR/tmp_repo/"* "$SRC_DIR/" 2>/dev/null
-            mv "$SRC_DIR/tmp_repo/."* "$SRC_DIR/" 2>/dev/null
-            rm -rf "$SRC_DIR/tmp_repo"
-        else
-            echo -e "${RED}错误: 仓库克隆失败，请检查网络！${RESET}"
+    # 使用 Git 稀疏检出只克隆子目录
+    if [ ! -d "$BASE_DIR/.git" ]; then
+        echo -e "\n${YELLOW}正在通过稀疏检出（Sparse Checkout）克隆官方 games/arena-brawl 目录...${RESET}"
+        mkdir -p "$BASE_DIR" && cd "$BASE_DIR"
+        git init
+        git remote add -f origin "$REPO_URL"
+        git config core.sparseCheckout true
+        echo "games/arena-brawl" >> .git/info/sparse-checkout
+        git pull origin main || git pull origin master
+        
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}错误: 仓库特定目录克隆失败，请检查网络！${RESET}"
+            rm -rf "$BASE_DIR"
             exit 1
         fi
     else
         echo -e "\n${GREEN}检测到本地已存在官方仓库，正在同步最新代码...${RESET}"
-        cd "$SRC_DIR" && git pull
+        cd "$BASE_DIR" && git pull origin main || git pull origin master
     fi
 
-    # 回到仓库根目录
-    cd "$SRC_DIR"
+    # 切进真正运行和编译的子目录
+    cd "$SRC_DIR" || { echo -e "${RED}错误: 找不到指定的子目录！${RESET}"; exit 1; }
 
     # 动态写入适配支持自定义端口的 docker-compose.yml
     cat <<EOF > docker-compose.yml
-
 services:
   arena-brawl:
     image: \${IMAGE:-arena-brawl:latest}
@@ -146,7 +148,7 @@ EOF
     get_status_info
     DETECT_IP=$(get_public_ip)
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${GREEN}        Game-Collection 编译并启动成功！            ${RESET}"
+    echo -e "${GREEN}         Arena Brawl 编译并启动成功！            ${RESET}"
     echo -e "${GREEN}====================================================${RESET}"
     echo -e "${YELLOW}游戏访问地址 : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "${YELLOW}项目所在路径 : ${SRC_DIR}${RESET}"
@@ -155,7 +157,7 @@ EOF
 
 # 原生更新：拉取代码 + 重新 Build
 update_translate() {
-    if [ ! -d "$SRC_DIR/.git" ]; then
+    if [ ! -d "$BASE_DIR/.git" ]; then
         echo -e "${RED}错误: 未检测到克隆的仓库，请先执行选项 1！${RESET}"
         return
     fi
@@ -163,9 +165,10 @@ update_translate() {
     local current_port=$webui_port
     [[ "$current_port" == "N/A" || -z "$current_port" ]] && current_port="3000"
 
-    echo -e "${YELLOW}正在同步最新的远程官方代码...${RESET}"
-    cd "$SRC_DIR" && git pull
+    echo -e "${YELLOW}正在同步最新的远程官方子目录代码...${RESET}"
+    cd "$BASE_DIR" && git pull origin main || git pull origin master
     
+    cd "$SRC_DIR"
     if [ -f ".env" ]; then
         sed -i '/^GAME_PORT=/d' .env
         echo "GAME_PORT=$current_port" >> .env
@@ -178,10 +181,10 @@ update_translate() {
 
 # 彻底卸载
 uninstall_translate() {
-    echo -ne "${RED}确定要停止并卸载 Game-Collection 容器集群吗？(y/n): ${RESET}"
+    echo -ne "${RED}确定要停止并卸载 arena-brawl 容器集群吗？(y/n): ${RESET}"
     read -r confirm
     if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-        if [ -d "$SRC_DIR/.git" ]; then
+        if [ -d "$BASE_DIR/.git" ]; then
             cd "$SRC_DIR" && docker compose down
             echo -e "${GREEN}容器与网络已被安全停止并移除。${RESET}"
             echo -ne "${YELLOW}是否同步连根拔除本地克隆的【全部源码及游戏数据】？(y/n): ${RESET}"
@@ -215,7 +218,7 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}===================================${RESET}"
-    echo -e "${GREEN}  ◈  Game-Collection 管理面板  ◈  ${RESET}"
+    echo -e "${GREEN}    ◈  arena-brawl 管理面板  ◈    ${RESET}"
     echo -e "${GREEN}===================================${RESET}"
     echo -e "${GREEN}状态 :${RESET} $status"
     echo -e "${GREEN}端口 :${RESET} ${YELLOW}${webui_port}${RESET}"
