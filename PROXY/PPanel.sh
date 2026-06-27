@@ -399,7 +399,7 @@ menu() {
     echo -e "${GREEN} 6. 重启容器${RESET}"
     echo -e "${GREEN} 7. 查看日志${RESET}"
     echo -e "${GREEN} 8. 查看配置${RESET}"
-    echo -e "${GREEN} 9.${RESET} ${YELLOW}ppnode${RESET}"
+    echo -e "${GREEN} 9. 对接节点${RESET} ${YELLOW}← PP-Node${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}====================================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
