@@ -266,7 +266,7 @@ renew_all(){
 check_domains_status() {
     clear
     echo -e "${YELLOW}========================================${RESET}"
-    echo -e "${YELLOW}        ◈ 本地证书状态实时监控 ◈            ${RESET}"
+    echo -e "${YELLOW}        ◈ 本地证书状态实时监控 ◈        ${RESET}"
     echo -e "${YELLOW}========================================${RESET}"
 
     local DOMAINS
@@ -288,33 +288,62 @@ check_domains_status() {
         echo -e "  ├─ ${YELLOW}证书类型: ${RESET}${TYPE}"
 
         if [ -f "$CERT_PATH" ]; then
-            END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
+            # 1. 提取原始英文到期时间文本
+            local RAW_END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
             
-            # 使用 OpenSSL 步进法完美规避 Alpine BusyBox date 命令的坑
-            local DAYS_LEFT=0
-            if openssl x509 -checkend 0 -in "$CERT_PATH" >/dev/null; then
-                while openssl x509 -checkend $((DAYS_LEFT * 86400)) -in "$CERT_PATH" >/dev/null; do
-                    DAYS_LEFT=$((DAYS_LEFT + 1))
-                    [ $DAYS_LEFT -gt 365 ] && break
-                done
-                DAYS_LEFT=$((DAYS_LEFT - 1))
-                
+            # 2. 💡 核心转换：用 awk 规避 BusyBox date 命令无法解析英文的局限，统一为 YYYY-MM-DD HH:MM:SS
+            local FORMATTED_DATE=$(echo "$RAW_END_DATE" | awk '{
+                split("Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec", m, "|");
+                for(i=1;i<=12;i++) mm[m[i]]=sprintf("%02d", i);
+                print $4"-"mm[$1]"-"sprintf("%02d", $2)" "$3
+            }')
+
+            # 3. 毫秒级计算剩余天数，彻底告别 while 步进循环
+            if END_TS=$(date -d "$FORMATTED_DATE" +%s 2>/dev/null); then
+                local NOW_TS=$(date +%s)
+                local DAYS_LEFT=$(( (END_TS - NOW_TS) / 86400 ))
+
                 if [ $DAYS_LEFT -ge 30 ]; then
                     STATUS_COLOR="${GREEN}"
                     STATUS_TEXT="正常有效"
-                else
+                elif [ $DAYS_LEFT -ge 0 ]; then
                     STATUS_COLOR="${YELLOW}"
                     STATUS_TEXT="即将过期 (请注意)"
+                else
+                    STATUS_COLOR="${RED}"
+                    STATUS_TEXT="已过期 (请立即更新)"
                 fi
+                
+                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}${FORMATTED_DATE}"
+                echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
+                echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
             else
-                STATUS_COLOR="${RED}"
-                STATUS_TEXT="已过期 (请立即更新)"
-                DAYS_LEFT=0
-            fi
+                # 4. 极端极端情况下的兜底 (若 date 命令无法处理标准格式，则无缝降级回原版逻辑)
+                local DAYS_LEFT=0
+                if openssl x509 -checkend 0 -in "$CERT_PATH" >/dev/null; then
+                    while openssl x509 -checkend $((DAYS_LEFT * 86400)) -in "$CERT_PATH" >/dev/null; do
+                        DAYS_LEFT=$((DAYS_LEFT + 1))
+                        [ $DAYS_LEFT -gt 365 ] && break
+                    done
+                    DAYS_LEFT=$((DAYS_LEFT - 1))
+                    
+                    if [ $DAYS_LEFT -ge 30 ]; then
+                        STATUS_COLOR="${GREEN}"
+                        STATUS_TEXT="正常有效"
+                    else
+                        STATUS_COLOR="${YELLOW}"
+                        STATUS_TEXT="即将过期 (请注意)"
+                    fi
+                else
+                    STATUS_COLOR="${RED}"
+                    STATUS_TEXT="已过期 (请立即更新)"
+                    DAYS_LEFT=0
+                fi
 
-            echo -e "  ├─ ${YELLOW}到期时间: ${RESET}$END_DATE"
-            echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
-            echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
+                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}$RAW_END_DATE"
+                echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
+                echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
+            fi
         else
             echo -e "  └─ ${YELLOW}运行状态: ${RESET}${RED}未在 $SSL_DIR 中找到导出的证书文件${RESET}"
         fi
@@ -322,6 +351,7 @@ check_domains_status() {
     done
     pause
 }
+
 
 # ==========================================
 # 7. 删除指定本地证书
