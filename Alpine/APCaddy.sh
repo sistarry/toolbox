@@ -336,8 +336,18 @@ check_domains_status() {
         echo -e "  ├─ ${YELLOW}证书类型: ${RESET}${TYPE}"
 
         if [ -n "$CERT_PATH" ] && [ -e "$CERT_PATH" ]; then
-            END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
-            if END_TS=$(date -d "$END_DATE" +%s 2>/dev/null) || END_TS=$(date -D "%b %d %T %Y %Z" -d "$END_DATE" +%s 2>/dev/null); then
+            # 1. 提取原始时间字符串 (例如: Sep 22 02:23:50 2026 GMT)
+            RAW_END_DATE=$(openssl x509 -enddate -noout -in "$CERT_PATH" | cut -d= -f2)
+            
+            # 2. 💡 终极兼容格式化：把英文月转化为通用数字格式 "YYYY-MM-DD HH:MM:SS"
+            FORMATTED_DATE=$(echo "$RAW_END_DATE" | awk '{
+                split("Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec", m, "|");
+                for(i=1;i<=12;i++) mm[m[i]]=sprintf("%02d", i);
+                print $4"-"mm[$1]"-"sprintf("%02d", $2)" "$3
+            }')
+
+            # 3. 将通用格式转换为时间戳 (无论是 GNU 还是 BusyBox 都能完美识别此格式)
+            if END_TS=$(date -d "$FORMATTED_DATE" +%s 2>/dev/null); then
                 NOW_TS=$(date +%s)
                 DAYS_LEFT=$(( (END_TS - NOW_TS) / 86400 ))
                 
@@ -351,10 +361,13 @@ check_domains_status() {
                     STATUS_COLOR="${RED}"
                     STATUS_TEXT="已过期"
                 fi
-                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}$(date -d "@$END_TS" +"%Y-%m-%d" 2>/dev/null || echo "$END_DATE")"
+                
+                # 到期时间直接显示格式化后的标准时间，避免输出原生的“invalid date”
+                echo -e "  ├─ ${YELLOW}到期时间: ${RESET}${FORMATTED_DATE}"
                 echo -e "  ├─ ${YELLOW}剩余天数: ${RESET}${STATUS_COLOR}${DAYS_LEFT} 天${RESET}"
                 echo -e "  └─ ${YELLOW}运行状态: ${RESET}${STATUS_COLOR}${STATUS_TEXT}${RESET}"
             else
+                # 4. 极端备用兜底逻辑 (如果连标准格式 date 都无法转时间戳，使用 openssl 原生检测)
                 if openssl x509 -checkend 2592000 -in "$CERT_PATH" >/dev/null; then
                     echo -e "  └─ ${YELLOW}运行状态: ${RESET}${GREEN}正常有效 (剩余 > 30天)${RESET}"
                 else
@@ -368,6 +381,7 @@ check_domains_status() {
     done
     pause
 }
+
 
 delete_site() {
     DOMAINS=($(get_all_domains))
