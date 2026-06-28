@@ -1,77 +1,146 @@
 #!/bin/bash
 # =========================================
-# 一键部署/管理脚本（Debian/Ubuntu 兼容，IPv4+IPv6 双栈）
-# HTTP 先行，HTTPS 自动申请
-# 支持自动续期 + 防浏览器访问 + DNS 检测 + 访问日志
+# 一键部署/管理脚本
 # =========================================
 
 WEB_ROOT="/var/www/html"
 LOG_FILE="/var/log/nginx/tim_access.log"
 GREEN='\033[0;32m'
+YELLOW="\033[33m"
 RED='\033[0;31m'
 RESET='\033[0m'
 
+# ✨ 终极双栈/纯v6 智能 IP 获取引擎
+get_public_ip() {
+    local mode=${1:-"v4"} # auto: 自动, v4: 强制IPv4, v6: 强制IPv6
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        # 强制获取 IPv4
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
+        done
+    elif [[ "$mode" == "v6" ]]; then
+        # 强制获取 IPv6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
+        done
+    else
+        # auto 模式：双栈环境优先获取 IPv4 (更适合大众网络)，纯 v6 环境自动fallback到 v6
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        # 如果获取 v4 失败，说明可能是纯 v6 机器，尝试获取 v6
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+
+    # 兜底处理：所有接口都失败时，直接输出 127.0.0.1，不报错
+    echo "127.0.0.1" && return 0
+}
+
+# 动态检查服务部署状态
+check_status() {
+    # 检查 Nginx 启用的站点目录中是否存在任何短链配置
+    if [ -d "/etc/nginx/sites-enabled" ] && [ "$(ls -A /etc/nginx/sites-enabled 2>/dev/null)" ]; then
+        # 进一步确认这些启用的配置里是否包含咱们脚本特有的伪装短链标识
+        if grep -q "http_user_agent" /etc/nginx/sites-enabled/* 2>/dev/null; then
+            echo -e "${YELLOW}[已部署]${RESET}"
+            return
+        fi
+    fi
+    echo -e "${RED}[未部署]${RESET}"
+}
+
+
 show_menu() {
     clear
-    echo -e "${GREEN}=========================================${RESET}"
-    echo -e "${GREEN}       vps短链脚本管理菜单                ${RESET}"
-    echo -e "${GREEN}=========================================${RESET}"
+    local STATUS_TEXT=$(check_status)
+    echo -e "${GREEN}==============================${RESET}"
+    echo -e "${GREEN}   ◈ vps短链脚本 管理菜单◈    ${RESET}"
+    echo -e "${GREEN}==============================${RESET}"
+    echo -e "${GREEN}当前状态: ${STATUS_TEXT}${RESET}"
     echo -e "${GREEN}1) 部署脚本${RESET}"
     echo -e "${GREEN}2) 卸载脚本${RESET}"
     echo -e "${GREEN}3) 更新脚本${RESET}"
     echo -e "${GREEN}4) 查看访问日志${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}==============================${RESET}"
 }
 
 install_tim() {
     read -p "请输入你的域名： " DOMAIN
-    read -p "请输入脚本 URL（可选，留空默认不下载）： " TIM_URL
-    read -p "请输入你的邮箱（用于 HTTPS）： " EMAIL
-    read -p "请输入 VPS 本地脚本存放目录（默认 /root/tim）： " LOCAL_DIR
-    LOCAL_DIR=${LOCAL_DIR:-/root/tim}
-
-    echo -e "${GREEN}安装依赖: nginx, curl, certbot, dnsutils...${RESET}"
-    apt update
-    apt install -y nginx curl certbot python3-certbot-nginx dnsutils
-
-    # 检查域名解析 (IPv4 + IPv6)
-    VPS_IPv4=$(curl -s4 https://ifconfig.co || true)
-    VPS_IPv6=$(curl -s6 https://ifconfig.co || true)
-    DOMAIN_A=$(dig +short A "$DOMAIN" | tail -n1)
-    DOMAIN_AAAA=$(dig +short AAAA "$DOMAIN" | tail -n1)
-
-    echo -e "${GREEN}VPS IPv4: $VPS_IPv4${RESET}"
-    echo -e "${GREEN}VPS IPv6: $VPS_IPv6${RESET}"
-    echo -e "${GREEN}域名 A 记录: $DOMAIN_A${RESET}"
-    echo -e "${GREEN}域名 AAAA 记录: $DOMAIN_AAAA${RESET}"
-
-    if [[ "$VPS_IPv4" == "$DOMAIN_A" || "$VPS_IPv6" == "$DOMAIN_AAAA" ]]; then
-        echo -e "${GREEN}✅ 域名解析正确，继续安装${RESET}"
-    else
-        echo -e "${RED}❌ 域名 $DOMAIN 未解析到本 VPS 公网 IP${RESET}"
-        echo -e "${RED}请确认 DNS 指向后再运行安装脚本${RESET}"
+    if [[ -z "$DOMAIN" ]]; then
+        echo -e "${RED}❌ 域名不能为空！${RESET}"
         return
     fi
 
-    # 创建目录
+    read -p "请输入脚本 URL（例如:https://raw.githubusercontent.com/gos/gost/refs/heads/main/gost.sh）： " TIM_URL
+    read -p "请输入 VPS 本地脚本存放目录（默认 /etc/tim）： " LOCAL_DIR
+    LOCAL_DIR=${LOCAL_DIR:-/etc/tim}
+
+    # 根据域名自动预测 Let's Encrypt 默认路径
+    PREDICT_CERT="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"
+    PREDICT_KEY="/etc/letsencrypt/live/$DOMAIN/privkey.pem"
+
+    echo -e "${GREEN}--- 证书路径配置（直接回车使用域名预测路径） ---${RESET}"
+    read -p "证书文件路径 [默认: $PREDICT_CERT]: " CERT_PATH
+    CERT_PATH=${CERT_PATH:-$PREDICT_CERT}
+
+    read -p "私钥文件路径 [默认: $PREDICT_KEY]: " KEY_PATH
+    KEY_PATH=${KEY_PATH:-$PREDICT_KEY}
+
+    if [[ ! -f "$CERT_PATH" || ! -f "$KEY_PATH" ]]; then
+        echo -e "${RED}❌ 错误：在指定路径未找到证书或私钥文件！${RESET}"
+        return
+    fi
+
+    echo -e "${GREEN}安装基础依赖: curl, dnsutils...${RESET}"
+    apt update && apt install -y curl dnsutils
+
+    # 检查域名解析 (仅 IPv4)
+    VPS_IPv4=$(get_public_ip)
+    DOMAIN_A=$(dig +short A "$DOMAIN" | tail -n1)
+
+    echo -e "${GREEN}VPS IPv4: $VPS_IPv4${RESET}"
+    echo -e "${GREEN}域名 A 记录: $DOMAIN_A${RESET}"
+
+    if [[ "$VPS_IPv4" == "$DOMAIN_A" ]]; then
+        echo -e "${GREEN}✅ 域名解析正确${RESET}"
+    else
+        echo -e "${RED}❌ 域名 $DOMAIN 未解析到本 VPS 公网 IPv4 地址${RESET}"
+        return
+    fi
+
     mkdir -p "$WEB_ROOT"
     mkdir -p "$LOCAL_DIR"
     chmod 700 "$LOCAL_DIR"
 
-    # 下载脚本（可选）
     if [[ -n "$TIM_URL" ]]; then
         curl -fsSL "$TIM_URL" -o "$WEB_ROOT/$DOMAIN"
         chmod +x "$WEB_ROOT/$DOMAIN"
         cp "$WEB_ROOT/$DOMAIN" "$LOCAL_DIR/$DOMAIN"
     fi
 
-    # 配置 Nginx HTTP 服务（双栈）
+    # 配置 Nginx 站点（纯 IPv4 监听）
     NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
     cat > "$NGINX_CONF" <<EOF
 server {
     listen 80;
-    listen [::]:80;
     server_name $DOMAIN;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name $DOMAIN;
+
+    ssl_certificate $CERT_PATH;
+    ssl_certificate_key $KEY_PATH;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
 
     root $WEB_ROOT;
 
@@ -112,90 +181,66 @@ updateTime();
 EOF
 
     ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
-    nginx -t && systemctl restart nginx
-
-    # 申请 HTTPS
-    echo -e "${GREEN}申请 HTTPS 证书...${RESET}"
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" || {
-        echo -e "${RED}HTTPS 安装失败，请检查 DNS 或 Nginx 配置后重试${RESET}"
-    }
-
-    # 创建自动续期脚本
-    RENEW_SCRIPT="/root/tim/renew_cert.sh"
-    cat > "$RENEW_SCRIPT" <<EOF
-#!/bin/bash
-certbot renew --quiet --deploy-hook "systemctl reload nginx"
-EOF
-    chmod +x "$RENEW_SCRIPT"
-
-    # 添加 cron 自动续期任务
-    CRON_JOB="0 0,12 * * * $RENEW_SCRIPT >> /var/log/renew_cert.log 2>&1"
-    (crontab -l 2>/dev/null | grep -v "$RENEW_SCRIPT"; echo "$CRON_JOB") | crontab -
-
-    echo -e "${GREEN}✅ 自动续期任务已设置，每天 0 点和 12 点检测证书${RESET}"
+    
+    if nginx -t; then
+        systemctl reload nginx
+        echo -e "${GREEN}✅ Nginx 配置重载成功！${RESET}"
+    else
+        echo -e "${RED}❌ Nginx 配置有误，请检查！${RESET}"
+        return
+    fi
 
     echo -e "${GREEN}==========================================${RESET}"
     echo -e "${GREEN}部署完成！${RESET}"
-    echo -e "${GREEN}本地脚本已保存到：$LOCAL_DIR/$DOMAIN${RESET}"
-    echo -e "${GREEN}HTTPS 已启用 https://$DOMAIN${RESET}"
-    echo -e "${GREEN}访问日志：$LOG_FILE${RESET}"
+    echo -e "${GREEN}使用证书：$CERT_PATH${RESET}"
+    echo -e "${GREEN}访问网址：https://$DOMAIN${RESET}"
+    echo -e "${GREEN}使用命令：bash <(curl -fsSL $DOMAIN)${RESET}"
     echo -e "${GREEN}==========================================${RESET}"
 }
 
 uninstall_tim() {
     read -p "请输入你的域名 ： " DOMAIN
-    read -p "请输入 VPS 本地脚本存放目录（默认 /root/tim）： " LOCAL_DIR
-    LOCAL_DIR=${LOCAL_DIR:-/root/tim}
+    read -p "请输入 VPS 本地脚本存放目录（默认 /etc/tim）： " LOCAL_DIR
+    LOCAL_DIR=${LOCAL_DIR:-/etc/tim}
 
-    echo -e "${GREEN}停止 Nginx...${RESET}"
-    systemctl stop nginx
-
-    echo -e "${GREEN}删除 Nginx 配置...${RESET}"
-    rm -f /etc/nginx/sites-available/"$DOMAIN"
-    rm -f /etc/nginx/sites-enabled/"$DOMAIN"
-
-    echo -e "${GREEN}删除本地脚本...${RESET}"
     rm -rf "$LOCAL_DIR"
-
-    echo -e "${GREEN}删除网页根目录脚本...${RESET}"
     rm -f "$WEB_ROOT/$DOMAIN"
 
-    echo -e "${GREEN}删除 HTTPS 证书...${RESET}"
-    certbot delete --cert-name "$DOMAIN" --non-interactive || echo "证书可能不存在"
-
-    echo -e "${GREEN}重启 Nginx...${RESET}"
-    systemctl restart nginx
-
-    echo -e "${GREEN}==========================================${RESET}"
+    systemctl reload nginx
     echo -e "${GREEN}卸载完成！${RESET}"
-    echo -e "${GREEN}==========================================${RESET}"
 }
 
 update_tim() {
     read -p "请输入最新脚本 URL： " TIM_URL
-    read -p "请输入 VPS 本地脚本存放目录（默认 /root/tim）： " LOCAL_DIR
-    LOCAL_DIR=${LOCAL_DIR:-/root/tim}
+    if [[ -z "$TIM_URL" ]]; then
+        echo -e "${RED}❌ 脚本 URL 不能为空！${RESET}"
+        return
+    fi
 
+    read -p "请输入 VPS 本地脚本存放目录（默认 /etc/tim）： " LOCAL_DIR
+    LOCAL_DIR=${LOCAL_DIR:-/etc/tim}
+
+    read -p "请输入你的域名（用于确定文件名）： " DOMAIN
     if [[ -z "$DOMAIN" ]]; then
-        read -p "请输入域名（用于生成文件名）： " DOMAIN
+        echo -e "${RED}❌ 域名不能为空！${RESET}"
+        return
     fi
 
     mkdir -p "$LOCAL_DIR"
-    curl -fsSL "$TIM_URL" -o "$LOCAL_DIR/$DOMAIN" || { 
-        echo -e "${RED}❌ 下载脚本失败，请检查 URL、权限或路径${RESET}"
+    echo -e "${GREEN}正在下载最新脚本...${RESET}"
+    curl -fsSL "$TIM_URL" -o "$LOCAL_DIR/$DOMAIN" || {
+        echo -e "${RED}❌ 下载失败，请检查 URL！${RESET}"
         return
     }
     chmod +x "$LOCAL_DIR/$DOMAIN"
-
+    
     cp -f "$LOCAL_DIR/$DOMAIN" "$WEB_ROOT/$DOMAIN"
-    echo -e "${GREEN}✅ 更新完成！本地和网页脚本已同步最新版本${RESET}"
+    echo -e "${GREEN}✅ 脚本已同步更新至最新版本！${RESET}"
 }
 
 view_logs() {
     if [ -f "$LOG_FILE" ]; then
-        echo -e "${GREEN}显示最近 20 条访问记录：${RESET}"
         tail -n 20 "$LOG_FILE"
-        echo -e "${GREEN}统计不同 IP (IPv4/IPv6) 访问次数：${RESET}"
         awk '{print $1}' "$LOG_FILE" | sort | uniq -c | sort -nr
     else
         echo -e "${RED}日志文件不存在${RESET}"
@@ -213,5 +258,6 @@ while true; do
         0) exit 0 ;;
         *) echo -e "${RED}请输入有效选项${RESET}" ;;
     esac
-    read -p "按回车返回菜单..."
+    echo -ne "${YELLOW}按回车键继续...${RESET}"
+    read -r
 done
