@@ -270,7 +270,7 @@ ping_action() {
 }
 
 uninstall_firewall() {
-    clear
+
     echo -e "${RED}警告：该操作将清空所有入站规则并彻底从 Alpine 卸载防火墙！${RESET}"
     read -p "确定要彻底卸载吗？(y/n): " confirm
     if ! echo "$confirm" | grep -qE '^[Yy]$'; then return; fi
