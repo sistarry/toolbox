@@ -161,3 +161,13 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/EGIPPur
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/NetUnlock.js
 ```
+
+### 黄历x
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/EGHL.js
+```
+
+### IP安全
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/NetworkSC.js
+```
