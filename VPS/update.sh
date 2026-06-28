@@ -48,7 +48,7 @@ if [ "$ID" = "alpine" ]; then
     apk update && apk upgrade
     
     # 基础装机必备组件
-    APK_PACKAGES="bash curl wget vim tar sudo git gzip openssl bind-tools openssh ca-certificates tzdata dcron jq gcompat"
+    APK_PACKAGES="bash curl wget vim tar sudo git gzip grep openssl bind-tools openssh ca-certificates tzdata dcron jq gcompat"
     
     # 只有非容器环境（物理机/VM）才安装时间同步服务
     if [ "$IS_CONTAINER" -eq 0 ]; then
