@@ -20,12 +20,12 @@ bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/vpst
 
 ### 脚本短链脚本
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dl.sh)
 ```
 
 ### 网站部署脚本
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/dl.sh)
+bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/html.sh)
 ```
 
 ### CF证书脚本
