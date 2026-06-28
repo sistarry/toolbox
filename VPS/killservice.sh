@@ -62,7 +62,7 @@ delete_service() {
         echo -e "${YELLOW}未找到服务文件: $service${RESET}"
         return
     fi
-    echo -e "${RED}⚠ 确认要删除服务: $service ($unit_path) ? [y/N] ${RESET}"
+    echo -e "${RED}确认要删除服务: $service ($unit_path) ? [y/N] ${RESET}"
     read -r confirm
     if [[ "$confirm" =~ ^[yY]$ ]]; then
         sudo systemctl stop "$service" 2>/dev/null
@@ -79,7 +79,9 @@ submenu_action() {
     local action="$1"
     while true; do
         refresh_list
-        echo -e "${GREEN}== 当前操作: $action 服务 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}    当前操作:${RESET} ${YELLOW}$action 服务       ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e "${GREEN}输入序号(可多选, 空格分隔)，0 返回上级菜单: ${RESET}")" ARGS
         [[ "$ARGS" == "0" ]] && break
 
@@ -105,10 +107,13 @@ submenu_action() {
 submenu_autostart() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 开机自启管理 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}         开机自启管理           ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1) 启用开机自启${RESET}"
         echo -e "${GREEN}2) 禁用开机自启${RESET}"
         echo -e "${GREEN}0) 返回上级菜单${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e "${GREEN}请选择操作: ${RESET}")" subchoice
 
         case $subchoice in
@@ -157,7 +162,9 @@ submenu_logs() {
 submenu_status() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 查看服务状态 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}        查看服务状态             ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e "${GREEN}输入序号(单选)，0 返回上级菜单: ${RESET}")" num
         [[ "$num" == "0" ]] && break
 
@@ -179,7 +186,7 @@ generate_full_list
 refresh_list
 
 while true; do
-    echo -e "${GREEN}=== 主菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 启动服务${RESET}"
     echo -e "${GREEN}2) 停止服务${RESET}"
     echo -e "${GREEN}3) 重启服务${RESET}"
@@ -189,6 +196,7 @@ while true; do
     echo -e "${GREEN}7) 开机自启管理${RESET}"
     echo -e "${GREEN}n) 下一页   p) 上一页   r) 刷新${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     read -p "$(echo -e "${GREEN}请选择操作: ${RESET}")" choice
 
     case $choice in
