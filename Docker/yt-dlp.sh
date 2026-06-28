@@ -316,7 +316,7 @@ while true; do
     if [ -f "$COOKIE_FILE" ]; then
         COOKIE_STATUS="${GREEN}已就绪 ($COOKIE_FILE)${RESET}"
     else
-        COOKIE_STATUS="${YELLOW}未配置 (请上传至 $COOKIE_FILE)${RESET}"
+        COOKIE_STATUS="${YELLOW}未配置(请上传至$COOKIE_FILE)${RESET}"
     fi
 
     echo -e "${GREEN}=================================${RESET}"
