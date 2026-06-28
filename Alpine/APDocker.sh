@@ -804,13 +804,29 @@ main_menu() {
         echo -e "${RESET}"
         echo -e "${GREEN}===========================================${RESET}"
         
+        # 检测 Docker 状态
         if command -v docker &>/dev/null; then
-            local d_status=$(docker info &>/dev/null && echo "运行中" || echo "未运行")
+            # 1. 获取基础状态与版本
+            local docker_status=$(docker info &>/dev/null && echo "运行中" || echo "未运行")
+            local docker_ver=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "未知")
+            local compose_ver=$(docker compose version --short 2>/dev/null || echo "未知")
+            
+            # 2. 统计各项数量
             local total=$(docker ps -a -q 2>/dev/null | wc -l)
             local running=$(docker ps -q 2>/dev/null | wc -l)
-            echo -e "${YELLOW}🐳| Docker: $d_status | 总容器: $total | 运行中: $running${RESET}"
+            local stopped=$(docker ps -aq -f status=exited 2>/dev/null | wc -l)
+            local total_volumes=$(docker volume ls -q 2>/dev/null | wc -l)
+            local total_images=$(docker images -q 2>/dev/null | sort -u | wc -l)
+            local total_networks=$(docker network ls --filter "type=custom" -q 2>/dev/null | wc -l)
+            
+            # 3. 打印状态栏
+            echo -e "${YELLOW}🐳 Docker   : v$docker_ver | 🐙 Compose : v$compose_ver${RESET}"
+            echo -e "${YELLOW}🐳 Docker   : $docker_status  | 📦 系统镜像: $total_images 个 "
+            echo -e "${YELLOW}🟢 运行容器 : $running 个    | 🔴 停止容器: $stopped 个${RESET}"
+            echo -e "${YELLOW}💾 数据卷数 : $total_volumes 个    | 🌐 网络数量: $total_networks 个${RESET}"
         else
-            echo -e "${YELLOW}🐳| Docker: 未安装 | 防火墙驱动: $(current_iptables)${RESET}"
+            # Docker 未安装时只显示 iptables 状态
+            echo -e "${YELLOW}🐳 Docker: 未安装 | 🌐 iptables: $(current_iptables)${RESET}"
         fi
         echo -e "${GREEN}===========================================${RESET}"
         echo -e "${GREEN}01. 安装/更新 Docker${RESET}"
@@ -824,13 +840,13 @@ main_menu() {
         echo -e "${GREEN}09. 网络管理${RESET}"
         echo -e "${GREEN}10. 切换至 iptables-legacy${RESET}"
         echo -e "${GREEN}11. 切换至 iptables-nft${RESET}"
-        echo -e "${GREEN}12. Docker备份/恢复${RESET}"
+        echo -e "${GREEN}12. 备份/恢复${RESET}"
         echo -e "${GREEN}13. 重启 Docker${RESET}"
-        echo -e "${GREEN}14. 卷管理${RESET}"
+        echo -e "${GREEN}14. 数据卷管理${RESET}"
         echo -e "${GREEN}15. 设置Docker镜像加速源${RESET}"
         echo -e "${GREEN}16. 设置Docker日志限制${RESET}"
-        echo -e "${GREEN}17.${RESET} ${YELLOW}一键清理所有未使用容器/镜像/卷${RESET}"
-        echo -e "${GREEN}18. Docker监控${RESET}"
+        echo -e "${GREEN}17.${RESET} ${YELLOW}清理未使用容器/镜像/卷${RESET}"
+        echo -e "${GREEN}18. 容器监控${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
         echo -e "${GREEN}===========================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
