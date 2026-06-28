@@ -142,7 +142,9 @@ submenu_autostart() {
 submenu_logs() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 查看服务日志 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}         查看服务日志           ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         read -p "$(echo -e "${GREEN}输入序号(单选)，0 返回上级菜单: ${RESET}")" num
         [[ "$num" == "0" ]] && break
 
