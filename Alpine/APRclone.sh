@@ -42,35 +42,35 @@ get_system_status() {
     
     if command -v rclone &> /dev/null; then
         local rclone_ver=$(rclone version | head -n 1 | awk '{print $2}')
-        echo -e "${GREEN}Rclone 状态:${RESET} ${YELLOW}已安装 (${rclone_ver})${RESET}"
+        echo -e "${GREEN}Rclone 状态 :${RESET} ${YELLOW}已安装 (${rclone_ver})${RESET}"
     else
-        echo -e "${GREEN}Rclone 状态:${RESET} ${RED}未安装${RESET}"
+        echo -e "${GREEN}Rclone 状态 :${RESET} ${RED}未安装${RESET}"
     fi
 
     if command -v rclone &> /dev/null; then
         local remote_count=$(rclone listremotes 2>/dev/null | wc -l)
-        echo -e "${GREEN}已配置网盘:${RESET} ${YELLOW}${remote_count} 个${RESET}"
+        echo -e "${GREEN}已配置网盘  :${RESET} ${YELLOW}${remote_count} 个${RESET}"
     else
-        echo -e "${GREEN}已配置网盘:${RESET} ${YELLOW}----${RESET}"
+        echo -e "${GREEN}已配置网盘  :${RESET} ${YELLOW}----${RESET}"
     fi
 
     local active_mounts=$(mount | grep -i "rclone" | awk '{print $3}')
     if [ -n "$active_mounts" ]; then
-        echo -e "${GREEN}活跃挂载点:${RESET} "
+        echo -e "${GREEN}活跃挂载点  :${RESET} "
         echo "$active_mounts" | while read -r mnt; do
             echo -e "  ${YELLOW}● $mnt (已开启开机自启)${RESET}"
         done
     else
-        echo -e "${GREEN}活跃挂载点:${RESET} ${YELLOW}暂无活跃挂载${RESET}"
+        echo -e "${GREEN}活跃挂载点  :${RESET} ${YELLOW}暂无活跃挂载${RESET}"
     fi
 
     local cron_count=$(crontab -l 2>/dev/null | grep "$CRON_PREFIX" | wc -l)
     echo -e "${GREEN}同步定时任务:${RESET} ${YELLOW}${cron_count} 个活跃任务${RESET}"
 
     if [[ "$TG_TOKEN" == "填入你的默认BotToken" || -z "$TG_TOKEN" ]]; then
-        echo -e "${GREEN}TG 通知状态:${RESET} ${YELLOW}未配置${RESET}"
+        echo -e "${GREEN}TG 通知状态 :${RESET} ${YELLOW}未配置${RESET}"
     else
-        echo -e "${GREEN}TG 通知状态:${RESET} ${YELLOW}已启用(${VPS_NAME})${RESET}"
+        echo -e "${GREEN}TG 通知状态 :${RESET} ${YELLOW}已启用(${VPS_NAME})${RESET}"
     fi
 
 }
@@ -345,7 +345,7 @@ show_assets_manifest() {
             echo -e "  任务名字: ${YELLOW}${task_id}${RESET}  |  执行周期: ${YELLOW}${cron_time}${RESET}"
         done
     else
-        echo -e "  ${YELLOW}(暂无通过本脚本创建的定时同步任务)${RESET}"
+        echo -e "  ${YELLOW}(暂无创建的定时同步任务)${RESET}"
     fi
     echo -e "${GREEN}=======================================${RESET}"
 }
@@ -459,10 +459,10 @@ EOF
 }
 
 schedule_del_one() {
-    echo -e "${YELLOW}--- 正在检索本脚本生成的任务... ---${RESET}"
+    echo -e "${YELLOW}--- 正在检索本生成的任务... ---${RESET}"
     local count=$(crontab -l 2>/dev/null | grep "$CRON_PREFIX" | wc -l)
     if [ "$count" -eq 0 ]; then
-        echo -e "${YELLOW}未发现通过本脚本创建的 Rclone 定时任务。${RESET}"
+        echo -e "${YELLOW}未发现创建的 Rclone 定时任务。${RESET}"
         return
     fi
 
