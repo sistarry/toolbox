@@ -112,7 +112,7 @@ manage_services() {
         echo -e "${RED}  0. 返回主菜单${RESET}"
         echo -e "${GREEN}=======================================${RESET}"
         
-        echo -e -n "${GREEN}请输入选项 [0-8]: ${RESET}"
+        echo -e -n "${GREEN}请输入选项: ${RESET}"
         read svc_choice
         
         case $svc_choice in
@@ -153,7 +153,7 @@ while true; do
     echo -e "${RED} 0. 退出${RESET}"
     echo -e "${GREEN}=======================================${RESET}" 
     
-    echo -e -n "${GREEN}请输入选项 [0-6]: ${RESET}"
+    echo -e -n "${GREEN}请输入选项: ${RESET}"
     read choice
     
     case $choice in
