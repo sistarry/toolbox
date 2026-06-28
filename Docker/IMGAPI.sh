@@ -242,8 +242,16 @@ status_service() {
 # 菜单循环
 while true; do
     clear
+    # 动态检测是否安装了服务
+    if [ -d "$BASE_DIR/images" ]; then
+        STATUS_TEXT="${YELLOW}[已安装]${RESET}"
+    else
+        STATUS_TEXT="${RED}[未安装]${RESET}"
+    fi
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}     ◈   随机图片 API   ◈      ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}当前状态: ${STATUS_TEXT}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 1) 安装服务${RESET}"
     echo -e "${GREEN} 2) 卸载服务${RESET}"
