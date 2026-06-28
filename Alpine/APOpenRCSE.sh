@@ -1,7 +1,6 @@
 #!/bin/sh
 # OpenRC 服务管理 
 # 功能：支持关键词过滤 + 分菜单操作（启动/停止/重启/删除/查看日志/查看状态/自启管理）
-# 完美适配 Alpine Linux 环境，彻底告别 Bash 依赖与排版色彩错乱
 
 # ================== 颜色定义 ==================
 RED="\033[31m"
@@ -136,7 +135,9 @@ submenu_action() {
     local action="$1"
     while true; do
         refresh_list
-        echo -e "${GREEN}== 当前操作: $action 服务 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}    当前操作:${RESET} ${YELLOW}$action 服务       ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         printf "${GREEN}输入序号(可多选，空格分隔)，0 返回上级菜单: ${RESET}"
         read -r ARGS
         [ "$ARGS" = "0" ] || [ -z "$ARGS" ] && break
@@ -167,10 +168,13 @@ submenu_action() {
 submenu_autostart() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 开机自启管理 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}         开机自启管理           ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1) 启用开机自启 (默认注册到 default 级别)${RESET}"
         echo -e "${GREEN}2) 禁用开机自启 (从所有级别移除)${RESET}"
         echo -e "${GREEN}0) 返回上级菜单${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         printf "${GREEN}请选择操作: ${RESET}"
         read -r subchoice
 
@@ -211,7 +215,9 @@ submenu_autostart() {
 submenu_logs() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 查看服务日志 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}         查看服务日志           ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         printf "${GREEN}输入序号(单选)，0 返回上级菜单: ${RESET}"
         read -r num
         [ "$num" = "0" ] || [ -z "$num" ] && break
@@ -246,7 +252,9 @@ submenu_logs() {
 submenu_status() {
     while true; do
         refresh_list
-        echo -e "${GREEN}== 查看服务状态 ==${RESET}"
+        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}        查看服务状态             ${RESET}"
+        echo -e "${GREEN}================================${RESET}"
         printf "${GREEN}输入序号(单选)，0 返回上级菜单: ${RESET}"
         read -r num
         [ "$num" = "0" ] || [ -z "$num" ] && break
@@ -273,7 +281,7 @@ generate_full_list
 
 while true; do
     refresh_list
-    echo -e "${GREEN}=== 主菜单 ===${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1) 启动服务${RESET}"
     echo -e "${GREEN}2) 停止服务${RESET}"
     echo -e "${GREEN}3) 重启服务${RESET}"
@@ -283,6 +291,7 @@ while true; do
     echo -e "${GREEN}7) 开机自启管理${RESET}"
     echo -e "${GREEN}n) 下一页   p) 上一页   r) 刷新${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
     printf "${GREEN}请选择操作: ${RESET}"
     read -r choice
 
