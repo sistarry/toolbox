@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # ==========================================
 # Poste.io 一键管理脚本 
@@ -21,21 +20,29 @@ check_root() {
     fi
 }
 
+# 获取公网 IP (兼容双栈环境)
 get_public_ip() {
-    local ip
-    for cmd in "curl -4s --max-time 5" "wget -4qO- --timeout=5"; do
-        for url in "https://api.ipify.org" "https://ip.sb" "https://checkip.amazonaws.com"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    local mode=${1:-"auto"}
+    local ip=""
+    
+    if [[ "$mode" == "v4" ]]; then
+        for url in "https://api.ipify.org" "https://4.ip.sb" "https://checkip.amazonaws.com"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" != *":"* ]] && echo "$ip" && return 0
         done
-    done
-    for cmd in "curl -6s --max-time 5" "wget -6qO- --timeout=5"; do
-        for url in "https://api64.ipify.org" "https://ip.sb"; do
-            ip=$($cmd "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return
+    elif [[ "$mode" == "v6" ]]; then
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -6 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" && "$ip" == *":"* ]] && echo "$ip" && return 0
         done
-    done
-    echo "无法获取公网 IP 地址。"
+    else
+        for url in "https://api.ipify.org" "https://4.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 -4 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+        for url in "https://api64.ipify.org" "https://6.ip.sb"; do
+            ip=$(wget -qO- --timeout=3 --tries=1 --no-check-certificate "$url" 2>/dev/null) && [[ -n "$ip" ]] && echo "$ip" && return 0
+        done
+    fi
+    echo "127.0.0.1" && return 0
 }
-
 
 
 check_docker() {
@@ -53,7 +60,8 @@ check_docker() {
 
 check_port() {
     local port=$1
-    if lsof -i:$port &> /dev/null; then
+    # 兼容 Alpine: 使用 netstat 检查本地端口是否被监听
+    if netstat -tuln 2>/dev/null | grep -qE ":$port\s"; then
         echo -e "${YELLOW}✗ 端口 $port........ ${RED}被占用${RESET}"
     else
         echo -e "${YELLOW}✓ 端口 $port........ ${GREEN}可用${RESET}"
@@ -63,34 +71,32 @@ check_port() {
 # ==================== 端口检测 ====================
 port_check() {
     echo -e "${YELLOW}端口检测${RESET}"
-    # 检测 timeout 是否安装
-    if ! command -v timeout &>/dev/null; then
-        echo -e "${YELLOW}检测到系统未安装 timeout，正在安装...${RESET}"
-        if [ -x "$(command -v apt)" ]; then
-            apt update && apt install -y coreutils
-        elif [ -x "$(command -v yum)" ]; then
-            yum install -y coreutils
+    
+    # 远程 SMTP 25 端口检测 (兼容 Alpine/Ubuntu/CentOS)
+    port=25
+    if command -v nc &>/dev/null; then
+        # Alpine 通常自带 busybox nc
+        if nc -w 3 -z smtp.qq.com $port &>/dev/null; then
+            echo -e "${YELLOW}✓ 端口 $port........ ${GREEN}可访问外网SMTP (nc检测)${RESET}"
         else
-            echo -e "${RED}无法自动安装 timeout，请手动安装 coreutils${RESET}"
-            return
+            echo -e "${YELLOW}✗ 端口 $port........ ${RED}不可访问外网SMTP (请检查服务商是否封禁25端口)${RESET}"
+        fi
+    else
+        # 备用 telnet 方案
+        telnet_output=$(echo "quit" | timeout 3 telnet smtp.qq.com $port 2>&1)
+        if echo "$telnet_output" | grep -q "Connected"; then
+            echo -e "${YELLOW}✓ 端口 $port........ ${GREEN}可访问外网SMTP${RESET}"
+        else
+            echo -e "${YELLOW}✗ 端口 $port........ ${RED}不可访问外网SMTP${RESET}"
         fi
     fi
-    # 远程 SMTP 25 端口检测
-    port=25
-    timeout=3
-    telnet_output=$(echo "quit" | timeout $timeout telnet smtp.qq.com $port 2>&1)
-    if echo "$telnet_output" | grep -q "Connected"; then
-        echo -e "${YELLOW}✓ 端口 $port........ ${GREEN}可访问外网SMTP${RESET}"
-    else
-        echo -e "${YELLOW}✗ 端口 $port........ ${RED}不可访问外网SMTP${RESET}"
-    fi
 
-    # 其他常用端口检测（只看能否连通）
+    # 其他常用端口检测
     for port in 587 110 143 993 995 465 80 443; do
         check_port $port
     done
 
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e "${YELLOW}按回车返回菜单...${RESET}")"
 }
 
 show_dns_info() {
@@ -98,7 +104,7 @@ show_dns_info() {
     local ip=$(get_public_ip)
     local root_domain=$(echo "$domain" | awk -F. '{print $(NF-1)"."$NF}')
     echo -e "${YELLOW}================ DNS 配置参考 ================${RESET}"
-    echo -e "${GREEN}▶ A       mail      ${ip}${RESET}"
+    echo -e "${GREEN}▶ A      mail      ${ip}${RESET}"
     echo -e "${GREEN}▶ CNAME   imap      ${domain}${RESET}"
     echo -e "${GREEN}▶ CNAME   pop       ${domain}${RESET}"
     echo -e "${GREEN}▶ CNAME   smtp      ${domain}${RESET}"
@@ -173,7 +179,31 @@ EOF
     echo -e "${YELLOW}默认管理员邮箱: ${admin_email}${RESET}"
     echo -e "${YELLOW}访问地址      : http://${SERVER_IP}:${WEB_PORT}${RESET}"
     echo -e "${YELLOW}=======================================${RESET}"
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e "${YELLOW}按回车返回菜单...${RESET}")"
+}
+
+# 辅助函数：启动容器
+start_container() {
+    if [ -d "$APP_DIR" ]; then
+        cd "$APP_DIR" || exit 1
+        docker-compose start
+        echo -e "${GREEN}✅ 容器已启动${RESET}"
+    else
+        echo -e "${RED}未检测到安装目录，请先安装${RESET}"
+    fi
+    sleep 1
+}
+
+# 辅助函数：停止容器
+stop_container() {
+    if [ -d "$APP_DIR" ]; then
+        cd "$APP_DIR" || exit 1
+        docker-compose stop
+        echo -e "${YELLOW}🔒 容器已停止${RESET}"
+    else
+        echo -e "${RED}未检测到安装目录${RESET}"
+    fi
+    sleep 1
 }
 
 restart_app() {
@@ -185,7 +215,7 @@ restart_app() {
     else
         echo -e "${RED}未检测到安装目录，请先安装${RESET}"
     fi
-    read -p "按回车返回菜单..."
+    sleep 1
 }
 
 view_logs() {
@@ -195,8 +225,8 @@ view_logs() {
         docker-compose logs -f
     else
         echo -e "${RED}未检测到安装目录，请先安装${RESET}"
+        read -p "$(echo -e "${YELLOW}按回车返回菜单...${RESET}")"
     fi
-    read -p "按回车返回菜单..."
 }
 
 update_app() {
@@ -209,44 +239,81 @@ update_app() {
     else
         echo -e "${RED}未检测到安装目录，请先安装${RESET}"
     fi
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e "${YELLOW}按回车返回菜单...${RESET}")"
 }
 
+
 uninstall_app() {
-    if [ -d "$APP_DIR" ]; then
-        cd "$APP_DIR" || exit 1
-        echo -e "${BLUE}正在卸载 Poste.io 服务...${RESET}"
-        docker-compose down
-        docker images | awk '/poste\.io/ {print $3}' | xargs -r docker rmi -f
-        rm -rf "$APP_DIR"
-        echo -e "${RED}✅ 已卸载服务及数据${RESET}"
-    else
-        echo -e "${RED}未检测到安装目录${RESET}"
+    echo -ne "${YELLOW}确定要卸载并删除 Poste.io 容器吗？(y/n): ${RESET}"
+    read -r confirm
+    if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+        if [ -f "$COMPOSE_FILE" ]; then
+            cd "$APP_DIR" && docker-compose down
+            rm -rf "$APP_DIR"
+            echo -e "${GREEN}容器已停止，本地配置与数据目录已彻底清理。${RESET}"
+        else
+            docker rm -f "${APP_NAME}-mailserver" 2>/dev/null
+        fi
+        echo -e "${GREEN}卸载完成！${RESET}"
     fi
-    read -p "按回车返回菜单..."
+    read -p "$(echo -e "${YELLOW}按回车返回菜单...${RESET}")"
 }
+
+
+get_status_and_port() {
+    if [ -d "$APP_DIR" ] && [ -f "$COMPOSE_FILE" ]; then
+        # 提取绑定的 HTTP 端口
+        webui_port=$(grep -E '\-[[:space:]]*"[0-9]+:80"' "$COMPOSE_FILE" | grep -oE '[0-9]+:80' | cut -d: -f1)
+        [ -z "$webui_port" ] && webui_port="80"
+        
+        # 通过 docker inspect 获取容器运行状态
+        local run_status=$(docker inspect -f '{{.State.Status}}' "${APP_NAME}-mailserver-1" 2>/dev/null)
+        if [ "$run_status" == "running" ]; then
+            status="${GREEN}运行中${RESET}"
+        elif [ -n "$run_status" ]; then
+            status="${YELLOW}已停止 ($run_status)${RESET}"
+        else
+            status="${RED}未启动 (容器不存在)${RESET}"
+        fi
+    else
+        status="${RED}未安装${RESET}"
+        webui_port="未配置"
+    fi
+}
+
 
 menu() {
     clear
+    get_status_and_port
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}◈ Poste.io  邮件服务器管理面板 ◈${RESET}"
+    echo -e "${GREEN}    ◈  Poste.io 邮箱服务  ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}1) 安装启动${RESET}"
-    echo -e "${GREEN}2) 更新容器${RESET}"
-    echo -e "${GREEN}3) 查看日志${RESET}"
-    echo -e "${GREEN}4) 卸载容器${RESET}"
-    echo -e "${GREEN}5) 端口检测${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
+    echo -e "${GREEN}状态 :${RESET} $status"
+    echo -e "${GREEN}端口 :${RESET} ${YELLOW}${webui_port}${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
+    echo -e "${GREEN}1. 部署启动${RESET}"
+    echo -e "${GREEN}2. 更新容器${RESET}"
+    echo -e "${GREEN}3. 卸载容器${RESET}"
+    echo -e "${GREEN}4. 启动容器${RESET}"
+    echo -e "${GREEN}5. 停止容器${RESET}"
+    echo -e "${GREEN}6. 重启容器${RESET}"
+    echo -e "${GREEN}7. 查看日志${RESET}"
+    echo -e "${GREEN}8. 端口检测${RESET}"
+    echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo -ne "${GREEN}请输入选项: ${RESET}"
+    read -r choice
     case $choice in
         1) install_app ;;
         2) update_app ;;
-        3) view_logs ;;
-        4) uninstall_app ;;
-        5) port_check ;;
+        3) uninstall_app ;;
+        4) start_container ;;
+        5) stop_container ;;
+        6) restart_app ;;
+        7) view_logs ;;
+        8) port_check ;; 
         0) exit 0 ;;
-        *) echo -e "${RED}无效选择${RESET}"; sleep 1; menu ;;
+        *) echo -e "${RED}无效选择${RESET}"; sleep 1 ;;
     esac
     menu
 }
