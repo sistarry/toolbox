@@ -282,7 +282,7 @@ view_visual_rules() {
 }
 
 uninstall_firewall() {
-    clear
+
     echo -e "${YELLOW}警告：该操作将清空所有宿主机入站规则并卸载防火墙组件，恢复网络全放行状态！${RESET}"
     read -p "确定要彻底卸载吗？(y/n): " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
