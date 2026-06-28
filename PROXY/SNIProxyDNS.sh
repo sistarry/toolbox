@@ -774,7 +774,7 @@ main() {
             10) run_AKdns ;;
             11) run_dns ;;
             0) exit 0 ;;
-            *) print_error "无效选项: '$choice'，请重新输入。"; sleep 1.5 ;;
+            *) print_error "无效选项,请重新输入。"; sleep 1.5 ;;
         esac
     done
 }
