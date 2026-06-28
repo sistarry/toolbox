@@ -611,18 +611,24 @@ function network_menu() {
 function main_menu() {
     while true; do
         clear
-        local docker_ver=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "未知")
-        local compose_ver=$(docker compose version --short 2>/dev/null || echo "未知")
-        local running_containers=$(docker ps -q | wc -l)
-        local total_images=$(docker images -q | sort -u | wc -l)
+        # 1. 统计容器数量
+        local running_containers=$(docker ps -q 2>/dev/null | wc -l)
+        # 使用 -f status=exited 筛选已停止的容器
+        local stopped_containers=$(docker ps -aq -f status=exited 2>/dev/null | wc -l)
+        # 2. 统计镜像、卷、网络数量
+        local total_images=$(docker images -q 2>/dev/null | sort -u | wc -l)
+        local total_volumes=$(docker volume ls -q 2>/dev/null | wc -l)
+        # 统计自定义网络（排除自带的 bridge, host, none）
+        local total_networks=$(docker network ls --filter "type=custom" -q 2>/dev/null | wc -l)
 
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN} ◈  Docker Compose 项目管理  ◈ ${RESET}"
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}Docker  :${RESET} ${YELLOW}v $docker_ver${RESET}" 
-        echo -e "${GREEN}Compose :${RESET} ${YELLOW}v $compose_ver ${RESET}"
-        echo -e "${GREEN}运行容器:${RESET} ${YELLOW}$running_containers 个${RESET}"
-        echo -e "${GREEN}系统镜像:${RESET} ${YELLOW}$total_images 个${RESET}"
+        echo -e "${GREEN}🟢 运行容器:${RESET} ${YELLOW}$running_containers 个${RESET}"  
+        echo -e "${GREEN}🔴 停止容器:${RESET} ${RED}$stopped_containers 个${RESET}"
+        echo -e "${GREEN}💾 数据卷数:${RESET} ${YELLOW}$total_volumes 个${RESET}"    
+        echo -e "${GREEN}🌐 网络数量:${RESET} ${YELLOW}$total_networks 个${RESET}"
+        echo -e "${GREEN}📦 系统镜像:${RESET} ${YELLOW}$total_images 个${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}1) 管理项目${RESET}"
         echo -e "${GREEN}2) 网络管理${RESET}"
