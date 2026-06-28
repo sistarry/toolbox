@@ -18,7 +18,7 @@ LOG_FILE="/var/log/alpine_setup.log"
 non_interactive=${NON_INTERACTIVE:-false}
 
 # 适配 Alpine 的精简依赖包 
-deps="curl wget git net-tools bash lsof tar unzip rsync pv sudo netcat-openbsd openssh openssh-client jq openssl ca-certificates"
+deps="curl wget git net-tools bash lsof tar unzip grep rsync pv sudo netcat-openbsd openssh openssh-client jq openssl ca-certificates"
 
 log() {
     echo -e "$1"
