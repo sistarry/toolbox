@@ -321,8 +321,8 @@ main_menu() {
         update_status_variables
         clear
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}   Cloudflare 远端控制管理面板    ${RESET}"
-        echo -e "${GREEN}   (Dashboard 模式/无需本地配置)  ${RESET}"
+        echo -e "${GREEN} ◈Cloudflare  远端控制管理面板◈ ${RESET}"
+        echo -e "${GREEN}  (Dashboard 模式/无需本地配置)  ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         [ ! -f "$CFT_BIN" ] && echo -e "${RED}[警告] 未找到执行文件，请先执行选项 1 安装！${RESET}"
         echo -e "${GREEN}当前状态 :${RESET} $G_STATUS"
