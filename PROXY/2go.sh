@@ -35,14 +35,14 @@ export SOCKS5_PORT=${SOCKS5_PORT:-'1080'}
 export SOCKS5_USER=${SOCKS5_USER:-''}
 export SOCKS5_PASS=${SOCKS5_PASS:-''}
 
-# 终端高亮颜色定义
+# 终端颜色定义
 RE="\033[0m"
-RED="\033[1;91m"
-GREEN="\033[1;32m"
-YELLOW="\033[1;33m"
-PURPLE="\033[1;35m"
-SKYBLUE="\033[1;36m"
-CYAN="\033[1;36m"
+RED="\033[91m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+PURPLE="\033[35m"
+SKYBLUE="\033[36m"
+CYAN="\033[36m"
 RESET="\033[0m"
 
 # 核心日志输出快捷工具
