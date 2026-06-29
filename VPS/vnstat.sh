@@ -623,7 +623,7 @@ main() {
             12) menu_cron_config ;;
             13) run_tgday ;;
             0) exit 0 ;;
-            *) echo "无效选项"; pause ;;
+            *) echo -e "${RED}无效选项${RESET}"; pause ;;
         esac
     done
 }
