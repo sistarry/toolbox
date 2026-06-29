@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# --- 脚本配置 ---
+# --- 代理配置 ---
 GITHUB_PROXY=(
     ''
     'https://v6.gh-proxy.org/'
@@ -10,12 +10,14 @@ GITHUB_PROXY=(
     'https://ghproxy.lvedong.eu.org/'
 )
 
-GREEN="\033[1;32m"
-RED="\033[1;31m"
-YELLOW="\033[1;33m"
-BLUE="\033[1;34m"
+
+GREEN="\033[32m"
+YELLOW="\033[33m"
+RED="\033[31m"
 NC="\033[0m"
+BLUE="\033[36m"
 RESET="\033[0m"
+
 
 INSTALL_DIR="/usr/local/bin"
 CONFIG_DIR="/etc/easytier"
