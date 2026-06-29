@@ -368,7 +368,7 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN} ◈    哆啦A梦转发面板管理    ◈   ${RESET}"
+    echo -e "${GREEN} ◈    哆啦A梦 转发面板管理    ◈   ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}前端状态 :${RESET} $status_front ${GREEN}端口 :${RESET} ${YELLOW}${web_front}${RESET}"
     echo -e "${GREEN}后端状态 :${RESET} $status_back ${GREEN}端口 :${RESET} ${YELLOW}${web_back}${RESET}"
