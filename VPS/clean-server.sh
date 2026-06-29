@@ -217,9 +217,9 @@ update_script() {
     if curl -sL "$SCRIPT_URL" -o "$tmp_update" && [ -s "$tmp_update" ]; then
         mv "$tmp_update" "$SCRIPT_PATH"
         chmod +x "$SCRIPT_PATH"
-        echo -e "${GREEN}脚本升级更新完成！${RESET}"
+        echo -e "${GREEN}更新完成！${RESET}"
     else
-        echo -e "${RED}更新失败：无法下载新脚本。${RESET}"
+        echo -e "${RED}更新失败：无法下载。${RESET}"
         rm -f "$tmp_update"
     fi
 }
@@ -247,6 +247,7 @@ fi
 # =========================================================
 auto_clean_menu() {
     while true; do
+        clear
         get_system_status
 
         echo -e "${GREEN}=======================================${RESET}"
@@ -290,7 +291,7 @@ auto_clean_menu() {
             *) echo -e "${RED}无效选择，请重新输入...${RESET}"; sleep 1; continue ;;
         esac
 
-        echo -ne "\n${GREEN}按回车返回面板...${RESET}"
+        echo -ne "${GREEN}按回车返回面板...${RESET}"
         read -r
     done
 }
