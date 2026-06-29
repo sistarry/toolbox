@@ -96,7 +96,7 @@ get_public_ip() {
 # 编号切换/新建节点
 switch_instance() {
     clear
-    echo -e "${CYAN}====== 节点切换与添加 ======${RESET}"
+    echo -e "${GREEN}====== 节点切换与添加 ======${RESET}"
     echo -e "${YELLOW}当前已检测到以下节点：${RESET}"
     
     # 获取节点列表到数组
@@ -120,7 +120,7 @@ switch_instance() {
     
     echo -e " ${YELLOW}[n] 添加节点${RESET}"
     echo -e " ${RED}[0] 返回主菜单${RESET}"
-    echo -e "${GREEN}----------------------------------------${RESET}"
+    echo -e "${GREEN}---------------------------${RESET}"
     echo -ne "${YELLOW}请输入对应编号: ${RESET}"
     read -r inst_choice
 
