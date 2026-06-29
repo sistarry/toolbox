@@ -10,6 +10,7 @@ RESET="\033[0m"
 GITHUB_PROXY=(
     ''
     'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
     'https://gh-proxy.com/'
     'https://hub.glowp.xyz/'
     'https://proxy.vvvv.ee/'
@@ -59,14 +60,10 @@ fetch_and_run() {
 case "$OS" in
     alpine)
         # 执行 Alpine 适配版脚本
-        fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APMicaProxy.sh"
+        fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/APnext-socks5SS.sh"
         ;;
-    debian|ubuntu|centos|rocky|almalinux|fedora)
+    debian|ubuntu|centos|rocky|almalinux|fedora|*)
         # 执行原版脚本
-        fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicaProxy.sh"
-        ;;
-    *)  
-        # 未能识别或暂不支持您的系统
         fetch_and_run "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicaProxy.sh"
         ;;
 esac
