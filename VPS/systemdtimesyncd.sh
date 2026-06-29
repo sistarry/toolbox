@@ -10,9 +10,9 @@ RED="\033[31m"
 BLUE="\033[36m"
 RESET="\033[0m"
 
-echo -e "${GREEN}========================================${RESET}"
-echo -e "${GREEN}         ⏰ 智能时间同步配置            ${RESET}"
-echo -e "${GREEN}========================================${RESET}"
+echo -e "${GREEN}===================================${RESET}"
+echo -e "${GREEN}   ◈   ⏰  智能时间同步配置   ◈   ${RESET}"
+echo -e "${GREEN}===================================${RESET}"
 
 # 1. 权限检查
 if [ "$EUID" -ne 0 ]; then
@@ -69,7 +69,7 @@ if [ "$OS" == "Alpine" ]; then
     
     rc-service chronyd start
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${GREEN}🎉 ✔ 时间同步已成功启动！           ${RESET}"
+    echo -e "${YELLOW}🎉 ✔ 时间同步已成功启动！           ${RESET}"
     echo -e "${YELLOW}📅 ✔ 时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
@@ -99,7 +99,8 @@ else
     else
         echo -e "${RED}❌ 启动失败，请检查日志${RESET}"
     fi
-    echo -e "${BLUE}========== 当前状态 ==========${RESET}"
+
+    echo -e "${GREEN}===================================${RESET}"
     timedatectl status
-    echo -e "${BLUE}==============================${RESET}"
+    echo -e "${GREEN}===================================${RESET}"
 fi
