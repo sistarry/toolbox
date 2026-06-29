@@ -543,7 +543,7 @@ menu() {
     echo -e "${GREEN} 6. 重启容器${RESET}"
     echo -e "${GREEN} 7. 查看日志${RESET}"
     echo -e "${GREEN} 8. 查看配置${RESET}"
-    echo -e "${GREEN} 9. 反向代理${RESET}  ${YELLOW}← nginx${RESET}"
+    echo -e "${GREEN} 9. 反向代理${RESET}  ${YELLOW}← Nginx${RESET}"
     echo -e "${GREEN}10. 订阅页面${RESET}  ${YELLOW}← 订阅页面${RESET}"
     echo -e "${GREEN}11. 对接节点${RESET}  ${YELLOW}← 添加节点${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
