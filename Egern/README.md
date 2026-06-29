@@ -62,6 +62,11 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/JQDYS.j
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/weather.js
 ```
 
+### 和风天气
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/qweather.js
+```
+
 ### 测速
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/speedtescs.js
