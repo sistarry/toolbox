@@ -1561,15 +1561,15 @@ while true; do
     echo -e "${YELLOW}[01] 卸载 Xray${RESET}"
     echo -e "${YELLOW}[02] 卸载 Sing-box${RESET}"
     echo -e "${YELLOW}[03] 卸载 Mihomo${RESET}"
-    echo -e "${YELLOW}[04] 卸载 Nginx${RESET}"
-    echo -e "${YELLOW}[05] 卸载 Caddy${RESET}"
-    echo -e "${YELLOW}[06] 卸载 ACME${RESET}"
-    echo -e "${YELLOW}[07] 卸载 WARP${RESET}"
-    echo -e "${YELLOW}[08] 卸载 Realm${RESET}"
-    echo -e "${YELLOW}[09] 卸载 GOST${RESET}"
-    echo -e "${YELLOW}[10] 卸载 FRP${RESET}"
-    echo -e "${YELLOW}[11] 卸载 CFTunnel${RESET}"
-    echo -e "${YELLOW}[12] 卸载 EasyTier${RESET}"
+    echo -e "${YELLOW}[04] 卸载 Realm${RESET}"
+    echo -e "${YELLOW}[05] 卸载 GOST${RESET}"
+    echo -e "${YELLOW}[06] 卸载 EasyTier${RESET}"
+    echo -e "${YELLOW}[07] 卸载 FRP${RESET}"
+    echo -e "${YELLOW}[08] 卸载 Nginx${RESET}"
+    echo -e "${YELLOW}[09] 卸载 Caddy${RESET}"
+    echo -e "${YELLOW}[10] 卸载 ACME${RESET}"
+    echo -e "${YELLOW}[11] 卸载 CFWARP${RESET}"
+    echo -e "${YELLOW}[12] 卸载 CFTunnel${RESET}"
     echo -e "${GREEN}[0] 返回${RESET}"
     echo -e "${GREEN}[x] 退出${RESET}"
 
@@ -1579,15 +1579,15 @@ while true; do
         01) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallXray.sh")) ; pause_return ;;
         02) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallSingbox.sh")) ; pause_return ;;
         03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallMihomo.sh")) ; pause_return ;;
-        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallNginx.sh")) ; pause_return ;;
-        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCaddy.sh")) ; pause_return ;;
-        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallAcme.sh")) ; pause_return ;;
-        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFWARP.sh")) ; pause_return ;;
-        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallRealm.sh")) ; pause_return ;;
-        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallGost.sh")) ; pause_return ;;
-        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallFRP.sh")) ; pause_return ;;
-        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFArgo.sh")) ; pause_return ;;
-        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallEasyTier.sh")) ; pause_return ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallRealm.sh")) ; pause_return ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallGost.sh")) ; pause_return ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallEasyTier.sh")) ; pause_return ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallFRP.sh")) ; pause_return ;;
+        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallNginx.sh")) ; pause_return ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCaddy.sh")) ; pause_return ;;
+        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallAcme.sh")) ; pause_return ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFWARP.sh")) ; pause_return ;;
+        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFArgo.sh")) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
