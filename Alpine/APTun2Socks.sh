@@ -611,7 +611,7 @@ panel_menu() {
         get_status
         clear
         echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN}       Tun2Socks 管理面板       ${RESET}"
+        echo -e "${GREEN}      Tun2Socks 管理面板        ${RESET}"
         echo -e "${GREEN}================================${RESET}"
         echo -e "${GREEN}状态   :${RESET} $status_show"
         echo -e "${GREEN}版本   :${RESET} $version_show"
