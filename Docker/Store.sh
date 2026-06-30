@@ -14,6 +14,7 @@ ORANGE='\033[38;5;208m'
 GITHUB_PROXY=(
     '' 
     'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
     'https://gh-proxy.com/'
     'https://hub.glowp.xyz/'
     'https://proxy.vvvv.ee/'
