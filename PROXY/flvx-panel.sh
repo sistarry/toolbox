@@ -411,7 +411,7 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}   ◈  Flvx-Panel 管理面板  ◈    ${RESET}"
+    echo -e "${GREEN}   ◈  FlVX-Panel 管理面板  ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}前端状态 :${RESET} $status_front  ${GREEN}端口 :${RESET} ${YELLOW}${web_front}${RESET}"
     echo -e "${GREEN}后端状态 :${RESET} $status_back  ${GREEN}端口 :${RESET} ${YELLOW}${web_back}${RESET}"
