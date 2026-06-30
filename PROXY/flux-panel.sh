@@ -8,6 +8,7 @@ RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 CYAN="\033[36m"
+RESET="\0 atmosphere [0m"
 RESET="\033[0m"
 
 APP_NAME="flux-panel"
@@ -56,7 +57,6 @@ download_file() {
 
 # 动态获取容器状态、映射端口
 get_status_info() {
-    # 1. 检查容器状态
     if [ "$(docker ps -q -f name=^/vite-frontend$)" ]; then
         status_front="${GREEN}运行中${RESET}"
     else
@@ -75,7 +75,6 @@ get_status_info() {
         status_mysql="${YELLOW}未创建或外部数据库${RESET}"
     fi
 
-    # 2. 从环境变量或容器中提取端口
     if [ -f "$ENV_FILE" ]; then
         web_front=$(grep 'FRONTEND_PORT=' "$ENV_FILE" | cut -d= -f2)
         web_back=$(grep 'BACKEND_PORT=' "$ENV_FILE" | cut -d= -f2)
@@ -107,6 +106,18 @@ get_public_ip() {
     echo "127.0.0.1" && return 0
 }
 
+
+# 格式化 URL 中的 IP (如果是 IPv6 则加上方括号 [])
+format_ip_for_url() {
+    local ip="$1"
+    if [[ "$ip" == *":"* ]]; then
+        echo "[$ip]"
+    else
+        echo "$ip"
+    fi
+}
+
+
 # 检测本地 IPv6 支持
 check_ipv6_support() {
     ping6 -c 1 ::1 &>/dev/null && return 0 || return 1
@@ -118,7 +129,7 @@ install_app() {
     mkdir -p "$BASE_DIR"
 
     echo -e "${CYAN}====== 数据库模式配置 ======${RESET}"
-    echo -e "${GREEN}1) 使用本地 Docker 自动安装 MySQL${RESET}"
+    echo -e "${GREEN}1) 使用本地 Docker 自动安装 MySQL (数据挂载至本地目录)${RESET}"
     echo -e "${GREEN}2) 连接已有的远程外部 MySQL 数据库 (自动导入结构)${RESET}"
     echo -ne "${YELLOW}请选择数据库部署模式 [默认 1]: ${RESET}"
     read -r db_mode
@@ -199,6 +210,8 @@ services:
 EOF
 
     if [ "$db_mode" == "1" ]; then
+    # 创建本地数据挂载目录
+    mkdir -p "$BASE_DIR/mysql_data"
     cat <<EOF >> "$COMPOSE_FILE"
   mysql:
     image: mysql:5.7
@@ -211,7 +224,7 @@ EOF
       MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Shanghai
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
       - ./gost.sql:/docker-entrypoint-initdb.d/init.sql:ro
     command: >
       --default-authentication-plugin=mysql_native_password
@@ -270,9 +283,6 @@ $( [ "$db_mode" == "1" ] && echo "    depends_on:
       - gost-network
 
 volumes:
-$( [ "$db_mode" == "1" ] && echo "  mysql_data:
-    name: mysql_data
-    driver: local" )
   backend_logs:
     name: backend_logs
     driver: local
@@ -291,7 +301,8 @@ EOF
     echo -e "${YELLOW}正在通过 Docker Compose 启动面板...${RESET}"
     cd "$BASE_DIR" && $DOCKER_CMD up -d --force-recreate
 
-    DETECT_IP=$(get_public_ip)
+    RAW_IP=$(get_public_ip)
+    DETECT_IP=$(format_ip_for_url "$RAW_IP")
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}    哆啦A梦转发面板 部署成功！  ${RESET}"
     echo -e "${GREEN}================================${RESET}"
@@ -303,7 +314,7 @@ EOF
 
 update_app() { [[ -f "$COMPOSE_FILE" ]] && cd "$BASE_DIR" && $DOCKER_CMD pull && $DOCKER_CMD up -d && echo -e "${GREEN}更新完成！${RESET}" || echo -e "${RED}错误: 未部署！${RESET}"; }
 uninstall_app() {
-    echo -ne "${YELLOW}确定要卸载并删除容器吗？(y/n): ${RESET}"
+    echo -ne "${YELLOW}确定要卸载并删除吗？(y/n): ${RESET}"
     read -r confirm
     if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
         if [ -f "$COMPOSE_FILE" ]; then
@@ -353,7 +364,8 @@ manage_nodes() {
 
 show_info() {
     get_status_info
-    local DETECT_IP=$(get_public_ip)
+    RAW_IP=$(get_public_ip)
+    DETECT_IP=$(format_ip_for_url "$RAW_IP")
     echo -e "${GREEN}================================${RESET}"
     echo -e "${YELLOW}前端状态 : $status_front"
     echo -e "${YELLOW}后端状态 : $status_back"
