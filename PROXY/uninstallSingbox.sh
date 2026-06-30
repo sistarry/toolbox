@@ -147,5 +147,5 @@ fi
 # 完成
 # =============================
 echo -e "${GREEN}========================================${RESET}"
-echo -e "${GREEN}✅ Sing-box + S-UI 已彻底卸载完成${RESET}"
+echo -e "${GREEN}     Sing-box + S-UI 已彻底卸载完成      ${RESET}"
 echo -e "${GREEN}========================================${RESET}"
