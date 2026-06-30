@@ -2,13 +2,31 @@
 
 GREEN='\033[0;32m'
 LIGHT_GREEN='\033[1;32m'
+YELLOW="\033[33m"
+RED="\033[31m"
 NC='\033[0;0m' # 无颜色
 
 # 菜单主循环
 while true; do
     clear
+    # 检测安装状态
+    if [ -d "/opt/ip_sentinel_master" ]; then
+        MSTATUS="${YELLOW}[已安装]${NC}"
+    else
+        MSTATUS="${RED}[未安装]${NC}"
+    fi
+
+    # 检测安装状态
+    if [ -d "/opt/ip_sentinel" ]; then
+        STATUS="${YELLOW}[已安装]${NC}"
+    else
+        STATUS="${RED}[未安装]${NC}"
+    fi
     echo -e "${GREEN}=================================${NC}"
     echo -e "${GREEN}    ◈ IP-Sentinel 管理菜单 ◈     ${NC}"
+    echo -e "${GREEN}=================================${NC}"
+    echo -e "${GREEN} 主控状态: ${MSTATUS}"
+    echo -e "${GREEN} 被控状态: ${STATUS}"
     echo -e "${GREEN}=================================${NC}"
     echo -e "${GREEN} 1. 部署 Master(服务端)${NC}"
     echo -e "${GREEN} 2. 部署 Agent (客户端)${NC}"
