@@ -55,8 +55,16 @@ download_script() {
 # 菜单主循环
 while true; do
     clear
+    # 检测安装状态
+    if [ -d "/root/TrafficCop" ]; then
+        STATUS="${YELLOW}[已安装]${NC}"
+    else
+        STATUS="${RED}[未安装]${NC}"
+    fi
     echo -e "${GREEN}=================================${NC}"
     echo -e "${GREEN}    ◈  TrafficCop 管理菜单  ◈     ${NC}"
+    echo -e "${GREEN}=================================${NC}"
+    echo -e "${GREEN} 当前状态: ${STATUS}"
     echo -e "${GREEN}=================================${NC}"
     echo -e "${GREEN} 1. 安装 TrafficCop${NC}"
     echo -e "${GREEN} 2. 解除网速限制${NC}"
