@@ -95,10 +95,14 @@ uninstall_nodeget() {
 }
 
 # --- 执行流程 ---
-echo -e "${yellow}--- 自动化清理程序启动 ---${plain}"
+echo -e "${green}===================================${plain}"
+echo -e "${yellow}    ◈  自动化清理程序启动  ◈       ${plain}"
+echo -e "${green}===================================${plain}"
 
 uninstall_nezha
 uninstall_komari
 uninstall_nodeget
 
-echo -e "${yellow}--- 所有组件已检测清理完毕 ---${plain}"
+echo -e "${green}===================================${plain}"
+echo -e "${yellow}   🎉 ✔ 所有组件已检测清理完毕     ${plain}"
+echo -e "${green}===================================${plain}"
