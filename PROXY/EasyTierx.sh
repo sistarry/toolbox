@@ -230,10 +230,10 @@ create_shortcut() {
         if [ "$download_success" = true ]; then
             chmod +x "$LOCAL_SCRIPT"
             ln -sf "$LOCAL_SCRIPT" "${ALIAS_PATH}"
-            echo -e "${GREEN} ✔ 脚本已成功安装至: ${LOCAL_SCRIPT}${NC}"
+            echo -e "${GREEN} ✔ 已成功安装至: ${LOCAL_SCRIPT}${NC}"
             echo -e "${GREEN} ✔ 快捷命令 “et” 创建成功！以后直接输入 et 即可管理。${NC}"
         else
-            echo -e "${RED} ✘ 固化本地脚本失败，网络连接超时。${NC}"
+            echo -e "${RED} ✘ 安装失败，网络连接超时。${NC}"
         fi
         return 0
     fi
