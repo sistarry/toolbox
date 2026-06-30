@@ -138,8 +138,23 @@ manage_services() {
 # 主菜单循环
 while true; do
     clear
+    # 检测安装状态
+    if [ -d "/etc/zelay-manager" ]; then
+        MSTATUS="${YELLOW}[已安装]${NC}"
+    else
+        MSTATUS="${RED}[未安装]${NC}"
+    fi
+    # 检测安装状态
+    if [ -d "/etc/zelay" ]; then
+        STATUS="${YELLOW}[已安装]${NC}"
+    else
+        STATUS="${RED}[未安装]${NC}"
+    fi
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN}          ◈ Zelay 管理菜单 ◈          ${RESET}"
+    echo -e "${GREEN}=======================================${RESET}"
+    echo -e "${GREEN} 面板状态: ${MSTATUS}"
+    echo -e "${GREEN} 节点状态: ${MSTATUS}"
     echo -e "${GREEN}=======================================${RESET}"
     echo -e "${GREEN} 1. 安装 Zelay 面板${RESET}"
     echo -e "${GREEN} 2. 更新 Zelay 面板${RESET}"
