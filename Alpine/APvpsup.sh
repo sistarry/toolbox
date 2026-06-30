@@ -517,7 +517,7 @@ main() {
     
     if [ "$non_interactive" = false ]; then
 
-        echo -ne "${GREEN}是否立刻开始执行一键优化？ [y/n]: ${RESET}"
+        echo -ne "${RED}是否立刻开始执行一键优化？ [y/n]: ${RESET}"
         read -r CONFIRM
         if [ "$CONFIRM" = "n" ] || [ "$CONFIRM" = "N" ]; then
             exit 0
