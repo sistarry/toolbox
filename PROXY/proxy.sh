@@ -16,23 +16,72 @@ SCRIPT_PATH="/root/proxy.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/proxy.sh"
 BIN_LINK_DIR="/usr/local/bin"
 
+
+# =============================
+# GitHub 代理镜像组（轮询模式）
+# =============================
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
+
+# 初始化轮询索引计数器
+PROXY_INDEX=0
+
+
+# 轮询转换 GitHub 链接为镜像链接
+proxy_url() {
+    local raw_url="$1"
+    local total_proxies=${#GITHUB_PROXY[@]}
+    
+    # 获取当前索引对应的代理
+    local proxy="${GITHUB_PROXY[$PROXY_INDEX]}"
+    
+    # 轮询索引自增，超过最大值则归零
+    PROXY_INDEX=$(( (PROXY_INDEX + 1) % total_proxies ))
+    
+    if [[ -z "$proxy" ]]; then
+        # 干净利落地只返回原始 URL，绝不掺杂任何多余的 echo 换行
+        echo "$raw_url"
+    else
+        # 提示信息必须严格重定向到标准错误 >&2，确保不污染变量捕获
+        echo -e "${YELLOW}[轮询提示] 当前切换至代理: ${proxy}${RESET}" >&2
+        if [[ "$raw_url" == *"raw.githubusercontent.com"* || "$raw_url" == *"github.com"* ]]; then
+            echo "${proxy}${raw_url}"
+        else
+            echo "$raw_url"
+        fi
+    fi
+}
+
 if [[ $EUID -ne 0 ]]; then
     echo -e "${RED}请使用 root 权限运行！${RESET}"
     exit 1
 fi
 
+
 # =============================
 # 首次运行自动安装
 # =============================
 if [ ! -f "$SCRIPT_PATH" ]; then
-    curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
-    chmod +x "$SCRIPT_PATH"
-    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/f"
-    ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/F"
-    echo -e "${GREEN}✅ 安装完成${RESET}"
-    echo -e "${GREEN}✅ 快捷键：F 或 f 可快速启动${RESET}"
-fi
+    install_url=$(proxy_url "$SCRIPT_URL")
 
+    if curl -fsSL -o "$SCRIPT_PATH" "$install_url"; then
+        chmod +x "$SCRIPT_PATH"
+        ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/f"
+        ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/F"
+        echo -e "${GREEN}✅ 安装完成${RESET}"
+        echo -e "${GREEN}✅ 快捷键：F 或 f 可快速启动${RESET}"
+    else
+        echo -e "${RED}❌ 初始化失败，请检查网络或更换代理！${RESET}"
+        exit 1
+    fi
+fi
 # =============================
 # 自动补零
 # =============================
@@ -47,7 +96,7 @@ format_choice() {
 # 通用菜单读取（一级用）
 # =============================
 read_mainmenu() {
-    echo -ne "${RED}请选择: ${RESET}"
+    echo -ne "${RED}请输入分类编号 ${RESET}"
     read choice
 
     choice=$(echo "$choice" | xargs)
@@ -62,7 +111,7 @@ read_mainmenu() {
 # 通用二级菜单读取逻辑
 # =============================
 read_submenu() {
-    echo -ne "${RED}选择: ${RESET}"
+    echo -ne "${RED}请输入代理编号: ${RESET}"
     read sub
 
     sub=$(echo "$sub" | xargs)
@@ -77,28 +126,82 @@ read_submenu() {
 pause_return() {
     read -p "$(echo -e ${GREEN}按回车返回菜单...${RESET})"
 }
+
+
+
+# 核心状态检测函数（按关键字模糊匹配）
+get_status() {
+    local name=$1 # 传入 "sing-box" 或 "xray"
+    local keyword=""
+    
+    # 根据传入的目标，定义模糊匹配的关键字
+    if [ "$name" = "xray" ]; then
+        keyword="vless|xray"  # 只要包含 vless 或 xray 都算
+    else
+        keyword="singbox|sing-box" # 包含 singbox 或 sing-box 都算
+    fi
+    
+    # 1. 检查 Docker 容器状态 (容器名包含关键字)
+    if command -v docker >/dev/null 2>&1; then
+        if docker ps --format '{{.Names}}' | grep -Ei "(${keyword})" >/dev/null 2>&1; then
+            echo -e "${YELLOW}运行中(Docker)${RESET}"
+            return 0
+        fi
+    fi
+
+    # 2. 检查 Systemd 服务状态 (常规 Linux 服务名包含关键字)
+    if command -v systemctl >/dev/null 2>&1; then
+        if systemctl list-units --type=service --state=running 2>/dev/null | grep -Ei "(${keyword})" >/dev/null 2>&1; then
+            echo -e "${YELLOW}运行中(Service)${RESET}"
+            return 0
+        fi
+    fi
+
+    # 3. 检查 OpenRC 服务状态 (Alpine Linux 运行中的服务)
+    if command -v rc-status >/dev/null 2>&1; then
+        if rc-status -s 2>/dev/null | grep "started" | grep -Ei "(${keyword})" >/dev/null 2>&1; then
+            echo -e "${YELLOW}运行中(OpenRC)${RESET}"
+            return 0
+        fi
+    fi
+
+    # 4. 🚀 核心改动：纯进程检测 (只要进程命令行里包含关键字就算)
+    # 使用 ps -ef 抓取所有进程，-i 忽略大小写，-E 支持正则表达式
+    if ps -ef 2>/dev/null | grep -v grep | grep -Ei "(${keyword})" >/dev/null 2>&1; then
+        echo -e "${YELLOW}运行中(Process)${RESET}"
+        return 0
+    fi
+
+    # 所有检查都未通过
+    echo -e "${RED}未运行${RESET}"
+}
+
 # =============================
 # 一级菜单
 # =============================
 main_menu() {
     clear
+    # 动态获取核心状态
+    local singbox_status=$(get_status "sing-box")
+    local xray_status=$(get_status "xray")
     echo -e "${ORANGE}╔═════════════════════════╗${RESET}"
-    echo -e "${ORANGE}  代理工具箱(快捷指令:F/f)  ${RESET}"
+    echo -e "${ORANGE}  代理工具箱${RESET}${YELLOW}(快捷指令:F/f)  ${RESET}"
     echo -e "${ORANGE}╚═════════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] 单协议安装类${RESET}"
-    echo -e "${YELLOW}[02] 多协议安装类${RESET}"
+    echo -e "${GREEN}📦 sing-box :${RESET} ${singbox_status}"
+    echo -e "${GREEN}📦 Xray     :${RESET} ${xray_status}"
+    echo -e "${ORANGE}---------------------------${RESET}"
+    echo -e "${YELLOW}[01] 单协议安装${RESET}"
+    echo -e "${YELLOW}[02] 多协议安装${RESET}"
     echo -e "${YELLOW}[03] 面板管理类${RESET}"
     echo -e "${YELLOW}[04] 转发管理类${RESET}"
     echo -e "${YELLOW}[05] 组网管理类${RESET}"
     echo -e "${YELLOW}[06] 网络优化类${RESET}"
-    echo -e "${YELLOW}[07] DNS 解锁类${RESET}"
-    echo -e "${YELLOW}[08] Docker单协议类${RESET}"
-    echo -e "${YELLOW}[09] Docker多协议类${RESET}"
-    echo -e "${YELLOW}[10] 监控通知类${RESET}"
-    echo -e "${YELLOW}[11] 核心状态检测${RESET}"
-    echo -e "${YELLOW}[12] 核心卸载管理${RESET}"
-    echo -e "${GREEN}[88] 更新脚本${RESET}"
-    echo -e "${GREEN}[99] 卸载脚本${RESET}"
+    echo -e "${YELLOW}[07] 媒体解锁类${RESET}"
+    echo -e "${YELLOW}[08] 监控通知类${RESET}"
+    echo -e "${YELLOW}[09] 核心卸载${RESET}"
+    echo -e "${YELLOW}[10] 核心检测${RESET}"
+    echo -e "${GREEN}[88] 更新${RESET}"
+    echo -e "${GREEN}[99] 卸载${RESET}"
     echo -e "${YELLOW}[00] 退出${RESET}"
 
     read_mainmenu
@@ -111,11 +214,9 @@ main_menu() {
         05) zwpanel_menu ;;
         06) network_menu ;;
         07) dns_menu ;;
-        08) docker_menu ;;
-        09) dockers_menu ;;
-        10) monitor_menu ;;
-        11) check_panel ; pause_return ;;
-        12) uninstall_core_menu ;;
+        08) monitor_menu ;;
+        09) uninstall_core_menu ;;
+        10) check_panel ; pause_return ;;
         88) update_script ; pause_return ;;
         99) uninstall_script ;;
         00) exit 0 ;;
@@ -133,41 +234,57 @@ while true; do
     echo -e "${ORANGE}      单协议安装类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] Shadowsocks${RESET}"
-    echo -e "${YELLOW}[02] Reality${RESET}"
-    echo -e "${YELLOW}[03] Snell${RESET}"
-    echo -e "${YELLOW}[04] Anytls${RESET}"
-    echo -e "${YELLOW}[05] Hysteria2${RESET}"
-    echo -e "${YELLOW}[06] Tuicv5${RESET}"
-    echo -e "${YELLOW}[07] MTProto${RESET}"
-    echo -e "${YELLOW}[08] Socks5${RESET}"
-    echo -e "${YELLOW}[09] NaïveProxy${RESET}"
-    echo -e "${YELLOW}[10] Xray-Argo${RESET}"
-    echo -e "${YELLOW}[11] Vmess+ws${RESET}"
-    echo -e "${YELLOW}[12] Vless+httpupgrade${RESET}"
-    echo -e "${YELLOW}[13] VlessEncryption${RESET}"
-    echo -e "${YELLOW}[14] VlessRealityxhttp${RESET}"
-    echo -e "${YELLOW}[15] AnyReality${RESET}"
+    echo -e "${YELLOW}[02] SS+ShadowTLS${RESET}"
+    echo -e "${YELLOW}[03] Snellv5${RESET}"
+    echo -e "${YELLOW}[04] Snellv5+ShadowTLS${RESET}"
+    echo -e "${YELLOW}[05] Reality${RESET}"
+    echo -e "${YELLOW}[06] Hysteria2${RESET}"
+    echo -e "${YELLOW}[07] Anytls${RESET}"
+    echo -e "${YELLOW}[08] Anytls+Reality${RESET}"
+    echo -e "${YELLOW}[09] Tuicv5${RESET}"
+    echo -e "${YELLOW}[10] MTProto${RESET}"
+    echo -e "${YELLOW}[11] MTProto(Docker)${RESET}"
+    echo -e "${YELLOW}[12] Socks5${RESET}"
+    echo -e "${YELLOW}[13] HTTP${RESET}"
+    echo -e "${YELLOW}[14] NaïveProxy${RESET}"
+    echo -e "${YELLOW}[15] Xray-Argo${RESET}"
+    echo -e "${YELLOW}[15] Vmess-ws${RESET}"
+    echo -e "${YELLOW}[17] Vless-httpupgrade${RESET}"
+    echo -e "${YELLOW}[18] Vless-ws-tls${RESET}"
+    echo -e "${YELLOW}[19] Vless-Reality-xhttp${RESET}"
+    echo -e "${YELLOW}[20] Vless-Encryption${RESET}"
+    echo -e "${YELLOW}[21] Vless-Encryption-Reality${RESET}"
+    echo -e "${YELLOW}[22] Snellv6${RESET}"
+    echo -e "${YELLOW}[23] Snellv6+ShadowTLS${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
     read_submenu || return
 
     case "$sub" in
-        01) wget -O ss-rust.sh https://raw.githubusercontent.com/xOS/Shadowsocks-Rust/master/ss-rust.sh && bash ss-rust.sh ;;
-        02) wget -qO /tmp/vlessreality.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vlessreality.sh && bash /tmp/vlessreality.sh ;;
-        03) wget -O snell.sh --no-check-certificate https://git.io/Snell.sh && chmod +x snell.sh && ./snell.sh ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Anytls.sh) ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHysteria2.sh) ;;
-        06) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tuicv5.sh) ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLMTProto.sh) ;;
-        08) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Socks5.sh) ;;
-        09) bash <(curl -fsSL naiveproxy-sigma.vercel.app) ;;
-        10) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xray2gsocks5.sh) ;;
-        11) wget -qO /tmp/Vmessws.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vmessws.sh && bash /tmp/Vmessws.sh ;;
-        12) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Vlesshttpupgrade.sh) ;;
-        13) wget -qO /tmp/VLESSEncryption.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/VLESSEncryption.sh && bash /tmp/VLESSEncryption.sh ;;
-        14) wget -qO /tmp/vlessrealityxhttp.sh https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vlessrealityxhttp.sh && bash /tmp/vlessrealityxhttp.sh ;;
-        15) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/singboxanyreality.sh) ;;
+        01) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/SSRustos.sh")) ;;
+        02) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/SSShadowTLSos.sh")) ;;
+        03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Snellos.sh")) ;;
+        04) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/SnellShadowTLSos.sh")) ;;
+        05) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessRealityos.sh")) ;;
+        06) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Hy2os.sh")) ;;
+        07) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/AnyTLSos.sh")) ;;
+        08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/AnyRealityos.sh")) ;;
+        09) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Tuicv5os.sh")) ;;
+        10) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/MTProtoos.sh")) ;;
+        11) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MTProtoDD.sh")) ;;
+        12) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/nextsocks5os.sh")) ;;
+        13) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/HTTPos.sh")) ;;
+        14) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/NaiveProxyos.sh")) ;;
+        15) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/2go.sh")) ;;
+        16) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Vmesswsos.sh")) ;;
+        17) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Vlesshttpupgradeos.sh")) ;;
+        18) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Vlesswstlsos.sh")) ;;
+        19) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessRealityxhttpos.sh")) ;;
+        20) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessEncryptionos.sh")) ;;
+        21) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessEncryptionRealityos.sh")) ;;
+        22) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Snellv6os.sh")) ;;
+        23) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Snellv6ShadowTLSos.sh")) ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
@@ -182,30 +299,22 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      多协议安装类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] 老王Sing-box${RESET}"
-    echo -e "${YELLOW}[02] mack-a八合一${RESET}"
-    echo -e "${YELLOW}[03] 甬哥-Sing-box${RESET}"
-    echo -e "${YELLOW}[04] F佬-Sing-box${RESET}"
-    echo -e "${YELLOW}[05] 233boy-Sing-box${RESET}"
-    echo -e "${YELLOW}[06] SS+SNELL+Reality${RESET}"
-    echo -e "${YELLOW}[07] Sing-box多用户与管理${RESET}"
-    echo -e "${YELLOW}[08] SS-Xray-2go${RESET}"
-    echo -e "${YELLOW}[09] vless-all-in-one${RESET}"
+    echo -e "${YELLOW}[01] Sing-box         fscarmen${RESET}"
+    echo -e "${YELLOW}[02] Sing-box         233boy${RESET}"
+    echo -e "${YELLOW}[03] Xray-2go         SS${RESET}"
+    echo -e "${YELLOW}[04] Sing-box         多用户管理${RESET}"
+    echo -e "${YELLOW}[05] vless-all-in-one 多协议代理${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -Ls https://raw.githubusercontent.com/eooce/sing-box/main/sing-box.sh) ;;
-        02) wget -O install.sh https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh && bash install.sh ;;
-        03) bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/sing-box-yg/main/sb.sh) ;;
-        04) bash <(wget -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) ;;
-        05) bash <(wget -qO- -o- https://github.com/233boy/sing-box/raw/main/install.sh) ;;
-        06) bash <(curl -L -s menu.jinqians.com) ;;
-        07) wget -O sb.sh https://raw.githubusercontent.com/Tangfffyx/sing-box/main/sb.sh && bash sb.sh ;;
-        08) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ;;
-        09) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ;;
+        01) bash <(wget -qO- $(proxy_url "https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh")) ;;
+        02) bash <(wget -qO- -o- $(proxy_url "https://github.com/233boy/sing-box/raw/main/install.sh")) ; pause_return ;;
+        03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh")) ;;
+        04) wget -O sb.sh $(proxy_url "https://raw.githubusercontent.com/Tangfffyx/sing-box/main/sb.sh") && bash sb.sh ;;
+        05) wget -O vless-server.sh $(proxy_url "https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh") && chmod +x vless-server.sh && ./vless-server.sh ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
@@ -220,54 +329,32 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      面板管理类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] S-UI${RESET}"
-    echo -e "${YELLOW}[02] H-UI${RESET}"
-    echo -e "${YELLOW}[03] X-UI${RESET}"
-    echo -e "${YELLOW}[04] 甬哥-X-UI${RESET}"
-    echo -e "${YELLOW}[05] 3X-UI${RESET}"
-    echo -e "${YELLOW}[06] 中文版-3X-UI${RESET}"
-    echo -e "${YELLOW}[07] Alpine-3X-UI${RESET}"
-    echo -e "${YELLOW}[08] Docker-3X-UI${RESET}"
-    echo -e "${YELLOW}[09] Xboard${RESET}"
-    echo -e "${YELLOW}[10] Xboard-Node${RESET}"
-    echo -e "${YELLOW}[11] heki 节点${RESET}"
-    echo -e "${YELLOW}[12] DockerHeki${RESET}"
-    echo -e "${YELLOW}[13] PPanel${RESET}"
-    echo -e "${YELLOW}[14] PPanel(MSQL)${RESET}"
-    echo -e "${YELLOW}[15] ppnode 节点${RESET}"
-    echo -e "${YELLOW}[16] Mihomo代理${RESET}"
-    echo -e "${YELLOW}[17] Clash代理${RESET}"
-    echo -e "${YELLOW}[18] FreeGFW代理${RESET}"
-    echo -e "${YELLOW}[19] 妙妙屋X${RESET}"
-    echo -e "${YELLOW}[20] Remnawave${RESET}"
-    echo -e "${YELLOW}[21] XrayR${RESET}"
+    echo -e "${YELLOW}[01] 3X-UI      Xray面板${RESET}"
+    echo -e "${YELLOW}[02] S-UI       Singbox面板${RESET}"
+    echo -e "${YELLOW}[03] Xboard     机场面板${RESET}"
+    echo -e "${YELLOW}[04] PPanel     机场面板${RESET}"
+    echo -e "${YELLOW}[05] Remnawave  节点管理${RESET}"
+    echo -e "${YELLOW}[06] 妙妙屋X    节点管理${RESET}"
+    echo -e "${YELLOW}[07] XrayR      机场后端 ${RESET}"
+    echo -e "${YELLOW}[08] Conflux    Mihomo代理${RESET}"
+    echo -e "${YELLOW}[09] AimiliVPN  干净IP出口${RESET}"
+    echo -e "${YELLOW}[10] MiGate     代理面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -Ls https://raw.githubusercontent.com/admin8800/s-ui/main/install.sh) ; pause_return ;;
-        02) bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) ; pause_return ;;
-        03) bash <(curl -Ls https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh) ; pause_return ;;
-        04) bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh) ; pause_return ;;
-        05) bash <(curl -fsSL https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) ; pause_return ;;
-        06) bash <(curl -fsSL https://raw.githubusercontent.com/xeefei/3x-ui/master/install.sh) ; pause_return ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh) ; pause_return ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/3X-UID.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xboard.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xboard-Node.sh) ; pause_return ;;
-        11) bash <(curl -Ls https://raw.githubusercontent.com/hekicore/heki/master/install.sh) ; pause_return ;;
-        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GLHeki.sh) ; pause_return ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanelYC.sh) ; pause_return ;;
-        14) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanel.sh) ; pause_return ;;
-        15) bash <(wget -qO- https://raw.githubusercontent.com/perfect-panel/ppanel-node/master/scripts/install.sh) ; pause_return ;;
-        16) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh) ; pause_return ;;
-        17) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ClashDocker.sh) ; pause_return ;;
-        18) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/FreeGFW.sh) ; pause_return ;;
-        19) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiaomiaowuX.sh) ; pause_return ;;
-        20) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RemnawaveGL.sh) ; pause_return ;;
-        21) bash <(curl -Ls https://raw.githubusercontent.com/JackHONGhy/xrayr-automated-install-script/master/install.sh) ; pause_return ;;
+        01) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/3xuios.sh")) ; pause_return ;;
+        02) bash <(curl -Ls https://s-ui.alireza0.dev/install.sh) ; pause_return ;;
+        03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Xboard.sh")) ;;
+        04) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/PPanel.sh")) ;;
+        05) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Remnawave.sh")) ;;
+        06) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiaoMiaoWuX.sh")) ;;
+        07) bash <(curl -Ls https://raw.githubusercontent.com/JackHONGhy/xrayr-automated-install-script/master/install.sh) ; pause_return ;;
+        08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh")) ;;
+        09) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh")) ; pause_return ;;
+        10) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiGate.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -283,38 +370,32 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      转发管理类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] 极光面板${RESET}"
-    echo -e "${YELLOW}[02] 哆啦A梦转发面板${RESET}"
-    echo -e "${YELLOW}[03] EZGost安装${RESET}"
-    echo -e "${YELLOW}[04] GOSTPanel${RESET}"
-    echo -e "${YELLOW}[05] EZRealm安装${RESET}"
-    echo -e "${YELLOW}[06] Realm-xwPF${RESET}"
-    echo -e "${YELLOW}[07] ZelayRealm转发面板${RESET}"
-    echo -e "${YELLOW}[08] Realm转发(Web面板)${RESET}"
-    echo -e "${YELLOW}[09] NodePass${RESET}"
-    echo -e "${YELLOW}[10] nftables端口转发${RESET}"
-    echo -e "${YELLOW}[11] 哆啦A梦面板重制版${RESET}"
-    echo -e "${YELLOW}[12] ForwardX端口转发管理面板${RESET}"
-    echo -e "${YELLOW}[13] iptables转发ddns域名${RESET}"
+    echo -e "${YELLOW}[01] EZGost      Gost转发${RESET}"
+    echo -e "${YELLOW}[02] Realm-xwPF  Realm转发${RESET}"
+    echo -e "${YELLOW}[03] hia-realm   Realm转发${RESET}"
+    echo -e "${YELLOW}[04] Zelay       Realm转发面板${RESET}"
+    echo -e "${YELLOW}[05] RelayPanel  端口转发面板${RESET}"
+    echo -e "${YELLOW}[06] ForwardX    端口转发面板${RESET}"
+    echo -e "${YELLOW}[07] nft-forward 端口转发面板${RESET}"
+    echo -e "${YELLOW}[08] 哆啦A梦     Gost转发面板${RESET}"
+    echo -e "${YELLOW}[09] FLVX        Gost转发面板${RESET}"
+    echo -e "${YELLOW}[10] NodePass    隧道转发面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -fsSL https://raw.githubusercontent.com/Aurora-Admin-Panel/deploy/main/install.sh) ; pause_return ;;
-        02) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dlam.sh) ; pause_return ;;
-        03) wget --no-check-certificate -O gost.sh https://raw.githubusercontent.com/qqrrooty/EZgost/main/gost.sh && chmod +x gost.sh && ./gost.sh ; pause_return ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/GOSTPanel.sh) ; pause_return ;;
-        05) wget -N https://raw.githubusercontent.com/qqrrooty/EZrealm/main/realm.sh && chmod +x realm.sh && ./realm.sh ; pause_return ;;
-        06) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ; pause_return ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ZelayRealm.sh) ; pause_return ;;
-        08) bash <(curl -fsSL https://raw.githubusercontent.com/hiapb/hia-realm/main/install.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/NodePass.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nftables.sh) ; pause_return ;;
-        11) curl -fsSL https://raw.githubusercontent.com/0xNetuser/flux-panel/main/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh ;;
-        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ForwardX.sh) ; pause_return ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/iptablesUtils.sh) ; pause_return ;;
+        01) wget --no-check-certificate -O gost.sh $(proxy_url "https://raw.githubusercontent.com/qqrrooty/EZgost/main/gost.sh") && chmod +x gost.sh && ./gost.sh ; pause_return ;;
+        02) wget -qO- $(proxy_url "https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh") | sudo bash -s install ; pause_return ;;
+        03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/hiapb/hia-realm/main/install.sh")) ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Zelay.sh")) ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/RelayPanel.sh")) ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ForwardX.sh")) ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/xjetry/nft-forward/main/install.sh")) ; pause_return ;;
+        08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/flux-panel.sh")) ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/flvx-panel.sh")) ;;
+        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/NodePassDash.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -330,12 +411,10 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      组网管理类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] WireGuard${RESET}"
-    echo -e "${YELLOW}[02] WG-Easy${RESET}"
-    echo -e "${YELLOW}[03] Easytier组网${RESET}"
-    echo -e "${YELLOW}[04] FRP-Panel(Web面板)${RESET}"
-    echo -e "${YELLOW}[05] FRP工具(FRP服务端/客户端)${RESET}"
-    echo -e "${YELLOW}[06] 安装FRP管理${RESET}"
+    echo -e "${YELLOW}[01] WireGuard  WireGuard组网${RESET}"
+    echo -e "${YELLOW}[02] WG-Easy    WireGuard面板${RESET}"
+    echo -e "${YELLOW}[03] Easytier   Easytier组网${RESET}"
+    echo -e "${YELLOW}[04] FRP-Panel  FRP面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -343,12 +422,10 @@ while true; do
   
 
     case "$sub" in
-        01) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/wireguard.sh) ; pause_return ;;
-        02) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WGEasy.sh) ; pause_return ;;
-        03) bash <(curl -sL https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ; pause_return ;;
-        04) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frppanel.sh) ; pause_return ;;
-        05) bash <(curl -fsSL https://raw.githubusercontent.com/nuro-hia/nuro-frp/main/install.sh) ; pause_return ;;
-        06) wget -O frp.sh https://raw.githubusercontent.com/ceocok/c.cococ/main/frp.sh && chmod +x frp.sh && ./frp.sh ; pause_return ;;
+        01) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WireGuard.sh")) ;;
+        02) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/wg-easy.sh")) ;;
+        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/EasyTierD.sh")) ;;
+        04) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frp-Panel.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -363,34 +440,34 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      网络优化类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] WARP管理${RESET}"
-    echo -e "${YELLOW}[02] TCP窗口调优${RESET}"
-    echo -e "${YELLOW}[03] BBR管理${RESET}"
-    echo -e "${YELLOW}[04] BBRv3优化${RESET}"
-    echo -e "${YELLOW}[05] BBR+TCP智能调参${RESET}"
-    echo -e "${YELLOW}[06] MicroWARP${RESET}"
-    echo -e "${YELLOW}[07] IP屏蔽助手${RESET}"
-    echo -e "${YELLOW}[08] 专线优化${RESET}"
-    echo -e "${YELLOW}[09] 甬哥-WARP${RESET}"
-    echo -e "${YELLOW}[10] tun2socks${RESET}"
-    echo -e "${YELLOW}[11] WARP面板${RESET}"
+    echo -e "${YELLOW}[01] tcpx         BBR管理${RESET}"
+    echo -e "${YELLOW}[02] BBRv3        Eric86777${RESET}"
+    echo -e "${YELLOW}[03] nekoneko     TCP窗口调优${RESET}"
+    echo -e "${YELLOW}[04] CFWARP       fscarmen${RESET}"
+    echo -e "${YELLOW}[05] MicroWARP    DockerCFWARP${RESET}"
+    echo -e "${YELLOW}[06] warp-rust    CFWARP${RESET}"
+    echo -e "${YELLOW}[07] he-tunnel    HE隧道${RESET}"
+    echo -e "${YELLOW}[08] Tun2Socksos  全局出口${RESET}"
+    echo -e "${YELLOW}[09] Redsocks     透明代理${RESET}"
+    echo -e "${YELLOW}[10] IP屏蔽       屏蔽国内IP${RESET}"
+    echo -e "${YELLOW}[11] Realmtimeout Realm优化${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
     read_submenu || return
 
     case "$sub" in
-        01) wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh ; pause_return ;;
-        02) wget http://sh.nekoneko.cloud/tools.sh -O tools.sh && bash tools.sh ; pause_return ;;
-        03) wget --no-check-certificate -O tcpx.sh https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh && chmod +x tcpx.sh && ./tcpx.sh ; pause_return ;;
-        04) bash <(curl -fsSL "https://raw.githubusercontent.com/Eric86777/vps-tcp-tune/main/install-alias.sh?$(date +%s)") ; pause_return ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/BBRTCP.sh) ; pause_return ;;
-        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicroWarp.sh) ; pause_return ;;
-        07) curl -fsSL https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbry.sh) ; pause_return ;;
-        09) bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/warp-yg/main/CFwarp.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/tun2socks.sh) ; pause_return ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WARPpanel.sh) ; pause_return ;;
+        01) wget --no-check-certificate -O tcpx.sh $(proxy_url "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh") && chmod +x tcpx.sh && ./tcpx.sh ; pause_return ;;
+        02) bash <(curl -fsSL "$(proxy_url "https://raw.githubusercontent.com/Eric86777/vps-tcp-tune/main/install-alias.sh?")$(date +%s)") ; pause_return ;;
+        03) wget http://sh.nekoneko.cloud/tools.sh -O tools.sh && bash tools.sh ; pause_return ;;
+        04) wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MicroWARP.sh")) ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/WARP-Rustos.sh")) ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/HES.sh")) ;;
+        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Tun2Socksos.sh")) ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Redsocksos.sh")) ;;
+        10) curl -fsSL $(proxy_url "https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh") -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Realmtimeout.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -404,16 +481,11 @@ dns_menu() {
 while true; do
     clear
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
-    echo -e "${ORANGE}      DNS 解锁类        ${RESET}"
+    echo -e "${ORANGE}      流媒体解锁类      ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] DDNS动态域名${RESET}"
-    echo -e "${YELLOW}[02] 自建DNS解锁${RESET}"
-    echo -e "${YELLOW}[03] DnsmasqSNIproxy-One-click${RESET}"
-    echo -e "${YELLOW}[04] 自定义DNS解锁${RESET}"
-    echo -e "${YELLOW}[05] 谷歌分流Warp${RESET}"
-    echo -e "${YELLOW}[06] 谷歌定位解锁${RESET}"
-    echo -e "${YELLOW}[07] DNS分流规则管理面板${RESET}"
-    echo -e "${YELLOW}[08] Akile优选DNS${RESET}"
+    echo -e "${YELLOW}[01] WARP  谷歌定位解锁${RESET}"
+    echo -e "${YELLOW}[02] DNS   分流管理面板${RESET}"
+    echo -e "${YELLOW}[03] AKDNS 流媒体解锁${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -421,14 +493,9 @@ while true; do
    
 
     case "$sub" in
-        01) bash <(wget -qO- https://raw.githubusercontent.com/mocchen/cssmeihua/mochen/shell/ddns.sh) ; pause_return ;;
-        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DNSjiesuo.sh) ; pause_return ;;
-        03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Dnsmasqsniproxy.sh) ; pause_return ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unlockdns.sh) ; pause_return ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/vpsjk/warp-google/main/warp-google.sh) ; pause_return ;;
-        06) bash <(curl -fsSL https://vpszdm.com/warp-google.sh) ; pause_return ;;
-        07) wget -O install.sh https://raw.githubusercontent.com/mslxi/Liquid-Glass-Prism-dns/main/install.sh && sudo bash install.sh ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/AkileDNS.sh) ;;
+        01) bash <(curl -fsSL https://vpszdm.com/warp-google.sh) ;;
+        02) wget -O install.sh $(proxy_url "https://raw.githubusercontent.com/mslxi/Liquid-Glass-Prism-dns/main/install.sh") && sudo bash install.sh ; pause_return ;;
+        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/akile-network/aktools/main/akdns.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -465,21 +532,21 @@ while true; do
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust2022D.sh) ; pause_return ;;
-        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust-tlsD.sh) ; pause_return ;;
-        03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityD.sh) ; pause_return ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snell-serverD.sh) ; pause_return ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snelltls-serverD.sh) ; pause_return ;;
-        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswstlsD.sh) ; pause_return ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/AnyTLSD.sh) ; pause_return ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/hysteria2D.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-TUICv5D.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/MTProtoD.sh) ; pause_return ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-Socks5D.sh) ; pause_return ;;
-        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswsD.sh) ; pause_return ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityxhttpD.sh) ; pause_return ;;
-        14) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-AnyRealityD.sh) ; pause_return ;;
-        15) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VlesshttpD.sh) ; pause_return ;;
+        01) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust2022D.sh")) ; pause_return ;;
+        02) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust-tlsD.sh")) ; pause_return ;;
+        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityD.sh")) ; pause_return ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snell-serverD.sh")) ; pause_return ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snelltls-serverD.sh")) ; pause_return ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswstlsD.sh")) ; pause_return ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/AnyTLSD.sh")) ; pause_return ;;
+        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/hysteria2D.sh")) ; pause_return ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-TUICv5D.sh")) ; pause_return ;;
+        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/MTProtoD.sh")) ; pause_return ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-Socks5D.sh")) ; pause_return ;;
+        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswsD.sh")) ; pause_return ;;
+        13) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityxhttpD.sh")) ; pause_return ;;
+        14) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-AnyRealityD.sh")) ; pause_return ;;
+        15) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VlesshttpD.sh")) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -516,21 +583,21 @@ while true; do
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust2022GLD.sh) ; pause_return ;;
-        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust-tlsGLD.sh) ; pause_return ;;
-        03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityGLD.sh) ; pause_return ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snell-serverGLD.sh) ; pause_return ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snelltls-serverGLD.sh) ; pause_return ;;
-        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswstlsGLD.sh) ; pause_return ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/AnyTLSGLD.sh) ; pause_return ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/hysteria2GLD.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-TUICv5GLD.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/MTProtoGLD.sh) ; pause_return ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-Socks5GLD.sh) ; pause_return ;;
-        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswsGLD.sh) ; pause_return ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityxhttpGLD.sh) ; pause_return ;;
-        14) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-AnyRealityGLD.sh) ; pause_return ;;
-        15) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VlesshttpGLD.sh) ; pause_return ;;
+        01) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust2022GLD.sh")) ; pause_return ;;
+        02) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/SSRust-tlsGLD.sh")) ; pause_return ;;
+        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityGLD.sh")) ; pause_return ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snell-serverGLD.sh")) ; pause_return ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/snelltls-serverGLD.sh")) ; pause_return ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswstlsGLD.sh")) ; pause_return ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/AnyTLSGLD.sh")) ; pause_return ;;
+        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/hysteria2GLD.sh")) ; pause_return ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-TUICv5GLD.sh")) ; pause_return ;;
+        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/MTProtoGLD.sh")) ; pause_return ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-Socks5GLD.sh")) ; pause_return ;;
+        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VmesswsGLD.sh")) ; pause_return ;;
+        13) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-RealityxhttpGLD.sh")) ; pause_return ;;
+        14) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Singbox-AnyRealityGLD.sh")) ; pause_return ;;
+        15) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/Dockerproxy/Xray-VlesshttpGLD.sh")) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -547,17 +614,12 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      监控通知类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] IP-Sentinel${RESET}"
-    echo -e "${YELLOW}[02] TrafficCop流量监控${RESET}"
-    echo -e "${YELLOW}[03] VPS遥控器${RESET}"
-    echo -e "${YELLOW}[04] vnstat${RESET}"
-    echo -e "${YELLOW}[05] 流量狗${RESET}"
-    echo -e "${YELLOW}[06] 阿里云CDT流量监控${RESET}"
-    echo -e "${YELLOW}[07] 3XUI面板流量监控${RESET}"
-    echo -e "${YELLOW}[08] VPS端口流量监控${RESET}"
-    echo -e "${YELLOW}[09] 流量日报管理工具${RESET}"
-    echo -e "${YELLOW}[10] S-UI流量管理工具${RESET}"
-    echo -e "${YELLOW}[11] 阿里CDT抢占型实例${RESET}"
+    echo -e "${YELLOW}[01] IP-Sentinel  送中拉回${RESET}"
+    echo -e "${YELLOW}[02] TrafficCop   流量监控${RESET}"
+    echo -e "${YELLOW}[03] Traffic-dog  端口流量狗${RESET}"
+    echo -e "${YELLOW}[04] S-UITraffic  S-UI流量管理${RESET}"
+    echo -e "${YELLOW}[05] VnstatTG     流量日报${RESET}"
+    echo -e "${YELLOW}[06] DDDNS        动态DNS管理工具${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -565,17 +627,12 @@ while true; do
    
 
     case "$sub" in
-        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/IPSentinel.sh) ;;
-        02) bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/toy/traffic.sh) ;;
-        03) curl -fsSL https://raw.githubusercontent.com/MEILOI/VPS_BOT_X/main/vps_bot-x/install.sh -o install.sh && chmod +x install.sh && bash install.sh ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/vnStat.sh) ;;
-        05) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
-        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ECSController.sh) ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xtrafficdash.sh) ;;
-        08) bash <(curl -fsSL https://raw.githubusercontent.com/156933/PortTrafficStatistics/main/install.sh) ;;
-        09) bash -c "$(curl -L https://raw.githubusercontent.com/SumMoonYou/vps_traffic/refs/heads/main/vps_vnstat_telegram.sh)" @ install ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/SUITraffic.sh) ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/AliCDTManager.sh) ;;
+        01) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/IP-Sentinel.sh")) ;;
+        02) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/TrafficCop.sh")) ;;
+        03) wget -O port-traffic-dog.sh $(proxy_url "https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh") && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/S-UITrafficReset.sh")) ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/vnstattgos.sh")) ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/CFDDNSManager.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -666,9 +723,9 @@ check_panel() {
     fi
     echo ""
     # =============================
-    # Mihomo (Clash Meta)
+    # Mihomo 
     # =============================
-    echo -e "${YELLOW}▶ Mihomo/Clash${RESET}"
+    echo -e "${YELLOW}▶ Mihomo${RESET}"
     
     mihomo_found=0
     mi_ports=""
@@ -734,6 +791,79 @@ check_panel() {
         echo -e "状态: ${RED}未安装${RESET}"
     fi
     echo ""
+
+
+
+    # =============================
+    # 防火墙底层规则架构检测 (兼容 Alpine / 常用系统)
+    # =============================
+    echo -e "${YELLOW}▶ 防火墙状态与规则${RESET}"
+
+    fw_engine="${RED}未知 / 未启用${RESET}"
+    nft_rules_count=0
+    ipt_rules_count=0
+
+    # 1. 检测 nftables 规则数量
+    if command -v nft >/dev/null 2>&1; then
+        # 兼容 BusyBox grep，排除空行和注释
+        nft_rules_count=$(nft list ruleset 2>/dev/null | grep -v '^$' | grep -v '^[[:space:]]*#' | wc -l)
+    fi
+
+    # 2. 检测 iptables 规则数量 (同时计算 filter, nat, mangle 表)
+    if command -v iptables >/dev/null 2>&1; then
+        ipt_rules_count=$( (iptables -S 2>/dev/null; iptables -t nat -S 2>/dev/null; iptables -t mangle -S 2>/dev/null) | grep -v '^-P' | wc -l)
+    fi
+
+    # 3. 判定当前系统服务状态 (兼容 Systemd 和 OpenRC)
+    is_nft_service_active=0
+    if command -v systemctl >/dev/null 2>&1; then
+        # Systemd 环境
+        systemctl is-active nftables >/dev/null 2>&1 && is_nft_service_active=1
+    elif command -v rc-service >/dev/null 2>&1; then
+        # Alpine OpenRC 环境
+        rc-service nftables status 2>/dev/null | grep -q "started" && is_nft_service_active=1
+    fi
+
+    # 4. 判定主要依靠哪种规则引擎
+    if [[ $is_nft_service_active -eq 1 ]] || [[ $nft_rules_count -gt $ipt_rules_count && $nft_rules_count -gt 0 ]]; then
+        fw_engine="${GREEN}nftables${RESET}"
+    elif [[ $ipt_rules_count -gt 0 ]]; then
+        # 检测是否是基于 nftables 后端的 iptables (iptables-nft)
+        if iptables -V 2>/dev/null | grep -q "nf_tables"; then
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(兼容模式/iptables-nft)${RESET}"
+        else
+            fw_engine="${GREEN}iptables${RESET} ${YELLOW}(经典模式/legacy)${RESET}"
+        fi
+    fi
+
+    # 5. 打印引擎及规则结果
+    echo -e "当前活动防火墙: $fw_engine"
+    echo -e "nftables 规则条数: ${YELLOW}${nft_rules_count}${RESET}"
+    echo -e "iptables 规则条数: ${YELLOW}${ipt_rules_count}${RESET}"
+    
+    # 6. 常见高级防火墙前端管理工具检测 (兼容 Systemd / OpenRC / 基础命令)
+    front_ends=""
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl is-active ufw >/dev/null 2>&1 && front_ends+="UFW "
+        systemctl is-active firewalld >/dev/null 2>&1 && front_ends+="Firewalld "
+    elif command -v rc-service >/dev/null 2>&1; then
+        rc-service ufw status 2>/dev/null | grep -q "started" && front_ends+="UFW "
+        rc-service firewalld status 2>/dev/null | grep -q "started" && front_ends+="Firewalld "
+    fi
+    
+    # Alpine 上经常直接用 awall (Alpine Wall) 作为前端
+    if command -v awall >/dev/null 2>&1; then
+        front_ends+="awall(AlpineWall) "
+    fi
+    
+    if [[ -n "$front_ends" ]]; then
+        echo -e "系统管理前端: ${YELLOW}${front_ends% }${RESET} (正在运行)"
+    else
+        echo -e "系统管理前端: ${YELLOW}无 (原生命令或底层规则管理)${RESET}"
+    fi
+    echo ""
+
+
     # =============================
     # Realm
     # =============================
@@ -870,6 +1000,82 @@ check_panel() {
             for name in $gost_containers; do
                 raw_s=$(docker inspect -f '{{.State.Status}}' "$name")
                 # 统一显示为 active 或实际状态
+                [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
+                echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
+            done
+        fi
+
+    else
+        echo -e "状态: ${RED}未安装${RESET}"
+    fi
+    echo ""
+
+
+    # =============================
+    # EasyTier (兼容 Alpine / 常用系统)
+    # =============================
+    echo -e "${YELLOW}▶ EasyTier${RESET}"
+    
+    # 查找 Docker 容器名包含 easytier 的容器 (不区分大小写)
+    easytier_containers=""
+    if command -v docker >/dev/null 2>&1; then
+        easytier_containers=$(docker ps -a --format "{{.Names}}" | grep -i "easytier")
+    fi
+
+    # 1. 检测是否存在（原生命令、进程、容器、或服务文件）
+    has_easytier=0
+    if command -v easytier-core >/dev/null 2>&1 || command -v easytier-cli >/dev/null 2>&1 || pgrep -x easytier-core >/dev/null 2>&1 || [[ -n "$easytier_containers" ]]; then
+        has_easytier=1
+    fi
+
+    if [[ $has_easytier -eq 1 ]]; then
+        # 判定状态：检测 Systemd 或 OpenRC
+        status="stopped"
+        
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl is-active easytier >/dev/null 2>&1 && status="active"
+            systemctl is-active easytier-core >/dev/null 2>&1 && status="active"
+        elif command -v rc-service >/dev/null 2>&1; then
+            rc-service easytier status 2>/dev/null | grep -q "started" && status="active"
+            rc-service easytier-core 2>/dev/null | grep -q "started" && status="active"
+        fi
+
+        # 如果服务没开，但进程在运行，依然算 active
+        if [[ "$status" != "active" ]]; then
+            if pgrep -x easytier-core >/dev/null 2>&1; then
+                status="active"
+            elif [[ -n "$easytier_containers" ]]; then
+                for name in $easytier_containers; do
+                    if [[ $(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null) == "running" ]]; then
+                        status="active"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "状态: $(format_status "$status")"
+
+        # 版本获取逻辑 (统一使用标准重定向)
+        ver=""
+        if command -v easytier-core >/dev/null 2>&1; then
+            ver=$(easytier-core --version 2>/dev/null | awk '{print $2}')
+        elif command -v easytier-cli >/dev/null 2>&1; then
+            ver=$(easytier-cli --version 2>/dev/null | awk '{print $2}')
+        elif [[ -n "$easytier_containers" ]]; then
+            first_c=$(echo "$easytier_containers" | head -n1)
+            ver=$(docker exec "$first_c" easytier-core --version 2>/dev/null | awk '{print $2}')
+        fi
+        echo -e "版本: ${ver:-运行中(未知版本)}"
+
+        # 端口获取
+        ports=$(get_ports easytier-core 2>/dev/null)
+        [[ -n "$ports" ]] && echo -e "端口: $(echo $ports | tr ' ' ', ')" || echo -e "${YELLOW}端口: 无${RESET}"
+
+        # 如果有 Docker 容器，列出所有相关容器名
+        if [[ -n "$easytier_containers" ]]; then
+            for name in $easytier_containers; do
+                raw_s=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)
                 [[ "$raw_s" == "running" ]] && c_s="active" || c_s="$raw_s"
                 echo -e "容器: ${CYAN}${name}${RESET} | 状态: $(format_status "$c_s")"
             done
@@ -1242,7 +1448,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|miaomiaowux|Mihomo|remnawave|alicdt-manager|ecs-controller|sui-traffic-reset|forwardx-panel')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
@@ -1357,33 +1563,31 @@ while true; do
     echo -e "${YELLOW}[03] 卸载 Mihomo${RESET}"
     echo -e "${YELLOW}[04] 卸载 Nginx${RESET}"
     echo -e "${YELLOW}[05] 卸载 Caddy${RESET}"
-    echo -e "${YELLOW}[06] 卸载 ACME证书${RESET}"
+    echo -e "${YELLOW}[06] 卸载 ACME${RESET}"
     echo -e "${YELLOW}[07] 卸载 WARP${RESET}"
-    echo -e "${YELLOW}[08] 卸载 BBR${RESET}"
-    echo -e "${YELLOW}[09] 卸载 Realm${RESET}"
-    echo -e "${YELLOW}[10] 卸载 GOST${RESET}"
-    echo -e "${YELLOW}[11] 卸载 FRP${RESET}"
-    echo -e "${YELLOW}[12] 卸载 CloudflareTunnel${RESET}"
-    echo -e "${YELLOW}[13] 清理 Docke代理容器${RESET}"
+    echo -e "${YELLOW}[08] 卸载 Realm${RESET}"
+    echo -e "${YELLOW}[09] 卸载 GOST${RESET}"
+    echo -e "${YELLOW}[10] 卸载 FRP${RESET}"
+    echo -e "${YELLOW}[11] 卸载 CFTunnel${RESET}"
+    echo -e "${YELLOW}[12] 卸载 EasyTier${RESET}"
     echo -e "${GREEN}[0] 返回${RESET}"
     echo -e "${GREEN}[x] 退出${RESET}"
 
     read_submenu || return
 
     case "$sub" in
-        01) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/xaryuninstall.sh) ; pause_return ;;
-        02) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/singboxuninstall.sh) ; pause_return ;;
-        03) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/mihomouninstall.sh) ; pause_return ;;
-        04) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/nginxuninstall.sh) ; pause_return ;;
-        05) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/caddyuninstall.sh) ; pause_return ;;
-        06) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/acmeuninstall.sh) ; pause_return ;;
-        07) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/warpuninstall.sh) ; pause_return ;;
-        08) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/bbruninstall.sh) ; pause_return ;;
-        09) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/realmuninstall.sh) ; pause_return ;;
-        10) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/gostuninstall.sh) ; pause_return ;;
-        11) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frpuninstall.sh) ; pause_return ;;
-        12) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/cftunneluninstall.sh) ; pause_return ;;
-        13) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/dockerprouninstall.sh) ; pause_return ;;
+        01) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallXray.sh")) ; pause_return ;;
+        02) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallSingbox.sh")) ; pause_return ;;
+        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallMihomo.sh")) ; pause_return ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallNginx.sh")) ; pause_return ;;
+        05) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCaddy.sh")) ; pause_return ;;
+        06) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallAcme.sh")) ; pause_return ;;
+        07) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFWARP.sh")) ; pause_return ;;
+        08) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallRealm.sh")) ; pause_return ;;
+        09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallGost.sh")) ; pause_return ;;
+        10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallFRP.sh")) ; pause_return ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFArgo.sh")) ; pause_return ;;
+        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallEasyTier.sh")) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -1394,17 +1598,21 @@ done
 # 更新 & 卸载
 # =============================
 update_script() {
-    echo -e "${GREEN}更新中...${RESET}"
-    curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
-    chmod +x "$SCRIPT_PATH"
-    echo -e "${GREEN}✅ 更新完成!${RESET}"
-    exec "$SCRIPT_PATH"
+    local up_url=$(proxy_url "$SCRIPT_URL")
+    echo -e "${YELLOW}正在更新代理工具箱...${RESET}"
+    if curl -fsSL -o "$SCRIPT_PATH" "$up_url"; then
+        chmod +x "$SCRIPT_PATH"
+        echo -e "${GREEN}更新成功！${RESET}"
+        exec bash "$SCRIPT_PATH"
+    else
+        echo -e "${RED}❌ 更新失败，请检查网络或代理是否可用！${RESET}"
+    fi
 }
 
 uninstall_script() {
     rm -f "$SCRIPT_PATH"
     rm -f "$BIN_LINK_DIR/F" "$BIN_LINK_DIR/f"
-    echo -e "${RED}✅ 脚本已卸载${RESET}"
+    echo -e "${RED}卸载完成!${RESET}"
     exit 0
 }
 
