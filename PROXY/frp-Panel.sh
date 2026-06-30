@@ -65,7 +65,7 @@ while true; do
         STATUS="${RED}[未安装]${NC}"
     fi
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}     ◈  FRP-Panel 管理面板  ◈    ${RESET}"
+    echo -e "${GREEN}    ◈  FRP-Panel 管理面板  ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN} 面板端状态: ${MSTATUS}"
     echo -e "${GREEN} 服务端状态: ${SSTATUS}"
