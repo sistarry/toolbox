@@ -28,7 +28,6 @@ while true; do
         2)
             echo -e "\n${GREEN}开始卸载 mini-sb-agent...${NC}\n"
             bash /opt/mini-sb-agent/uninstall.sh 
-            echo -e "\n${GREEN}卸载完成${NC}"
             echo -e -n "${LIGHT_GREEN}按任意键返回菜单...${NC}"
             read -n 1 -s
             ;;
