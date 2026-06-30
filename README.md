@@ -2,21 +2,27 @@
 
 Linux VPS 管理工具箱脚本，集成多种常用功能，方便快速管理服务器。
 
-## 快速安装
+## 🚀 快速开始
 
-执行以下命令安装必要依赖：
+### 1. 安装必要依赖
+为了确保脚本能够正常运行，请根据您的操作系统执行以下命令安装必要依赖：
 
+**对于 Debian / Ubuntu 系统:**
 ```bash
 apt-get update -y && apt-get install -y curl
 ```
 
-### 🚀 运行
-
-**通用地址：**
+**对于 Alpine Linux 系统:**
 ```bash
-bash <(curl -fsSL tool.wwwo.eu.cc)
+apk update && apk add --no-cache bash curl wget vim tar sudo git
 ```
 
+### 2. 一键运行工具箱
+依赖安装完成后，直接复制并执行以下指令：
+
+```bash
+bash <(curl -fsSL tool.ccc.xx.kg)
+```
 ---
 
 ## 使用说明
@@ -35,10 +41,8 @@ bash <(curl -fsSL tool.wwwo.eu.cc)
 * **应用商店**：常用建站、实用程序安装
 * **证书管理**：SSL 证书申请与续期
 * **系统管理**：资源监控、用户管理
-* **工具箱合集**：集成其他优秀脚本
-* **玩具熊ʕ•ᴥ•ʔ**：趣味功能模块
-* **监控通知**：消息通知配置
 * **备份恢复**：数据迁移与备份
+* **玩具熊ʕ•ᴥ•ʔ**：趣味功能模块
 * **更新卸载**：脚本自身的维护与卸载
 
 ### 操作流程
