@@ -58,13 +58,13 @@ show_menu() {
     clear
     get_status
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN} ◈  ReadCLI  终端阅读管理面板 ◈ ${RESET}"
+    echo -e "${GREEN} ◈ ReadCLI  终端阅读(readcli) ◈ ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态 :${RESET} $status"
     echo -e "${GREEN}版本 :${RESET} $readcli_version"
     echo -e "${GREEN}书架 :${RESET} $bookshelf_status"
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}1. 安装${RESET}"
+    echo -e "${GREEN}1. 安装/更新${RESET}"
     echo -e "${GREEN}2. 打开书架${RESET}"
     echo -e "${GREEN}3. 打开书籍 (TXT/EPUB)${RESET}"
     echo -e "${GREEN}4. 快捷键指南${RESET}"
@@ -114,6 +114,7 @@ download_latest_readcli() {
             
             echo -e "${GREEN}✔ 最新版 ReadCLI 成功安装！${RESET}"
             echo -e "${GREEN}✔ 全局软链接已指向: /usr/local/bin/readcli (任意 Shell 环境下均可直接运行)${RESET}"
+            echo -e "${YELLOW}✔ 快捷指令: readcli${RESET}"
         else
             echo -e "${RED}❌ 解压文件中未找到 readcli 二进制文件。${RESET}"
             rm -rf "$TMP_DIR"
@@ -232,7 +233,7 @@ uninstall_readcli() {
         fi
         echo -e "${GREEN}✔ 全局软链、核心程序及本地数据已全部净化！${RESET}"
     else
-        echo "已取消卸载操作。"
+        echo -e "${GREEN}已取消卸载操作。${RESET}"
     fi
     echo -ne "\n${GREEN}按回车键返回主菜单...${RESET}" && read -r
 }
