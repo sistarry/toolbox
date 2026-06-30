@@ -8,14 +8,52 @@ RESET="\033[0m"
 BOLD="\033[1m"
 ORANGE='\033[38;5;208m'
 
+
+# ================== GitHub 代理列表 ==================
+# 第一个留空代表默认直连
+GITHUB_PROXY=(
+    '' 
+    'https://v6.gh-proxy.org/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+    'https://ghproxy.lvedong.eu.org/'
+)
+
+# ================== 轮询检测网络 ==================
+CHOSEN_PROXY=""
+
+for proxy in "${GITHUB_PROXY[@]}"; do
+    if [ -z "$proxy" ]; then
+
+        # 测试直连，5秒超时
+        if curl -o /dev/null -s -m 5 "https://raw.githubusercontent.com"; then
+            CHOSEN_PROXY=""
+            break
+        fi
+    else
+        # 测试代理站是否可用
+        if curl -o /dev/null -s -m 2 "${proxy}https://raw.githubusercontent.com"; then
+            CHOSEN_PROXY="$proxy"
+            break
+        fi
+    fi
+done
+
+
 # ================== 脚本路径 ==================
 SCRIPT_PATH="/root/store.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
 BIN_LINK_DIR="/usr/local/bin"
 
+
 # ================== 首次运行自动安装 ==================
 if [ ! -f "$SCRIPT_PATH" ]; then
-    curl -fsSL -o "$SCRIPT_PATH" "$SCRIPT_URL"
+    mkdir -p "$(dirname "$SCRIPT_PATH")"
+    
+    REAL_URL="${CHOSEN_PROXY}${SCRIPT_URL}"
+    
+    curl -fsSL -o "$SCRIPT_PATH" "$REAL_URL"
     if [ $? -ne 0 ]; then
         echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
         exit 1
@@ -31,628 +69,524 @@ fi
 declare -A categories=(
     [1]="Docker管理"
     [2]="数据证书"
-    [3]="订阅通知"
-    [4]="监控项目"
-    [5]="管理面板"
+    [3]="订阅转换"
+    [4]="监控通知"
+    [5]="网络工具"
     [6]="媒体服务"
-    [7]="图床项目"
+    [7]="面板项目"
     [8]="实用工具"
     [9]="交易商店"
     [10]="文件管理"
-    [11]="机器人工具"
-    [12]="AI项目"
-    [13]="游戏项目"
+    [11]="机器人项目"
+    [12]="游戏项目"
+    [13]="甲骨文云服务"
+    [14]="IDC服务"
+    [15]="AI项目"
 )
 
 # ================== 二级菜单应用 ==================
 declare -A apps=(
-    [1,1]="Docker管理"
-    [1,2]="Dockercompose项目管理"
-    [1,3]="Dockercompose备份恢复"
-    [1,4]="Dockercompose自动更新"
-    [1,5]="DockercomposeTGBot"
-    [1,6]="NGINXV4反代"
-    [2,1]="MySQL数据管理"
-    [2,2]="caddy证书管理"
-    [2,3]="NginxProxyManager可视化面板"
-    [2,4]="ALLinSSL证书管理"
-    [2,5]="彩虹聚合DNS管理系统(MySQL)"
-    [2,6]="彩虹聚合DNS管理系统"
-    [2,7]="DDNS-GO动态DNS管理工具"
-    [2,8]="Lucky反代"
-    [2,9]="CFGuardCloudflaredns管理面板"
-    [2,10]="Redis数据"
-    [2,11]="MongoDB数据"
-    [2,12]="AdguardHomeDNSDoH"
-    [2,13]="ACME证书管理"
-    [3,1]="Sub-store节点订阅管理"
-    [3,2]="subwebmodify节点订阅转换"
-    [3,3]="Wallos个人财务管理工具"
-    [3,4]="Vaultwarden密码管理"
-    [3,5]="妙妙屋节点流量监控管理系统"
-    [3,6]="subs-check订阅检测转换工具"
-    [3,7]="Apprise通知"
-    [3,8]="NodeCtl节点管理"
-    [3,9]="SublinkWorker节点订阅管理"
-    [3,10]="DockerNotify容器状态监听"
-    [3,11]="SublinkPro节点订阅管理"
-    [3,12]="Renewlet个人财务订阅管理"
-    [3,13]="Chain-Subconverter链式代理订阅转换"
-    [3,14]="ProxySudo订阅转换"
-    [4,1]="Kuma-Mieru监控工具"
-    [4,2]="Komari监控"
-    [4,3]="哪吒V1监控"
-    [4,4]="uptime-kuma监控工具"
-    [4,5]="NodeSeeker关键词监控"
-    [4,6]="Beszel服务器监控"
-    [4,7]="WHOIS域名查询"
-    [4,8]="哪吒V0监控"
-    [4,9]="Changedetection网页监控"
-    [4,10]="Pulse监控"
-    [4,11]="pika监控"
-    [4,12]="KULA监控"
-    [4,13]="vStats监控"
-    [4,14]="Collei监控"
-    [4,15]="DStatus监控"
-    [4,16]="Netcup流量监控"
-    [4,17]="NodeGet监控"
-    [4,18]="Checkmate监控"
-    [4,19]="DockUP检测容器更新"
-    [4,20]="Kulin轻量化哪吒监控"
-    [5,1]="运维面板"
-    [5,2]="Sun-Panel导航面板"
-    [5,3]="WebSSH网页版SSH连接工具"
-    [5,4]="NexusTerminal远程连接工具"
-    [5,5]="Poste.io邮局"
-    [5,6]="OneNav书签管理"
-    [5,7]="青龙面板定时任务管理平台"
-    [5,8]="Termix远程连接工具"
-    [5,9]="VPS剩余价值计算器"
-    [5,10]="Trilium笔记"
-    [5,11]="firefox浏览器"
-    [5,12]="moments微信朋友圈"
-    [5,13]="searxng聚合搜索站"
-    [5,14]="甲骨文云Y探长"
-    [5,15]="dpanelDocker可视化面板系统"
-    [5,16]="网页QQ"
-    [5,17]="网页微信"
-    [5,18]="eooceWebSSH"
-    [5,19]="Navlink聚合导航与插件化管理系统"
-    [5,20]="EasyNodeSSH终端"
-    [5,21]="Epic游戏领取"
-    [5,22]="AssppWebApple应用下载"
-    [5,23]="wxchat微信转发代理"
-    [5,24]="Lottery彩票开奖信息"
-    [5,25]="homepage自托管服务仪表盘"
-    [5,26]="GMSSH远程工具"
-    [5,27]="VoceChat多人在线聊天系统"
-    [5,28]="Umami网站统计工具"
-    [5,29]="思源笔记"
-    [5,30]="Ubuntu远程桌面网页版"
-    [5,31]="WUD Docker更新监控"
-    [5,32]="Backrest(restic)备份"
-    [5,33]="WatchtowerDocker自动更新"
-    [5,34]="FOSSBilling VPS托管业务"
-    [5,35]="网页Telegram"
-    [5,36]="Ech0笔记"
-    [5,37]="WebSSHGateway"
-    [5,38]="DockerCopilot容器管理工具"
-    [5,39]="GiftWishlist礼物愿望清单"
-    [5,40]="OutlookEmailPlus邮箱管理"
-    [5,41]="OpenFlare CDN加速"
-    [5,42]="WindowsDocker"
-    [5,43]="联通余量"
-    [5,44]="NodeTerminalSSH"
-    [5,45]="1ShellSSH"
-    [5,46]="白虎面板"
-    [5,47]="ShadowSSH"
-    [5,48]="GithubStars项目管理"
-    [5,49]="Zephyr-SSH"
-    [5,50]="FastNoteSyncService笔记同步"
-    [5,51]="Dockge管理dockercompose"
-    [5,52]="VaultFleet备份管理系统"
-    [6,1]="koodoreader阅读"
-    [6,2]="LrcApi音乐数据"
-    [6,3]="OpenList多存储文件列表程序"
-    [6,4]="SPlayer网页音乐播放器"
-    [6,5]="AutoBangumi全自动追番"
-    [6,6]="MoviePilot媒体库自动化管理工具"
-    [6,7]="qBittorrentBT磁力下载面板"
-    [6,8]="Vertex PT刷流管理工具"
-    [6,9]="yt-dlpweb 视频下载工具"
-    [6,10]="libretv私有影视"
-    [6,11]="MoonTV私有影视"
-    [6,12]="Emby开心版(AMD)"
-    [6,13]="Emby开心版(ARM)"
-    [6,14]="Emby官方版(AMD)"
-    [6,15]="Emby官方版(ARM)"
-    [6,16]="Jellyfiny多媒体管理系统 "
-    [6,17]="metatube刮削插件"
-    [6,18]="Navidrome音乐管理系统"
-    [6,19]="musictagweb音乐数据刮削"
-    [6,20]="qmediasync(strm+302)网盘观影"
-    [6,21]="LogVar弹幕API"
-    [6,22]="music-player网页音乐播放器"
-    [6,23]="MDC-NG AV刮削"
-    [6,24]="Melody音乐精灵"
-    [6,25]="SyncTV一起看"
-    [6,26]="Emby签到保活"
-    [6,27]="御坂网络弹幕服务"
-    [6,28]="ANI-RSS追番"
-    [6,29]="DecoTV影视"
-    [6,30]="Kavita漫画"
-    [6,31]="MHTI里番刮削"
-    [6,32]="MoonTVPlus私有影视"
-    [6,33]="Lxserver"
-    [6,34]="yt-dlp-webui"
-    [6,35]="mytube视频下载"
-    [6,36]="global-radio在线电台"
-    [6,37]="magnetfix磁力搜索"
-    [6,38]="AMMDS个人影视数据管理平台"
-    [6,39]="FlareSolverr绕过Cloudflare反爬虫保护"
-    [6,40]="IYUU辅种"
-    [6,41]="go-webdav-virtual"
-    [6,42]="WebDAV"
-    [6,43]="Komga图书"
-    [6,44]="IPTVtool"
-    [6,45]="MeridianEmby反代"
-    [6,46]="TgtoDrive网盘资源"
-    [6,47]="Transmission"
-    [6,48]="Audiobookshelf有声书播客"
-    [6,49]="Audiobookshelf喜马拉雅元数据"
-    [6,50]="Emby-proxy-go"
-    [6,51]="TuneScout音乐库管理"
-    [6,52]="amuleED2K"
-    [6,53]="ReClip视频音频下载器"
-    [6,54]="馒头保号"
-    [6,55]="AList-TvBox"
-    [6,56]="Newsnow新闻热榜"
-    [6,57]="FoamEmby管理系统"
-    [6,58]="Emby-In-OneEmby服务器聚合"
-    [6,59]="qBittorrentBTBot"
-    [6,60]="IPTVTRMAS"
-    [6,61]="冬瓜影视"
-    [6,62]="emby-pulse"
-    [6,63]="个人91站"
-    [6,64]="MediaStationGo私人媒体中心"
-    [7,1]="Foxel图片管理"
-    [7,2]="兰空图床(MySQL)"
-    [7,3]="兰空图床"
-    [7,4]="图片API(兰空图床)"
-    [7,5]="简单图床"
-    [7,6]="随机图片API"
-    [7,7]="EasyImg图床"
-    [7,8]="初春图床"
-    [7,9]="nodeimage图床"
-    [7,10]="Telegram云图床Pro"
-    [7,11]="xg-icons-hub图标"
-    [7,12]="HD-Icons图标"
-    [7,13]="immich图片管理"
-    [7,14]="PhotoPrism图片管理"
-    [7,15]="tgstate图床"
-    [8,1]="2FAuth自托管二步验证器"
-    [8,2]="gh-proxyGithub文件加速"
-    [8,3]="HubP轻量级Docker镜像加速"
-    [8,4]="HubProxyDockerGitHub加速代理"
-    [8,5]="Zurl短链接系统"
-    [8,6]="vue-color-avatar头像生成网站"
-    [8,7]="msgboard实时留言板"
-    [8,8]="it-tools工具箱"
-    [8,9]="LibreSpeed测速工具"
-    [8,10]="libretranslate在线翻译服务器"
-    [8,11]="linkwarden书签管理"
-    [8,12]="LookingGlass 服务器测速"
-    [8,13]="StirlingPDF工具大全"
-    [8,14]="super-clipboard在线剪贴板"
-    [8,15]="ForgejoGit自建Gitea"
-    [8,16]="excalidraw开源白板工具"
-    [8,17]="Drawnix开源白板工具"
-    [8,18]="Karakeep书签管理"
-    [8,19]="Navigation书签管理"
-    [8,20]="translateWeb翻译工具"
-    [8,21]="VanNav导航站"
-    [8,22]="NavDashboard导航"
-    [8,23]="多种风格可选的萌萌计数器"
-    [8,24]="Memos说说"
-    [8,25]="Twikoo网站评论系统"
-    [8,26]="Utilsfun工具箱"
-    [8,27]="问卷调查"
-    [8,28]="MagicResume简历"
-    [8,29]="LiteGist私有化Gist"
-    [8,30]="HeartXanadu个人主页"
-    [9,1]="异次元商城(MySQL)"
-    [9,2]="异次元商城"
-    [9,3]="萌次元商城"
-    [9,4]="UPAYPRO"
-    [9,5]="独角数卡"
-    [9,6]="FakabotTelegram自动发卡机器人"
-    [9,7]="Epusdt"
-    [9,8]="EpayBot易支付订单通知"
-    [10,1]="Cloudreve网盘"
-    [10,2]="ZdirPro多功能文件分享"
-    [10,3]="fastsend文件快传"
-    [10,4]="FileTransferGo文件快传"
-    [10,5]="send文件快传"
-    [10,6]="pairdrop文件快传"
-    [10,7]="Gopeed高速下载工具"
-    [10,8]="Syncthing点对点文件同步工具"
-    [10,9]="迅雷离线下载工具"
-    [10,10]="Enclosed阅后即焚"
-    [10,11]="PanSou网盘搜索"
-    [10,12]="Dufs极简静态文件服务器"
-    [10,13]="ConvertX多格式文件转换工具"
-    [10,14]="百度网盘Docker"
-    [10,15]="Linkit文件分享"
-    [10,16]="Aria2"
-    [10,17]="FileCodeBox匿名口令分享文本文件"
-    [11,1]="SaveAnyBot(TG转存)"
-    [11,2]="TeleBoxTG机器人"
-    [11,3]="TGBotRSS RSS订阅工具"
-    [11,4]="messageTG消息转发机器人"
-    [11,5]="AstrBot聊天机器人"
-    [11,6]="Miaospeed测速后端"
-    [11,7]="NapcatQQ机器人"
-    [11,8]="Koipy测速机器人"
-    [11,9]="TG群组签到"
-    [11,10]="LangBot聊天机器人"
-    [11,11]="Sakura-embyboss emby开号机器人"
-    [11,12]="TelegramPanel多账户管理面板"
-    [11,13]="QQbot消息通知"
-    [11,14]="TeleRelayTelegram私聊中转机器人"
-    [11,15]="NodeSeek关键词监控Bot"
-    [11,16]="LuckyLilliaBot"
-    [11,17]="LowEndTalk监控Bot"
-    [11,18]="Telegram倒计时目标推送机器人"
-    [11,19]="Emby用户管理"
-    [11,20]="TGuardTelegram群组智能验证机器人"
-    [11,21]="TG-WatchBot双向客服机器人"
-    [11,22]="TelegramDriveBot信息管理与检索工具"
-    [11,23]="RayNews新闻聚合阅读器"
-    [11,24]="StickerAlchemyTelegram贴纸互转机器人"
-    [12,1]="火宝短剧AI短剧生成"
-    [12,2]="ONEAPI大模型资产管理"
-    [12,3]="Grok2API"
-    [12,4]="NEWAPI大模型资产管理"
-    [12,5]="AntigravityTools "
-    [12,6]="CLIProxyAPI"
-    [12,7]="OpenClaw"
-    [12,8]="gcli2api"
-    [12,9]="Sub2API"
-    [12,10]="octopusAPI聚合"
-    [12,11]="AIClient2API"
-    [12,12]="Codeg"
-    [12,13]="三省六部Edict"
-    [12,14]="ModelStatus模型监控"
-    [12,15]="GPTImage"
-    [12,16]="HermesAgent"
-    [12,17]="ClaudeCode"
-    [12,18]="GeminiCLI"
-    [12,19]="CodexCLI"
-    [12,20]="OpenCode"
-    [12,21]="DrissionPage网页自动化工具"
-    [12,22]="GeminiBusiness2API"
-    [12,23]="MiMo2API"
-    [12,24]="CodexWebUI"
-    [12,25]="DeepSeekTUI"
-    [12,26]="CPAUsageKeeperCPA用量追踪"
-    [13,1]="MCSManager游戏开服"
-    [13,2]="桃花源文字游戏"
-
+    [1,1]="Docker        安装管理"
+    [1,2]="Dockercompose 项目管理"
+    [1,3]="Dockercompose 备份恢复"
+    [1,4]="Dockercompose 自动更新"
+    [1,5]="Dockercompose TGBot"
+    [2,1]="MySQL      数据管理"
+    [2,2]="PostgreSQL 数据管理"
+    [2,3]="Redis      数据管理"
+    [2,4]="MongoDB    数据管理"
+    [2,5]="MariaDB    数据管理"
+    [2,6]="DBX        数据管理"
+    [2,7]="Lucky      反向代理"
+    [2,8]="NGINXV4    反向代理"
+    [2,9]="NGINXV6    反向代理"
+    [2,10]="Caddy      反向代理"
+    [2,11]="Acme       证书申请"
+    [3,1]="Wallos      财务管理"
+    [3,2]="Renewlet    财务管理"
+    [3,3]="SubTracker  财务管理"
+    [3,4]="EasySub     财务管理"
+    [3,5]="Vaultwarden 密码管理"
+    [3,6]="2FAuth      2FA验证器"
+    [3,7]="PocketID    OIDC认证"
+    [3,8]="Tinyauth    身份验证"
+    [3,9]="subs-check  节点管理"
+    [3,10]="miaomiaowu  节点管理"
+    [3,11]="Sub-store   节点管理"
+    [3,12]="SubBoost    节点管理"
+    [4,1]="Uptime-kuma  监控"
+    [4,2]="Kuma-Mieru   监控"
+    [4,3]="Komari       监控"
+    [4,4]="哪吒V1       监控"
+    [4,5]="Beszel       监控"
+    [4,6]="NodeGet      监控"
+    [4,7]="Apprise      通知"
+    [4,8]="wxchat       微信转发代理"
+    [5,1]="彩虹聚合DNS  DNS管理"
+    [5,2]="DDNS-GO      DNS管理"
+    [5,3]="AdguardHome  DNSDoH"
+    [5,4]="OpenFlare    CDN加速"
+    [5,5]="FlareSolverr 绕过Cloudflare反爬虫保护"
+    [5,6]="雷池WAF      网络防御"
+    [5,7]="SamWaf       网络防御"
+    [5,8]="GHProxy      代理加速"
+    [5,9]="HubProxy     代理加速"
+    [6,1]="AList-TvBox     小雅AList"
+    [6,2]="小雅全家桶      小雅Emby"
+    [6,3]="Emby官方版      多媒体管理系统"
+    [6,4]="Emby开心版      多媒体管理系统"
+    [6,5]="Jellyfiny       多媒体管理系统 "
+    [6,6]="MediaStationGo  媒体库自动化管理工具"
+    [6,7]="MoviePilot      媒体库自动化管理工具"
+    [6,8]="kaloscope       追番媒体库管理工具"
+    [6,9]="Audiobookshelf  有声书播客管理工具"
+    [6,10]="Audiobookshelf  喜马拉雅元数据刮削"
+    [6,11]="Navidrome       音乐管理系统"
+    [6,12]="musictagweb     音乐刮削"
+    [6,13]="TuneScout       音乐库管理管理工具"
+    [6,14]="LrcApi          歌词API"
+    [6,15]="LogVar          弹幕API"
+    [6,16]="metatube        AV刮削"
+    [6,17]="MDC-NG          AV刮削"
+    [6,18]="MHTI            里番刮削"
+    [6,19]="AutoBangumi     全自动追番"
+    [6,20]="ANI-RSS         全自动追番"
+    [6,21]="emby-pulse      Emby服务管理"
+    [6,22]="EmbyTGBot       Emby服务管理"
+    [6,23]="Kavita          漫画管理"
+    [6,24]="Suwayomi        漫画阅读器"
+    [6,25]="Komga           图书管理"
+    [6,26]="koodoreader     图书阅读器"
+    [6,27]="TgtoDrive       网盘媒体自动化管理工具"
+    [6,28]="MediaryScout    网盘媒体自动化管理工具"
+    [6,29]="PanSou          网盘搜索"
+    [6,30]="magnetfix       磁力搜索"
+    [6,31]="91影视          个人私有视频站"
+    [6,32]="DecoTV          影视网站"
+    [6,33]="Lxserver        网页音乐播放器"
+    [6,34]="IPTVTRMAS       IPTV直播管理"
+    [6,35]="Emby-In-OneEmby Emby服务器聚合"
+    [6,36]="Emby-proxy-go   Emby反代通用"
+    [6,37]="EmbyProxy       Emby反代面板"
+    [6,38]="Vertex          PT刷流管理工具"
+    [6,39]="IYUU            自动辅种工具"
+    [6,40]="ReClip          视频音频下载器"
+    [6,41]="BiliLive-Tools  直播录制"
+    [6,42]="Transmission    BT下载工具"
+    [6,43]="qBittorrent     二进制"
+    [6,44]="qBittorrent     系统包"
+    [6,45]="qBittorrent     Docker"
+    [6,46]="qBit-Bot        TGBot"
+    [6,47]="Aria2           Docker"
+    [6,48]="GlobalRadio     全球电台"
+    [6,49]="Kerkerker       影视网站"
+    [6,50]="Kikoeru         ASMR助眠"
+    [6,51]="ReadCLI         终端阅读器"
+    [7,1]="WordPress        博客工具"
+    [7,2]="Halo             博客工具"
+    [7,3]="Typecho          博客工具"
+    [7,4]="Flarum           论坛软件"
+    [7,5]="Rhex             论坛软件"
+    [7,6]="XIAOJUSURVEY     问卷系统"
+    [7,7]="Twikoo           评论系统"
+    [7,8]="Artalk           评论系统"
+    [7,9]="Umami            网站统计"
+    [7,10]="Moe-Counter      网站计数"
+    [7,11]="RemioHome        个人主页"
+    [7,12]="Moments          微信朋友圈"
+    [7,13]="MomentsBlog      微信朋友圈"
+    [7,14]="PandaWiki        文档工具"
+    [7,15]="宝塔面板         国际版"
+    [7,16]="宝塔面板         开心版"
+    [7,17]="1Panel V1        开心版"
+    [7,18]="1Panel V2        开心版"
+    [7,19]="KaraKeep         书签管理"
+    [7,20]="Sun-Panel        导航面板"
+    [7,21]="FlatNas          导航面板"
+    [7,22]="青龙面板         定时任务"
+    [7,23]="白虎面板         定时任务"
+    [7,24]="朱雀面板         定时任务"
+    [7,25]="呆呆面板         定时任务"
+    [7,26]="蜘蛛网络         Cloudflare管理"
+    [7,27]="HTML             网站部署"
+    [7,28]="bbs1org          轻量级论坛"
+    [8,1]="Windows          DockerWin"
+    [8,2]="Firefox          Docker浏览器"
+    [8,3]="Chrom            Docker浏览器"
+    [8,4]="SearXNG          聚合搜索"
+    [8,5]="Zurl             短链接系统"
+    [8,6]="ForgejoGit       Gitea"
+    [8,7]="LiteGist         Gist"
+    [8,8]="MagicResume      简历模板"
+    [8,9]="Translate        翻译工具"
+    [8,10]="Utils.fun        工具箱"
+    [8,11]="VoceChat         聊天系统"
+    [8,12]="Paperphoneplus   聊天系统"
+    [8,13]="Poste.io         邮件服务"
+    [8,14]="OutlookEmailPlus 邮箱管理"
+    [8,15]="Backrest         备份管理"
+    [8,16]="VaultFleet       备份管理"
+    [8,17]="SiYuan           思源笔记"
+    [8,18]="Ech0             博客笔记"
+    [8,19]="WebSSH           网页版SSH"
+    [8,20]="ShadowSSH        网页版SSH" 
+    [8,21]="Quick-SSH        终端SSH"
+    [8,22]="DockUP           Docker更新通知"
+    [8,23]="Watchtower       Docker自动更新"
+    [9,1]="独角数卡        发卡系统"
+    [9,2]="异次元商城      发卡系统"
+    [9,3]="萌次元商城      发卡系统"
+    [9,4]="Fakabot         发卡机器人"
+    [9,5]="BEpusdt         交易系统"
+    [9,6]="UPAYPRO         交易系统"
+    [9,7]="Epusdt          交易系统"
+    [9,8]="EpayBot         订单通知"
+    [10,1]="Cloudreve      云盘管理"
+    [10,2]="FileBrowser    云盘管理"
+    [10,3]="OpenList       云盘管理"
+    [10,4]="WebDAV         文件管理"
+    [10,5]="兰空图床       图床项目"
+    [10,6]="图片API        兰空图床"
+    [10,7]="简单图床       图床项目"
+    [10,8]="EasyImg        图床项目"
+    [10,9]="初春图床       图床项目"
+    [10,10]="IMGAPI         图片API"
+    [10,11]="ConvertX       文件转换"
+    [10,12]="Enclosed       阅后即焚"
+    [10,13]="FileTransferGo 文件分享"
+    [10,14]="FileCodeBox    文件分享"
+    [10,15]="send           文件分享"
+    [10,16]="015            文件分享"
+    [11,1]="SaveAnyBot   TG转存文件"
+    [11,2]="TeleBoxTG    TG人形机器人"
+    [11,3]="LangBot      AI即时通信机器人"
+    [11,4]="LLBot        QQ机器人"
+    [11,5]="AstrBot      聊天机器人"
+    [11,6]="koipy        测速机器人"
+    [11,7]="MiaoSpeed    测速后端"
+    [11,8]="FlClouds     TG转存网盘"
+    [12,1]="MCSManager       游戏开服"
+    [12,2]="PuppyStardew     星露谷物语开服"
+    [12,3]="Ice-Climber      敲冰块大逃杀"
+    [12,4]="Arena Brawl      大乱斗网页游戏"
+    [13,1]="Y 探长        甲骨文云助手 "
+    [13,2]="OCI-Start     甲骨文云助手"
+    [13,3]="R 探长        甲骨文云助手"
+    [13,4]="lookbusy      甲骨文保活"
+    [14,1]="FOSSBilling   托管业务"
+    [14,2]="Paymenter     托管业务"
+    [14,3]="PayIncus      托管业务"
+    [14,4]="PVE           切割小鸡"
+    [14,5]="LXC           切割小鸡"
+    [14,6]="Docker        切割小鸡"
+    [14,7]="Incus         切割小鸡"
+    [14,8]="LXDAPI        切割小鸡"
+    [14,9]="CLICD         切割小鸡"
+    [15,1]="OpenClaw           AI助手"
+    [15,2]="HermesAgent        AI助手"
+    [15,3]="NEWAPI             AI模型聚合网关"
+    [15,4]="CLIProxyAPI        AI模型聚合网关"
+    [15,5]="Sub2API            AI模型聚合网关"
+    [15,6]="CliRelay           AI模型聚合网关"
+    [15,7]="AntigravityTools   AI模型聚合网关"
+    [15,8]="gcli2api           AI模型聚合网关"
+    [15,9]="octopusAPI         AI模型聚合网关"
+    [15,10]="AIClient2API       AI模型聚合网关"
+    [15,11]="GeminiBusiness2API AI模型聚合网关"
+    [15,12]="MiMo2API           AI模型聚合网关"
+    [15,13]="baiduchat2api      AI模型聚合网关"
+    [15,14]="Codeg              智能体编码工作台"
+    [15,15]="Huobao-Drama       短剧生成"
+    [15,16]="GPTImage           图片生成"
+    [15,17]="ModelStatus        模型监控"
+    [15,18]="CPAUsageKeeperCPA  用量追踪"
+    [15,19]="DrissionPage       网页自动化工具"
+    [15,20]="Open  WebUI        Web面板"
+    [15,21]="Codex WebUI        Web面板"
+    [15,22]="Gemini CLI         CLI工具"
+    [15,23]="Open Code          CLI工具"
+    [15,24]="Code Whale         CLI工具"
+    [15,25]="Claude Code        CLI工具"
+    [15,26]="Codex CLI          CLI工具"
 )
 
 # ================== 二级菜单命令 ==================
 declare -A commands=(
-    [1,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Docker.sh)'
+    [1,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Dockersos.sh)'
     [1,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockercompose.sh)'
     [1,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh)'
     [1,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh)'
-    [1,5]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DockerTelegramBot.sh)'
-    [1,6]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ngixv4.sh)'
-    [2,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/msql.sh)'
-    [2,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CaddyDocker.sh)'
-    [2,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NginxProxy.sh)'
-    [2,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ALLSSL.sh)'
-    [2,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DNSMgrdb.sh)'
-    [2,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DNSMgr.sh)'
-    [2,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DDNS-GO.sh)'
-    [2,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/CN/Lucky.sh)'
-    [2,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CFServer.sh)'
-    [2,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Redis.sh)'
-    [2,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MongoDB.sh)'
-    [2,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AdGuardHome.sh)'
-    [2,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ACMED.sh)'
-    [3,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/sub-store.sh)'
-    [3,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/subzh.sh)'
-    [3,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/wallos.sh)'
-    [3,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/vaultwarden.sh)'
-    [3,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/miaomiaowu.sh)'
-    [3,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SubsCheck.sh)'
-    [3,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Apprise.sh)'
-    [3,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeCtl.sh)'
-    [3,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SublinkWorker.sh)'
-    [3,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DockerRunNotify.sh)'
-    [3,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SubLinkPro.sh)'
-    [3,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Renewlets.sh)'
-    [3,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Chain-Subconverter.sh)'
-    [3,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Proxysudo.sh)'
-    [4,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/kuma-mieru.sh)'
-    [4,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/komarigl.sh)'
-    [4,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/aznezha.sh)'
-    [4,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/UptimeKuma.sh)'
-    [4,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeSeeker.sh)'
-    [4,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Beszel.sh)'
-    [4,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/whoisdomainlookup.sh)'
-    [4,8]='curl -L https://ba.sh/naza -o naza.sh && chmod +x naza.sh && ./naza.sh'
-    [4,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/changedetection.sh)'
-    [4,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Pulse.sh)'
-    [4,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Pika.sh)'
-    [4,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kula.sh)'
-    [4,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/VStats.sh)'
-    [4,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Collei.sh)'
-    [4,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dstatus.sh)'
-    [4,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NetcupMonitor.sh)'
-    [4,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeGetgl.sh)'
-    [4,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/checkmate.sh)'
-    [4,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockup.sh)'
-    [4,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KulinDashboard.sh)'
-    [5,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/panel.sh)'
-    [5,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/sun-panel.sh)'
-    [5,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/webssh.sh)'
-    [5,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/nexus-terminal.sh)'
-    [5,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/posteio.sh)'
-    [5,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/onenav.sh)'
-    [5,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qlmb.sh)'
-    [5,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Termix.sh)'
-    [5,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/vps-value.sh)'
-    [5,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Trilium.sh)'
-    [5,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/firefox.sh)'
-    [5,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/moments.sh)'
-    [5,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/searxng.sh)'
-    [5,14]='bash <(wget -qO- https://github.com/Yohann0617/oci-helper/releases/latest/download/sh_oci-helper_install.sh)'
-    [5,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dpanel.sh)'
-    [5,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/QQ.sh)'
-    [5,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WeChat.sh)'
-    [5,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/eoossh.sh)'
-    [5,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Navlink.sh)'
-    [5,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasyNode.sh)'
-    [5,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Epicgamer.sh)'
-    [5,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AssppWeb.sh)'
-    [5,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WxChatDL.sh)'
-    [5,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Lottery.sh)'
-    [5,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/homepage.sh)'
-    [5,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GMSSH.sh)'
-    [5,27]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/VoceChat.sh)'
-    [5,28]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Umami.sh)'
-    [5,29]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Siyuan.sh)'
-    [5,30]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WebtopUbuntu.sh)'
-    [5,31]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WUD.sh)'
-    [5,32]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Backrest.sh)'
-    [5,33]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Watchtower.sh)'
-    [5,34]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FOSSBilling.sh)'
-    [5,35]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramD.sh)'
-    [5,36]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Ech0.sh)'
-    [5,37]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WebSSHGateway.sh)'
-    [5,38]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DockerCopilot.sh)'
-    [5,39]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GiftList.sh)'
-    [5,40]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OutlookEmailPlus.sh)'
-    [5,41]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OpenFlare.sh)'
-    [5,42]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WindowsD.sh)'
-    [5,43]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LTnetworkpanel.sh)'
-    [5,44]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeTerminal.sh)'
-    [5,45]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/1shell.sh)'
-    [5,46]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/baihu.sh)'
-    [5,47]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ShadowSSH.sh)'
-    [5,48]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GithubStarsManager.sh)'
-    [5,49]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ZephyrSSH.sh)'
-    [5,50]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FastNoteSyncService.sh)'
-    [5,51]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockge.sh)'
-    [5,52]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/VaultFleet.sh)'
-    [6,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/koodoreader.sh)'
-    [6,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/lacapi.sh)'
-    [6,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Openlist.sh)'
-    [6,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/splayer.sh)'
-    [6,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Autobangumi.sh)'
-    [6,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/movpv2.sh)'
-    [6,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qBittorrentoo.sh)'
-    [6,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/vertex.sh)'
-    [6,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ytdlpweb.sh)'
-    [6,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/libretv.sh)'
-    [6,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/mootv.sh)'
-    [6,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/kxembyamd.sh)'
-    [6,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/kxembyarm.sh)'
-    [6,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/embyamd.sh)'
-    [6,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/embyarm.sh)'
-    [6,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Jellyfin.sh)'
-    [6,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/metadata.sh)'
-    [6,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/navidrome.sh)'
-    [6,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/musictw.sh)'
-    [6,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qmediasync.sh)'
-    [6,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/danmu.sh)'
-    [6,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/mplayer.sh)'
-    [6,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MDCNG.sh)'
-    [6,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Melody.sh)'
-    [6,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/synctv.sh)'
-    [6,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/embykeeper.sh)'
-    [6,27]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/misakadanmu.sh)'
-    [6,28]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ASSRSS.sh)'
-    [6,29]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DecoTV.sh)'
-    [6,30]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kavita.sh)'
-    [6,31]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MHTI.sh)'
-    [6,32]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MoontvPlus.sh)'
-    [6,33]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Lxserver.sh)'
-    [6,34]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/YTDLPWebUI.sh)'
-    [6,35]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MyTube.sh)'
-    [6,36]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GlobalRadio.sh)'
-    [6,37]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/magnetfix.sh)'
-    [6,38]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AMMDS.sh)'
-    [6,39]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FlareSolverr.sh)'
-    [6,40]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IYUUPlus.sh)'
-    [6,41]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/gowdd.sh)'
-    [6,42]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WebDAV.sh)'
-    [6,43]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Komga.sh)'
-    [6,44]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IPTVtool.sh)'
-    [6,45]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Meridian.sh)'
-    [6,46]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TgToDrive.sh)'
-    [6,47]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Transmission.sh)'
-    [6,48]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Audiobookshelf.sh)'
-    [6,49]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ABSXimalaya.sh)'
-    [6,50]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyProxyGo.sh)'
-    [6,51]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Tunescout.sh)'
-    [6,52]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/amule.sh)'
-    [6,53]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ReClip.sh)'
-    [6,54]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PT/MTLogin.sh)'
-    [6,55]='wget http://d.har01d.cn/alist-tvbox.sh; sudo bash ./alist-tvbox.sh'
-    [6,56]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NewsNow.sh)'
-    [6,57]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FOAM.sh)'
-    [6,58]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyInOne.sh)'
-    [6,59]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qbit-bot.sh)'
-    [6,60]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IPTVTRMAS.sh)'
-    [6,61]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dongguaTV.sh)'
-    [6,62]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyPulsePro.sh)'
-    [6,63]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/91w.sh)'
-    [6,64]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MediaStation-Go.sh)'
-    [7,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/foxel.sh)'
-    [7,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/lskyprodb.sh)'
-    [7,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/lskypro.sh)'
-    [7,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/apitu.sh)'
-    [7,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasyImage.sh)'
-    [7,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/tuapi.sh)'
-    [7,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasyImg.sh)'
-    [7,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OneImg.sh)'
-    [7,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeImage.sh)'
-    [7,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramImageBed.sh)'
-    [7,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/XGIconsHub.sh)'
-    [7,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HDIcons.sh)'
-    [7,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Immich.sh)'
-    [7,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/PhotoPrism.sh)'
-    [7,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TGState.sh)'
-    [8,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/2fauth.sh)'
-    [8,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/fdgit.sh)'
-    [8,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockhub.sh)'
-    [8,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/hubproxy.sh)'
-    [8,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Zurl.sh)'
-    [8,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Colo.sh)'
-    [8,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MsgBoard.sh)'
-    [8,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/it-tools.sh)'
-    [8,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LibreSpeed.sh)'
-    [8,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/libretranslate.sh)'
-    [8,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Linkwarden.sh)'
-    [8,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/lookingglass.sh)'
-    [8,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/StirlingPDF.sh)'
-    [8,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/super.sh)'
-    [8,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Forgejo.sh)'
-    [8,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Excalidraw.sh)'
-    [8,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Drawnix.sh)'
-    [8,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Karakeep.sh)'
-    [8,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Navigation.sh)'
-    [8,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Translate.sh)'
-    [8,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/VanNav.sh)'
-    [8,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NavDashboard.sh)'
-    [8,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MoeCounter.sh)'
-    [8,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Memos.sh)'
-    [8,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Twikoo.sh)'
-    [8,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Utilsfun.sh)'
-    [8,27]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/XiaojuSurvey.sh)'
-    [8,28]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Magicresum.sh)'
-    [8,29]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LiteGist.sh)'
-    [8,30]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HeartXanadu.sh)'
-    [9,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ACGFakadb.sh)'
-    [9,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ACGFaka.sh)'
-    [9,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/mcygl.sh)'
-    [9,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/UPayPro.sh)'
-    [9,5]='bash <(curl -fsSL https://raw.githubusercontent.com/dujiao-next/community-projects/main/scripts/langge-dujiao-next-install/dujiao-next-install.sh)'
-    [9,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Fakabot.sh)'
-    [9,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EPUSDT.sh)'
-    [9,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EpayBot.sh)'
+    [1,5]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerbots.sh)'
+    [2,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MySQLD.sh)'
+    [2,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/PostgreSQL.sh)'
+    [2,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Redis.sh)'
+    [2,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MongoDB.sh)'
+    [2,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MariaDB.sh)'
+    [2,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DBX.sh)'
+    [2,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Lucky.sh)'
+    [2,8]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Nginxos.sh)'
+    [2,9]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Nginx6os.sh)'
+    [2,10]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Caddyos.sh)'
+    [2,11]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Acmeos.sh)'
+    [3,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Wallos.sh)'
+    [3,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Renewlet.sh)'
+    [3,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Subtracker.sh)'
+    [3,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasySub.sh)'
+    [3,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Vaultwarden.sh)'
+    [3,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/2FAuth.sh)'
+    [3,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Pocket-ID.sh)'
+    [3,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Tinyauth.sh)'
+    [3,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Subs-Check.sh)'
+    [3,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MiaoMiaoWu.sh)'
+    [3,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Sub-Store.sh)'
+    [3,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Subboost.sh)'
+    [4,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/UptimeKuma.sh)'
+    [4,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KumaMieru.sh)'
+    [4,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Komari.sh)'
+    [4,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NezhaDashboard.sh)'
+    [4,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Beszel.sh)'
+    [4,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Nodeget.sh)'
+    [4,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Apprise.sh)'
+    [4,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/WxChatpy.sh)'
+    [5,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dnsmgr.sh)'
+    [5,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DDNS-Go.sh)'
+    [5,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AdGuardHome.sh)'
+    [5,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/OpenFlare.sh)'
+    [5,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FlareSolverr.sh)'
+    [5,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/SafeLine.sh)'
+    [5,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/SamWAF.sh)'
+    [5,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GHProxy.sh)'
+    [5,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HubProxy.sh)'
+    [6,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AList-TvBox.sh)'
+    [6,2]='bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)"'
+    [6,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyServerGF.sh)'
+    [6,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Embyserver.sh)'
+    [6,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Jellyfin.sh)'
+    [6,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MediaStationGo.sh)'
+    [6,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MoviePilotV2.sh)'
+    [6,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kaloscope.sh)'
+    [6,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Audiobookshelf.sh)'
+    [6,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ABS-Ximalaya.sh)'
+    [6,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Navidrome.sh)'
+    [6,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MusicTagWeb.sh)'
+    [6,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TuneScout.sh)'
+    [6,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LrcApi.sh)'
+    [6,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LogVar.sh)'
+    [6,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MetaTube.sh)'
+    [6,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MDCNG.sh)'
+    [6,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MHTI.sh)'
+    [6,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AutoBangumi.sh)'
+    [6,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ANIRSS.sh)'
+    [6,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyPulse.sh)'
+    [6,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyTGBot.sh)'
+    [6,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kavita.sh)'
+    [6,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Suwayomi.sh)'
+    [6,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Komga.sh)'
+    [6,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KoodoReader.sh)'
+    [6,27]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TgtoDrive.sh)'
+    [6,28]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MediaryScout.sh)'
+    [6,29]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Pansou.sh)'
+    [6,30]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MagnetFix.sh)'
+    [6,31]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/91w.sh)'
+    [6,32]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DecoTVD.sh)'
+    [6,33]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LX-Music.sh)'
+    [6,34]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IPTV-trmas.sh)'
+    [6,35]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Emby-In-One.sh)'
+    [6,36]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Emby-Proxy-Go.sh)'
+    [6,37]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyProxy.sh)'
+    [6,38]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Vertex.sh)'
+    [6,39]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IYUUPlus.sh)'
+    [6,40]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Reclip.sh)'
+    [6,41]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/BiliLive-Tools.sh)'
+    [6,42]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Transmission.sh)'
+    [6,43]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/qBittorrent-noxos.sh)'
+    [6,44]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/OS/qbittorrentos.sh)'
+    [6,45]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qBittorrent.sh)'
+    [6,46]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/qBit-Bot.sh)'
+    [6,47]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Aria2DK.sh)'
+    [6,48]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GlobalRadio.sh)'
+    [6,49]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kerkerker.sh)'
+    [6,50]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Kikoeru.sh)'
+    [6,51]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ReadCLI.sh)'
+    [7,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/WordPress.sh)'
+    [7,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Halo.sh)'
+    [7,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Typecho.sh)'
+    [7,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Flarum.sh)'
+    [7,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Rhex.sh)'
+    [7,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/XiaojuSurvey.sh)'
+    [7,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Twikoo.sh)'
+    [7,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Artalk.sh)'
+    [7,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Umami.sh)'
+    [7,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Moe-Counter.sh)'
+    [7,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/RemioHome.sh)'
+    [7,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Moments.sh)'
+    [7,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/MomentsBlog.sh)'
+    [7,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/PandaWiki.sh)'
+    [7,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/aaPanel.sh)'
+    [7,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/kxbaota.sh)'
+    [7,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/kx1Panelv1.sh)'
+    [7,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/kx1Panelv2.sh)'
+    [7,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/KaraKeep.sh)'
+    [7,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Sun-Panel.sh)'
+    [7,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FlatNAS.sh)'
+    [7,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Qinglong.sh)'
+    [7,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Baihu.sh)'
+    [7,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ZhuQue.sh)'
+    [7,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DaidaiPanel.sh)'
+    [7,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Cloudflare-panel.sh)'
+    [7,27]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/html.sh)'
+    [7,28]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/BBS1ORG.sh)'
+    [8,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DockerWindows.sh)'
+    [8,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FirefoxJ.sh)'
+    [8,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Chromium.sh)'
+    [8,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SearXNG.sh)'
+    [8,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ZUrl.sh)'
+    [8,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ForgejoGit.sh)'
+    [8,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Litegist.sh)'
+    [8,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MagicResume.sh)'
+    [8,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Translate.sh)'
+    [8,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Utilsfun.sh)'
+    [8,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/VoceChat.sh)'
+    [8,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Paperphone-plus.sh)'
+    [8,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/posteio.sh)'
+    [8,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Outlook-Email-Plus.sh)'
+    [8,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Backrest.sh)'
+    [8,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Vaultfleet.sh)'
+    [8,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SiYuanNote.sh)'
+    [8,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Ech0.sh)'
+    [8,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/eooceWebSSH.sh)'
+    [8,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ShadowSSH.sh)'
+    [8,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Quick-SSH.sh)'
+    [8,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DockUP.sh)'
+    [8,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Watchtowertg.sh)'
+    [9,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/DuJiaoNext.sh)'
+    [9,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/ACG-FAKAD.sh)'
+    [9,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCY.sh)'
+    [9,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Fakabot.sh)'
+    [9,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/BEpusdt.sh)'
+    [9,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/UPayPro.sh)'
+    [9,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Epusdt.sh)'
+    [9,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Epay-bot.sh)'
     [10,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Cloudreve.sh)'
-    [10,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Zdir.sh)'
-    [10,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FastSend.sh)'
-    [10,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FileTransfer.sh)'
-    [10,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/send.sh)'
-    [10,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/pairdrop.sh)'
-    [10,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/gopeed.sh)'
-    [10,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/syncthing.sh)'
-    [10,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/xunlei.sh)'
-    [10,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Enclosed.sh)'
-    [10,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Pansou.sh)'
-    [10,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DUFS.sh)'
-    [10,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ConvertX.sh)'
-    [10,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/BaiduPCSRust.sh)'
-    [10,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LinkIt.sh)'
-    [10,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Aria2D.sh)'
-    [10,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FileCodeBox.sh)'
+    [10,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Filebrowser.sh)'
+    [10,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OpenList.sh)'
+    [10,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ApacheWebDAV.sh)'
+    [10,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/lsky-pro.sh)'
+    [10,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/RandomImageAPI.sh)'
+    [10,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasyImage2.sh)'
+    [10,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EasyImg.sh)'
+    [10,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OneImg.sh)'
+    [10,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/IMGAPI.sh)'
+    [10,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ConvertX.sh)'
+    [10,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Enclosed.sh)'
+    [10,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Filetransfergo.sh)'
+    [10,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FileCodeBox.sh)'
+    [10,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Send.sh)'
+    [10,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/015.sh)'
     [11,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SaveAnyBot.sh)'
     [11,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TeleBox.sh)'
-    [11,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TGRSSBot.sh)'
-    [11,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramBot.sh)'
-    [11,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Astrbot.sh)'
-    [11,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Miaospeed.sh)'
-    [11,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Napcat.sh)'
-    [11,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Koipy.sh)'
-    [11,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TGsignpulse.sh)'
-    [11,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LangBot.sh)'
-    [11,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Sakuraembyboss.sh)'
-    [11,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramPanel.sh)'
-    [11,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/23QQBot.sh)'
-    [11,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TeleRelay.sh)'
-    [11,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NodeSeekRSSbot.sh)'
-    [11,16]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LuckyLilliaBot.sh)'
-    [11,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LETBOT.sh)'
-    [11,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SubscriptionBot.sh)'
-    [11,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Emby-TG.sh)'
-    [11,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TGuard.sh)'
-    [11,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TG-WatchBot.sh)'
-    [11,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/TelegramDriveBots.sh)'
-    [11,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/RayNewsv.sh)'
-    [11,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/StickerAlchemy.sh)'
-    [12,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HuobaoDrama.sh)'
-    [12,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/OneAPI.sh)'
-    [12,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Grok2API.sh)'
-    [12,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/NewAPI.sh)'
-    [12,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AntigravityManager.sh)'
-    [12,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CLIProxyAPI.sh)'
-    [12,7]='bash <(curl -sL kejilion.sh) app openclaw'
-    [12,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/gcli2api.sh)'
-    [12,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/sub2api.sh)'
-    [12,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Octopus.sh)'
-    [12,11]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AIClient2API.sh)'
-    [12,12]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CodeG.sh)'
-    [12,13]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/SXEdict.sh)'
-    [12,14]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/ModelStatus.sh)'
-    [12,15]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GPTImage.sh)'
-    [12,16]='bash <(curl -sL https://raw.githubusercontent.com/kejilion/sh/main/hermes_manager.sh)'
-    [12,17]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZClaudeCode.sh)'
-    [12,18]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZGeminiCLI.sh)'
-    [12,19]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZCodexCLI.sh)'
-    [12,20]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AZOpenCode.sh)'
-    [12,21]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/DrissionPage.sh)'
-    [12,22]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GeminiBusiness2API.sh)'
-    [12,23]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Mimo2API.sh)'
-    [12,24]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
-    [12,25]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DeepSeekTUI.sh)'
-    [12,26]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/CPAUsageKeeper.sh)'
-    [13,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
-    [13,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Taoyuan.sh)'
+    [11,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LangBot.sh)'
+    [11,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/LLBot.sh)'
+    [11,5]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AstrBot.sh)'
+    [11,6]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Koipy.sh)'
+    [11,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Miaospeed.sh)'
+    [11,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/FlClouds.sh)'
+    [12,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh)'
+    [12,2]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/PuppyStardewServer.sh)'
+    [12,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/games-IceClimberArena.sh)'
+    [12,4]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/games-ArenaBrawl.sh)'
+    [13,1]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oci-helper.sh)'
+    [13,2]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/oci-start.sh)'
+    [13,3]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/RBot.sh)'
+    [13,4]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/Oracle/lookbusy.sh)'
+    [14,1]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/FOSSBilling.sh)'
+    [14,2]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/Paymenter.sh)'
+    [14,3]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/PayIncus.sh)'
+    [14,4]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/PVEGL.sh)'
+    [14,5]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/LXD.sh)'
+    [14,6]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/DockerLXC.sh)'
+    [14,7]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/Incus.sh)'
+    [14,8]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/LXDAPI.sh)'
+    [14,9]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/CLICD.sh)'
+    [15,1]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenClaw.sh)'
+    [15,2]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Hermes.sh)'
+    [15,3]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/New-API.sh)'
+    [15,4]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CLIProxyAPI.sh)'
+    [15,5]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Sub2API.sh)'
+    [15,6]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CliRelay.sh)'
+    [15,7]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Antigravity.sh)'
+    [15,8]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/gcli2api.sh)'
+    [15,9]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Octopus.sh)'
+    [15,10]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AIClient2API.sh)'
+    [15,11]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiBusiness2API.sh)'
+    [15,12]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/MIMO-2API.sh)'
+    [15,13]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/BAIDUCHAT2API.sh)'
+    [15,14]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Codeg.sh)'
+    [15,15]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Huobao-Drama.sh)'
+    [15,16]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GPTImagePanel.sh)'
+    [15,17]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Model-Status.sh)'
+    [15,18]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CPAUsageKeeper.sh)'
+    [15,19]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DrissionPage.sh)'
+    [15,20]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenWebUI.sh)'
+    [15,21]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
+    [15,22]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiCLI.sh)'
+    [15,23]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenCodeCLI.sh)'
+    [15,24]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodeWhale.sh)'
+    [15,25]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/ClaudeCode.sh)'
+    [15,26]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexCLI.sh)'
+
 )
+
+
+# ================== Docker 状态获取函数 ==================
+show_docker_status() {
+    # 检查系统是否安装了 docker 
+    if ! command -v docker &> /dev/null; then
+        echo -e "${GREEN}🐳 Docker 状态:${RESET} ${RED}❌ 未安装${RESET}"
+        return
+    fi
+
+    # 检查 Docker 服务是否在运行
+    if ! docker info &> /dev/null; then
+        echo -e "${GREEN}🐳 Docker 状态:${RESET} ${RED}🛑 未启动${RESET}"
+        return
+    fi
+
+    # 获取容器和镜像数量
+    # runningCount: 运行中, stoppedCount: 已停止, imageCount: 镜像数
+    local running_containers=$(docker ps -q | wc -l)
+    local total_containers=$(docker ps -a -q | wc -l)
+    local stopped_containers=$((total_containers - running_containers))
+    local total_images=$(docker images -q | sort -u | wc -l)
+
+    echo -e "${GREEN}🐳 Docker     :${RESET} ${YELLOW}运行中${RESET}"
+    echo -e "${GREEN}🟢 运行容器   :${RESET} ${YELLOW}${running_containers}${RESET}" 
+    echo -e "${GREEN}🔴 停止容器   :${RESET} ${YELLOW}${stopped_containers}${RESET}" 
+    echo -e "${GREEN}📦 系统镜像   :${RESET} ${YELLOW}${total_images}${RESET}"
+}
+
 
 # ================== 菜单显示函数 ==================
 show_category_menu() {
     clear
     echo -e "${ORANGE}${BOLD}╔══════════════════════════════╗${RESET}"
-    echo -e "${ORANGE}${BOLD}   应用分类菜单(快捷指令:D/d)    ${RESET}"
+    echo -e "${ORANGE}${BOLD}   应用分类菜单${RESET}${YELLOW}(快捷指令:D/d)    ${RESET}"
     echo -e "${ORANGE}${BOLD}╚══════════════════════════════╝${RESET}"
+    show_docker_status
+    echo -e "${ORANGE}--------------------------------${RESET}"
 
     for i in $(seq 1 ${#categories[@]}); do
         printf "${YELLOW}[%02d] %-20s${RESET}\n" "$i" "${categories[$i]}"
     done
 
-    printf "${GREEN}[%02d] %-20s${RESET}\n" 88 "更新脚本"
-    printf "${GREEN}[%02d] %-20s${RESET}\n" 99 "卸载脚本"
-    printf "${YELLOW}[%02d] %-20s${RESET}\n" 0  "退出脚本"
+    printf "${GREEN}[%02d] %-20s${RESET}\n" 88 "更新"
+    printf "${GREEN}[%02d] %-20s${RESET}\n" 99 "卸载"
+    printf "${YELLOW}[%02d] %-20s${RESET}\n" 0  "退出"
 }
 
 show_app_menu() {
     local cat=$1
+    clear
     echo -e "${ORANGE}${BOLD}╔═════════════════════════════╗${RESET}"
     echo -e "${ORANGE}${BOLD}           ${categories[$cat]} ${RESET}"
     echo -e "${ORANGE}${BOLD}╚═════════════════════════════╝${RESET}"
@@ -684,12 +618,11 @@ show_app_menu() {
     printf "${GREEN}[X] %-25s${RESET}\n" " 退出"
 }
 
-
 category_menu_handler() {
     while true; do
         show_category_menu
         read -rp "$(echo -e "${RED}请输入分类编号:${RESET}")" cat_choice
-        cat_choice=$(echo "$cat_choice" | xargs)  # 去掉前后空格
+        cat_choice=$(echo "$cat_choice" | xargs)  
 
         # 检查是否为数字（允许前导零）
         if ! [[ "$cat_choice" =~ ^0*[0-9]+$ ]]; then
@@ -699,7 +632,7 @@ category_menu_handler() {
         fi
 
         case "$cat_choice" in
-            0|00) exit 0 ;;           # 支持 0 或 00
+            0|00) exit 0 ;;         
             88) update_script ;;
             99) uninstall_script ;;
             *)
@@ -738,7 +671,21 @@ app_menu_handler() {
             break
         elif [[ -n "${menu_map[$app_choice]}" ]]; then
             key="${menu_map[$app_choice]}"
-            bash -c "${commands[$key]}"
+            
+            # 1. 提取原始命令
+            local RAW_CMD="${commands[$key]}"
+            local EXEC_CMD=""
+
+            # 2. 🌟只有当代理不为空时才做替换，默认直连绝不污染命令
+            if [ -n "$CHOSEN_PROXY" ]; then
+                EXEC_CMD="${RAW_CMD//https:\/\/raw.githubusercontent.com\//$CHOSEN_PROXYhttps:\/\/raw.githubusercontent.com\/}"
+            else
+                EXEC_CMD="$RAW_CMD"
+            fi
+            
+            
+            # 3. 执行安全的命令
+            bash -c "$EXEC_CMD"
         else
             echo -e "${RED}无效选择，请重新输入!${RESET}"
             sleep 1
@@ -751,9 +698,11 @@ app_menu_handler() {
 
 # ================== 脚本更新与卸载 ==================
 update_script() {
-    echo -e "${YELLOW}正在更新脚本...${RESET}"
+    echo -e "${YELLOW}正在更新应用商店...${RESET}"
 
-    if curl -fsSL -o "$SCRIPT_PATH.new" "$SCRIPT_URL"; then
+    local REAL_UPDATE_URL="${CHOSEN_PROXY}${SCRIPT_URL}"
+
+    if curl -fsSL -o "$SCRIPT_PATH.new" "$REAL_UPDATE_URL"; then
         chmod +x "$SCRIPT_PATH.new"
         mv -f "$SCRIPT_PATH.new" "$SCRIPT_PATH"
 
@@ -771,14 +720,13 @@ update_script() {
 }
 
 uninstall_script() {
-    echo -e "${YELLOW}正在卸载脚本...${RESET}"
     rm -f "$SCRIPT_PATH"
     rm -f "$BIN_LINK_DIR/d" "$BIN_LINK_DIR/D"
-    echo -e "${RED}卸载完成!${RESET}"
+    echo -e "${RED}卸载完成！${RESET}"
     exit 0
 }
 
 # ================== 主循环 ==================
 while true; do
     category_menu_handler
-done
+done 
