@@ -298,16 +298,17 @@ declare -A apps=(
     [15,14]="Codeg              智能体编码工作台"
     [15,15]="Huobao-Drama       短剧生成"
     [15,16]="GPTImage           图片生成"
-    [15,17]="ModelStatus        模型监控"
-    [15,18]="CPAUsageKeeperCPA  用量追踪"
-    [15,19]="DrissionPage       网页自动化工具"
-    [15,20]="Open  WebUI        Web面板"
-    [15,21]="Codex WebUI        Web面板"
-    [15,22]="Gemini CLI         CLI工具"
-    [15,23]="Open Code          CLI工具"
-    [15,24]="Code Whale         CLI工具"
-    [15,25]="Claude Code        CLI工具"
-    [15,26]="Codex CLI          CLI工具"
+    [15,17]="ImagePlayground    图片生成"
+    [15,18]="ModelStatus        模型监控"
+    [15,19]="CPAUsageKeeperCPA  用量追踪"
+    [15,20]="DrissionPage       网页自动化工具"
+    [15,21]="Open  WebUI        Web面板"
+    [15,22]="Codex WebUI        Web面板"
+    [15,23]="Gemini CLI         CLI工具"
+    [15,24]="Open Code          CLI工具"
+    [15,25]="Code Whale         CLI工具"
+    [15,26]="Claude Code        CLI工具"
+    [15,27]="Codex CLI          CLI工具"
 )
 
 # ================== 二级菜单命令 ==================
@@ -524,16 +525,17 @@ declare -A commands=(
     [15,14]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Codeg.sh)'
     [15,15]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Huobao-Drama.sh)'
     [15,16]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GPTImagePanel.sh)'
-    [15,17]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Model-Status.sh)'
-    [15,18]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CPAUsageKeeper.sh)'
-    [15,19]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DrissionPage.sh)'
-    [15,20]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenWebUI.sh)'
-    [15,21]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
-    [15,22]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiCLI.sh)'
-    [15,23]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenCodeCLI.sh)'
-    [15,24]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodeWhale.sh)'
-    [15,25]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/ClaudeCode.sh)'
-    [15,26]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexCLI.sh)'
+    [15,17]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GPTImagePlayground.sh)'
+    [15,18]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Model-Status.sh)'
+    [15,19]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CPAUsageKeeper.sh)'
+    [15,20]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DrissionPage.sh)'
+    [15,21]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenWebUI.sh)'
+    [15,22]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
+    [15,23]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiCLI.sh)'
+    [15,24]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenCodeCLI.sh)'
+    [15,25]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodeWhale.sh)'
+    [15,26]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/ClaudeCode.sh)'
+    [15,27]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexCLI.sh)'
 
 )
 
