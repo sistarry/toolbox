@@ -843,14 +843,15 @@ main() {
     echo -e "${GREEN}=============================================${NC}"
     echo -e "${GREEN}     ◈     欢迎使用 VPS 一键优化     ◈       ${NC}"
     echo -e "${GREEN}=============================================${NC}"
-    echo -e "${YELLOW}本脚本将执行：系统更新、BBR调优、防火墙放行、DNS设置、${NC}"
+    echo -e "${YELLOW}将执行：系统更新、BBR调优、防火墙放行、DNS设置、${NC}"
     echo -e "${YELLOW}Swap配置、SSH加固、Docker安装、垃圾清理等一系列操作。${NC}"
     echo -e "${YELLOW}注意：运行结束后会自动重启服务器。${NC}"
     echo -e "${YELLOW}注意: Alpine/容器/轻量级虚拟化 (LXC/Docker/OpenVZ)不支持${NC}"
     echo -e "${GREEN}---------------------------------------------${NC}"
 
     if [[ "$non_interactive" = false ]]; then
-        read -p "是否确认开始优化? [y/n]: " -r CONFIRM
+        echo -ne "${RED}是否确认开始优化? [y/n]: ${NC}"
+        read -r CONFIRM
         
         if [[ "$CONFIRM" =~ ^[nN]$ ]]; then
             exit 0
@@ -881,7 +882,7 @@ main() {
         echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${YELLOW}❌ 错误: 检测到当前环境为虚拟化容器: ${VIRT_TYPE}${NC}"
         echo -e "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${NC}"
-        echo -e "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${NC}"
+        echo -e "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行。${NC}"
         echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         exit 1
     fi
