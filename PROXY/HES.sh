@@ -2,13 +2,23 @@
 
 GREEN='\033[0;32m'
 LIGHT_GREEN='\033[1;32m'
+YELLOW="\033[33m"
+RED="\033[31m"
 NC='\033[0;0m' # 无颜色
 
 # 菜单主循环
 while true; do
     clear
+    # 检测安装状态
+    if [ -d "/opt/he-tunnel-manager" ]; then
+        STATUS="${YELLOW}[已安装]${NC}"
+    else
+        STATUS="${RED}[未安装]${NC}"
+    fi
     echo -e "${GREEN}========================${NC}"
     echo -e "${GREEN}   ◈  HE隧道 管理  ◈   ${NC}"
+    echo -e "${GREEN}========================${NC}"
+    echo -e "${GREEN} 当前状态: ${STATUS}"
     echo -e "${GREEN}========================${NC}"
     echo -e "${GREEN} 1. 安装${NC}"
     echo -e "${GREEN} 2. 卸载${NC}"
