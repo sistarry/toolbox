@@ -577,7 +577,7 @@ while true; do
     echo -e "${GREEN} 7. 重启当前实例${RESET}"
     echo -e "${GREEN} 8. 当前实例日志${RESET}"
     echo -e "${GREEN} 9. 当前实例配置${RESET}"
-    echo -e "${GREEN}10. 管理实例${RESET}  ${YELLOW}← 添加/切换节点${RESET}"
+    echo -e "${GREEN}10. 管理实例${RESET}     ${YELLOW}← 添加/切换节点${RESET}"
     echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}===========================================${RESET}"
     
