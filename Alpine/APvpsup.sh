@@ -18,7 +18,7 @@ LOG_FILE="/var/log/alpine_setup.log"
 non_interactive=${NON_INTERACTIVE:-false}
 
 # 适配 Alpine 的精简依赖包 
-deps="curl wget git net-tools bash lsof tar unzip grep rsync pv sudo netcat-openbsd openssh openssh-client jq openssl ca-certificates"
+deps="curl wget git net-tools bash lsof tar unzip grep  gcompat rsync pv sudo netcat-openbsd openssh openssh-client jq openssl ca-certificates"
 
 log() {
     echo -e "$1"
@@ -43,7 +43,7 @@ detect_environment() {
     fi
     log "${GREEN}当前运行环境:${RESET} ${RED}${VIRT_TYPE}${RESET}"
     log "${YELLOW}由于容器环境共享宿主机内核，无法进行 BBR 调优、Swap 分配等底层操作。${RESET}"
-    log "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此脚本。${RESET}"
+    log "${YELLOW}请在 KVM/VMware/XEN 等全虚拟化架构或物理机上运行此。${RESET}"
     log "${YELLOW}注意：运行结束后会自动重启服务器。${RESET}"
 }
 
@@ -516,7 +516,8 @@ main() {
     detect_environment
     
     if [ "$non_interactive" = false ]; then
-        echo -n "是否立刻开始执行一键优化？ [y/n]: "
+
+        echo -ne "${GREEN}是否立刻开始执行一键优化？ [y/n]: ${RESET}"
         read -r CONFIRM
         if [ "$CONFIRM" = "n" ] || [ "$CONFIRM" = "N" ]; then
             exit 0
