@@ -5,6 +5,7 @@
 
 # 颜色定义
 GREEN='\033[0;32m'
+YELLOW="\033[33m"
 RED='\033[0;31m'
 NC='\033[0m'
 RESET='\033[0m'
@@ -45,9 +46,31 @@ download_and_run() {
 
 while true; do
     clear
+    # 检测安装状态
+    if [ -d "/opt/frpp-master" ]; then
+        MSTATUS="${YELLOW}[已安装]${NC}"
+    else
+        MSTATUS="${RED}[未安装]${NC}"
+    fi
+    # 检测安装状态
+    if [ -d "/opt/frp-panel-server" ]; then
+        SSTATUS="${YELLOW}[已安装]${NC}"
+    else
+        SSTATUS="${RED}[未安装]${NC}"
+    fi
+    # 检测安装状态
+    if [ -d "/opt/frp-panel-client" ]; then
+        STATUS="${YELLOW}[已安装]${NC}"
+    else
+        STATUS="${RED}[未安装]${NC}"
+    fi
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}     ◈  FRP-Panel 管理面板  ◈    ${NC}"
+    echo -e "${GREEN}     ◈  FRP-Panel 管理面板  ◈    ${RESET}"
     echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN} 面板端状态: ${MSTATUS}"
+    echo -e "${GREEN} 服务端状态: ${SSTATUS}"
+    echo -e "${GREEN} 客户端状态: ${STATUS}"
+    echo -e "${GREEN}=================================${RESET}"
     echo -e "${GREEN}1. Master 面板端${NC}"
     echo -e "${GREEN}2. Server 服务端${NC}"
     echo -e "${GREEN}3. Client 客户端${NC}"
