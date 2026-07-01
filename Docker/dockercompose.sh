@@ -546,6 +546,11 @@ function project_menu() {
 function network_menu() {
     while true; do
         clear
+        if ! command -v docker &> /dev/null; then
+            echo -e "${RED}❌ 错误: 未检测到 Docker，请先安装！${RESET}"
+            read -p "$(echo -e "${GREEN}按回车返回主菜单...${RESET}")" temp
+            break # 跳出循环，返回主菜单
+        fi
         # 实时抓取系统中的所有网络状态数据
         local total_nets=$(docker network ls -q | wc -l)
         local net_list=$(docker network ls --format "{{.Name}} ({{.Driver}})" | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
@@ -624,6 +629,162 @@ function network_menu() {
 }
 
 
+# ============================================================
+# Docker安装
+# ============================================================
+run_docker() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://ghfast.top/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Dockersos.sh"
+    local TEMP_SCRIPT="/tmp/docker_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+}
+# ============================================================
+# 备份
+# ============================================================
+run_backup() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://ghfast.top/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh"
+    local TEMP_SCRIPT="/tmp/backup_temp.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        # 真正执行备份恢复脚本
+        bash "$TEMP_SCRIPT"
+        
+        # 执行完毕后清理临时文件
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+}
+# ============================================================
+# 更新
+# ============================================================
+run_update() {
+    clear
+    # 用户提供的代理前缀列表
+    local GITHUB_PROXY=(
+        ''
+        'https://v6.gh-proxy.org/'
+        'https://ghfast.top/'
+        'https://gh-proxy.com/'
+        'https://hub.glowp.xyz/'
+        'https://proxy.vvvv.ee/'
+        'https://ghproxy.lvedong.eu.org/'
+    )
+    
+    local RAW_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
+    local TEMP_SCRIPT="/tmp/update.sh"
+    local success=false
+
+
+    # 循环轮询代理列表
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local target_url="${proxy}${RAW_URL}"
+        if [ -n "$proxy" ]; then
+            echo
+        else
+            echo
+        fi
+
+        # 使用 curl 下载，设置 8 秒超时
+        if curl -fsSL --connect-timeout 8 "$target_url" -o "$TEMP_SCRIPT"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}❌ 当前连接失败，正在切换下一个节点...${RESET}"
+    done
+
+    # 判断是否下载成功并执行
+    if [ "$success" = true ] && [ -f "$TEMP_SCRIPT" ]; then
+        echo
+        chmod +x "$TEMP_SCRIPT"
+        
+        bash "$TEMP_SCRIPT"
+        
+        rm -f "$TEMP_SCRIPT"
+    else
+        echo -e "${RED}❌ 致命错误：所有 GitHub 代理节点均无法连接，请检查您的 VPS 网络！${RESET}"
+    fi
+}
+
+
+
 # ---------------------------
 # 代理下载核心引擎（自动轮询尝试各节点）
 # ---------------------------
@@ -674,15 +835,18 @@ function main_menu() {
         echo -e "${GREEN}🌐 网络数量:${RESET} ${YELLOW}$total_networks 个${RESET}"
         echo -e "${GREEN}📦 系统镜像:${RESET} ${YELLOW}$total_images 个${RESET}"
         echo -e "${GREEN}======================================${RESET}"
-        echo -e "${GREEN}1) 管理项目${RESET}"
-        echo -e "${GREEN}2) 网络管理${RESET}"
-        echo -e "${GREEN}3) 查看容器运行状态${RESET}"
-        echo -e "${GREEN}4) 多选删除项目${RESET}"
-        echo -e "${GREEN}5) 删除未运行的项目${RESET}"
-        echo -e "${GREEN}6) 清理镜像卷${RESET}"
-        echo -e "${GREEN}7) 更新${RESET}"
-        echo -e "${GREEN}8) 卸载${RESET}"
-        echo -e "${GREEN}0) 退出${RESET}"
+        echo -e "${GREEN} 1) 管理项目${RESET}"
+        echo -e "${GREEN} 2) 网络管理${RESET}"
+        echo -e "${GREEN} 3) 容器运行状态${RESET}"
+        echo -e "${GREEN} 4) 多选删除项目${RESET}"
+        echo -e "${GREEN} 5) 删除未运行的项目${RESET}"
+        echo -e "${GREEN} 6) 清理镜像卷${RESET}"
+        echo -e "${GREEN} 7) 管理Docker${RESET}"
+        echo -e "${GREEN} 8) 备份Docker${RESET}"
+        echo -e "${GREEN} 9) 自动更新${RESET}"
+        echo -e "${GREEN}10) 更新${RESET}"
+        echo -e "${GREEN}11) 卸载${RESET}"
+        echo -e "${GREEN} 0) 退出${RESET}"
         echo -e "${GREEN}======================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case "$choice" in
@@ -691,8 +855,20 @@ function main_menu() {
             3) monitor_docker_containers ;;
             4) delete_multiple_projects ;;
             5) delete_all_stopped_projects ;;
-            6) docker image prune -a -f && docker volume prune -f ;;
-            7)
+            6) 
+               if ! command -v docker &> /dev/null; then
+                   echo -e "${RED}❌ 错误: 未检测到 Docker，请先安装！${RESET}"
+                   exit 0                  
+               fi
+               echo -e "${YELLOW}⏳ 正在清理未使用的镜像和数据卷...${RESET}"
+               docker image prune -a -f && docker volume prune -f
+               echo -e "${GREEN}✅ Docker 镜像与数据卷清理成功！${RESET}"
+               read -p "$(echo -e "${GREEN}按回车返回主菜单...${RESET}")" temp
+               ;;
+            7) run_docker ;;
+            8) run_backup ;;
+            9) run_update ;;
+            10) 
                echo -e "${YELLOW}🔄 正在更新...${RESET}"
                if download_script; then
                    echo -e "${GREEN}✅ 已成功更新！${RESET}"
@@ -701,7 +877,7 @@ function main_menu() {
                fi
                read -p "$(echo -e "${GREEN}按回车返回主菜单...${RESET}")" temp
                ;;
-            8)
+            11)
                echo -e "${YELLOW}正在卸载...${RESET}"
                rm -f "$BIN_LINK_DIR/p" "$BIN_LINK_DIR/P" "$SCRIPT_PATH"
                echo -e "${RED}✅ 卸载完成${RESET}"
