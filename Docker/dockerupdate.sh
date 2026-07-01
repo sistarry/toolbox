@@ -1,21 +1,10 @@
 #!/bin/bash
 # ========================================
 # Docker 自动更新管理器
-# 功能：
-#   ✅ 运行即安装到 /root/dockerupdate.sh 并赋权限
-#   ✅ 定时任务调用固定脚本路径 /root/dockerupdate.sh
-#   ✅ 日志 /var/log/docker-update.log
-#   ✅ Telegram 成功/失败通知
-#   ✅ 手动更新、一键更新、自定义文件夹更新
-#   ✅ 添加/删除普通项目和自定义文件夹定时任务
-#   ✅ 卸载管理器（删除脚本+定时任务）
-# 使用：
-#   手动执行管理器: ./dockerupdate.sh
-#   定时任务: /root/dockerupdate.sh /项目路径 项目名称
 # ========================================
 
-SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
-SCRIPT_PATH="/root/dockerupdate.sh"
+RAW_SCRIPT_URL="raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
+SCRIPT_PATH="/etc/dockerupdate.sh"
 CRON_TAG="# docker-project-update"
 
 GREEN="\033[32m"
@@ -27,16 +16,55 @@ PROJECTS_DIR="/opt"
 CONF_FILE="/etc/docker-update.conf"
 LOG_FILE="/var/log/docker-update.log"
 
+# GitHub 代理列表
+GITHUB_PROXIES=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+)
+
+# ========================================
+# 获取最快的 GitHub 下载链接
+# ========================================
+get_available_url() {
+    local target_path=$1
+    # 优先测试直连（第一个空字符串）
+    if curl -o /dev/null -s -m 3 --connect-timeout 2 "https://${target_path}"; then
+        echo "https://${target_path}"
+        return 0
+    fi
+
+    # 轮询测试其他代理，返回第一个可以接通的
+    for proxy in "${GITHUB_PROXIES[@]}"; do
+        [ -z "$proxy" ] && continue
+        if curl -o /dev/null -s -m 3 --connect-timeout 2 "${proxy}https://${target_path}"; then
+            echo "${proxy}https://${target_path}"
+            return 0
+        fi
+    done
+
+    # 如果都失败了，保底返回直连
+    echo "https://${target_path}"
+}
+
 # ========================================
 # 自动下载安装管理器
 # ========================================
 if [ ! -f "$SCRIPT_PATH" ]; then
+    echo -e "${YELLOW}🔍 正在测速并选择最佳 GitHub 镜像源...${RESET}"
+    SCRIPT_URL=$(get_available_url "$RAW_SCRIPT_URL")
+    echo -e "${YELLOW}📥 正在下载安装...${RESET}"
+    
     curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
     if [ $? -ne 0 ]; then
         echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
         exit 1
     fi
     chmod +x "$SCRIPT_PATH"
+    echo -e "${GREEN}✅ 安装成功！${RESET}"
 fi
 
 # ========================================
@@ -46,8 +74,8 @@ uninstall_manager() {
     echo -e "${RED}正在卸载管理器...${RESET}"
     crontab -l 2>/dev/null | grep -v "$CRON_TAG" | crontab -
     echo -e "${GREEN}✅ 已删除所有 Docker 定时任务${RESET}"
-    [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器脚本${RESET}"
-    echo -e "${GREEN}卸载完成${RESET}"
+    [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器${RESET}"
+    echo -e "${GREEN}✅ 卸载完成${RESET}"
     exit 0
 }
 
@@ -353,17 +381,19 @@ remove_all_updates() {
 }
 
 # ========================================
-# 管理器自更新（极简覆盖版）
+# 管理器自更新（带代理测速覆盖版）
 # ========================================
 self_update() {
     load_conf
     SERVER=${SERVER_NAME:-$(hostname)}
 
-    echo -e "${GREEN}🚀 正在更新管理器...${RESET}"
+    echo -e "${GREEN}🚀 正在检测更新管理器...${RESET}"
+    CURRENT_URL=$(get_available_url "$RAW_SCRIPT_URL")
+    echo -e "${YELLOW}📥 正在下载最新版本...${RESET}"
 
     TMP=$(mktemp)
 
-    if ! curl -fsSL "$SCRIPT_URL" -o "$TMP"; then
+    if ! curl -fsSL "$CURRENT_URL" -o "$TMP"; then
         echo -e "${RED}❌ 下载失败${RESET}"
         return
     fi
