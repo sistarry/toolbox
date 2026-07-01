@@ -47,7 +47,7 @@ reinstall_os() {
     echo -e "${yellow}注意：NAT重装后SSH端口密码保持原端口密码不变${re}"
     
     while true; do
-        read -p $'\033[1;35m确定要重装吗？(y/n): \033[0m' confirm
+        read -p $'\033[0;31m确定要重装吗？(y/n): \033[0m' confirm
         if [[ $confirm =~ ^[Yy]$ ]]; then
             # 执行网络检查并确定可用链接
             check_network
