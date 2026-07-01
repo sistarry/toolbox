@@ -154,7 +154,7 @@ update_one() {
             UPDATED_LIST+=("$NAME")
             echo -e "${GREEN}✅ $NAME 更新成功！${RESET}"
         else
-            echo -e "${RED}❌ $NAME 更新脚本执行失败${RESET}"
+            echo -e "${RED}❌ $NAME 更新工具箱执行失败${RESET}"
             rm -f "$TMP"
         fi
     else
@@ -173,13 +173,13 @@ run_update() {
     update_one "store" "store.sh" "Docker/Store.sh"
 
     if [ ${#UPDATED_LIST[@]} -gt 0 ]; then
-        MSG="🚀 脚本已更新
+        MSG="🚀 工具箱已更新
 服务器: ${SERVER_NAME}
-脚本: ${UPDATED_LIST[*]}"
+工具箱: ${UPDATED_LIST[*]}"
         tg_send "$MSG"
         echo -e "${GREEN}更新完成${RESET}"
     else
-        echo -e "${YELLOW}没有脚本需要更新${RESET}"
+        echo -e "${YELLOW}没有工具箱需要更新${RESET}"
     fi
 }
 
