@@ -28,6 +28,13 @@ check_dependencies() {
 
 # 动态获取容器状态
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        webui_port="N/A"
+        data_dir="N/A"
+        return 0
+    fi
     if [ "$(docker ps -q -f name=xboard)" ]; then
         status="${YELLOW}运行中${RESET}"
         REAL_CONTAINER=$(docker ps --format "{{.Names}}" -f name=xboard | head -n 1)
