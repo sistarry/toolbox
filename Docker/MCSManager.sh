@@ -28,8 +28,8 @@ get_status_info() {
     if ! command -v docker &> /dev/null; then
         status="${RED}未安装 Docker${RESET}"
         img_version="${RED}未安装${RESET}"
-        webui_port="N/A"
-        data_dir="N/A"
+        web_port="N/A"
+        daemon_port="N/A"
         return 0
     fi
     # 1. 检查 Web 和 Daemon 状态
