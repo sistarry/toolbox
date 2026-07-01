@@ -420,14 +420,26 @@ self_update() {
 
     echo -e "${GREEN}🚀 正在检测更新管理器...${RESET}"
     
-    # 🟢 同样调用盲跑轮询下载函数
-    if ! download_script "$RAW_SCRIPT_URL" "$SCRIPT_PATH"; then
-        echo -e "${RED}❌ 更新失败${RESET}"
+    # 1. 建立一个临时的下载目标，避免直接影响正在运行的脚本
+    local TMP_UPDATE_PATH="/etc/dockerupdate.sh.tmp"
+
+    # 2. 调用盲跑轮询下载函数
+    if ! download_script "$RAW_SCRIPT_URL" "$TMP_UPDATE_PATH"; then
+        echo -e "${RED}❌ 更新失败，无法下载${RESET}"
+        rm -f "$TMP_UPDATE_PATH"
+        read -p "$(echo -e ${GREEN}回车继续...${RESET})"
         return
     fi
 
+    # 3. 核心修复：先给临时文件赋权，再覆盖，确保可执行属性不丢失
+    chmod +x "$TMP_UPDATE_PATH"
+    mv -f "$TMP_UPDATE_PATH" "$SCRIPT_PATH"
+    chmod +x "$SCRIPT_PATH" # 再次保底赋权
+
     tg_send "🚀 <b>Docker 管理器已更新</b>%0A服务器: $SERVER%0A时间: $(date '+%F %T')"
     echo -e "${GREEN}✅ 更新完成，重新启动...${RESET}"
+    
+    # 4. 重新启动新脚本
     exec "$SCRIPT_PATH"
 }
 
