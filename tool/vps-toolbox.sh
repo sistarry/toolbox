@@ -8,7 +8,7 @@
 # - 彩色菜单和动态彩虹标题
 # - 完整安装/卸载
 
-INSTALL_PATH="$HOME/vps-toolbox.sh"
+INSTALL_PATH="/etc/vps-toolbox.sh"
 SHORTCUT_PATH="/usr/local/bin/m"
 SHORTCUT_PATH_UPPER="/usr/local/bin/M"
 
