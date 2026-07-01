@@ -219,7 +219,7 @@ while true; do
     clear
     get_runtime_status
     echo -e "${GREEN}==============================${RESET}"
-    echo -e "${GREEN}◈LookBusy防回收保活  管理面板◈  ${RESET}"
+    echo -e "${GREEN} ◈LookBusy 防回收保活管理面板◈  ${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     # 状态栏拆分，严格每行一个指标
     echo -e "${GREEN}容器状态:${RESET} $status"
