@@ -45,7 +45,7 @@ download_script() {
     local tmp_file=$(mktemp)
 
     # 1. 优先尝试直连
-    echo -e "${YELLOW}📥 正在尝试直连下载...${RESET}"
+    echo -e "${YELLOW}📥 正在尝试直连...${RESET}"
     if curl -fsSL -m 5 "https://${target_path}" -o "$tmp_file"; then
         mv -f "$tmp_file" "$output_path"
         return 0
@@ -57,7 +57,7 @@ download_script() {
     
     for idx in "${shuffled_indexes[@]}"; do
         local proxy="${GITHUB_PROXIES[$idx]}"
-        echo -e "${YELLOW}📥 直连未成功，正在通过代理下载: ${proxy}${RESET}"
+        echo -e "${YELLOW}📥 直连未成功，正在通过代理: ${proxy}${RESET}"
         if curl -fsSL -m 8 "${proxy}https://${target_path}" -o "$tmp_file"; then
             mv -f "$tmp_file" "$output_path"
             return 0
