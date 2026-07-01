@@ -61,6 +61,14 @@ download_file() {
 }
 
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status_front="${RED}未安装${RESET}"
+        status_back="${RED}未安装${RESET}"
+        status_db="${RED}未配置${RESET}"
+        web_front="-"
+        web_back="-"
+        return 0
+    fi
     [ "$(docker ps -q -f name=^/vite-frontend$)" ] && status_front="${GREEN}运行中${RESET}" || status_front="${RED}已停止/未创建${RESET}"
     [ "$(docker ps -q -f name=^/flux-panel-backend$)" ] && status_back="${GREEN}运行中${RESET}" || status_back="${RED}已停止/未创建${RESET}"
     
