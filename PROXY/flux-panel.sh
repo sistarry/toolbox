@@ -57,6 +57,16 @@ download_file() {
 
 # 动态获取容器状态、映射端口
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        status_front="${RED}已停止/未创建${RESET}"
+        status_back="${RED}已停止/未创建${RESET}"
+        status_mysql="${YELLOW}未创建或外部数据库${RESET}"
+        web_front="-"
+        web_back="-"
+        return 0
+    fi
     if [ "$(docker ps -q -f name=^/vite-frontend$)" ]; then
         status_front="${GREEN}运行中${RESET}"
     else
