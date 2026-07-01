@@ -568,11 +568,11 @@ execute_choice() {
         102) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Aria2.sh) ;;
         103) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/yt-dlp.sh) ;;
         104) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD.sh) ;;
-        105) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ;;
+        105) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/nezhassh.sh) ;;
 		106) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/AI/AIcheck.sh) ;;
         107) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/test.sh) ;;
         108) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockermo.sh) ;;
-        109) docker image prune -a -f && docker volume prune -f ;;
+        109) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockerclear.sh) ;;
         110) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/unagent.sh) ;;
 
         #  自动更新脚本
