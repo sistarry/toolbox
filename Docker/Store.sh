@@ -43,7 +43,7 @@ done
 
 
 # ================== 脚本路径 ==================
-SCRIPT_PATH="/root/store.sh"
+SCRIPT_PATH="/etc/store.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh"
 BIN_LINK_DIR="/usr/local/bin"
 
