@@ -24,6 +24,13 @@ check_dependencies() {
 
 # 动态获取当前运行状态和实时配置参数 (修复无错版)
 get_runtime_status() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        webui_port="N/A"
+        data_dir="N/A"
+        return 0
+    fi
     if [ -f "$COMPOSE_FILE" ] && [ "$(cd "$BASE_DIR" && docker compose ps -q 2>/dev/null)" ]; then
         status="${GREEN}运行中 (正在动态模拟负载)${RESET}"
         
