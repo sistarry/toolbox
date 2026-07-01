@@ -205,12 +205,13 @@ uninstall_croc() {
     echo -e "${YELLOW}➔ 正在卸载 Croc...${RESET}"
     if command -v croc &>/dev/null || [ -f /usr/local/bin/croc ] || [ -f /usr/bin/croc ]; then
         rm -f /usr/local/bin/croc /usr/bin/croc 2>/dev/null
+        rm -rf /opt/Croc
         local croc_path
         croc_path=$(command -v croc 2>/dev/null)
         [ -n "$croc_path" ] && rm -f "$croc_path"
-        echo -e "${GREEN}🟢 Croc 已从当前系统成功卸载。${RESET}"
+        echo -e "${GREEN}Croc 已从当前系统成功卸载。${RESET}"
     else
-        echo -e "${YELLOW}⚠️  系统中未发现已安装的 Croc。${RESET}"
+        echo -e "${YELLOW}系统中未发现已安装的 Croc。${RESET}"
     fi
     read -r -p "按回车返回主菜单..."
 }
