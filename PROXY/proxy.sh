@@ -337,8 +337,9 @@ while true; do
     echo -e "${YELLOW}[06] 妙妙屋X    节点管理${RESET}"
     echo -e "${YELLOW}[07] XrayR      机场后端 ${RESET}"
     echo -e "${YELLOW}[08] Conflux    Mihomo代理${RESET}"
-    echo -e "${YELLOW}[09] AimiliVPN  干净IP出口${RESET}"
-    echo -e "${YELLOW}[10] MiGate     代理面板${RESET}"
+    echo -e "${YELLOW}[09] OneBoard   Mihomo代理${RESET}"
+    echo -e "${YELLOW}[10] AimiliVPN  干净IP出口${RESET}"
+    echo -e "${YELLOW}[11] MiGate     代理面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -353,8 +354,9 @@ while true; do
         06) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiaoMiaoWuX.sh")) ;;
         07) bash <(curl -Ls https://raw.githubusercontent.com/JackHONGhy/xrayr-automated-install-script/master/install.sh) ; pause_return ;;
         08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Conflux.sh")) ;;
-        09) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh")) ; pause_return ;;
-        10) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiGate.sh")) ;;
+        09) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/OneBoard.sh")) ;;
+        10) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh")) ; pause_return ;;
+        11) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiGate.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -1448,7 +1450,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend|onebord|nodepassdash')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
