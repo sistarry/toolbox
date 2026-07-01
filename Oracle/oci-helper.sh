@@ -183,6 +183,13 @@ restart_containers() {
 }
 
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        webui_port="N/A"
+        data_dir="N/A"
+        return 0
+    fi
     local active_count=0
     for name in "oci-helper-watcher" "oci-helper" "websockify"; do
         if [[ $(docker ps --filter "name=^/${name}$" --format "{{.Status}}") == Up* ]]; then
