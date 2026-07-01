@@ -54,9 +54,7 @@ get_available_url() {
 # 自动下载安装管理器
 # ========================================
 if [ ! -f "$SCRIPT_PATH" ]; then
-    echo -e "${YELLOW}🔍 正在测速并选择最佳 GitHub 镜像源...${RESET}"
     SCRIPT_URL=$(get_available_url "$RAW_SCRIPT_URL")
-    echo -e "${YELLOW}📥 正在下载安装...${RESET}"
     
     curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
     if [ $? -ne 0 ]; then
@@ -241,7 +239,7 @@ remove_update() {
 list_update() {
     clear
     echo -e "${GREEN}=============================================${RESET}"
-    echo -e "${GREEN}     📂 当前生效的 Docker 定时更新任务        ${RESET}"
+    echo -e "${GREEN}      📂 当前生效的 Docker 定时更新任务         ${RESET}"
     echo -e "${GREEN}=============================================${RESET}"
     
     # 获取属于管理器的 crontab 任务
@@ -250,10 +248,7 @@ list_update() {
     if [ -z "$cron_items" ]; then
         echo -e "${RED}❌ 暂无任何自动更新任务。${RESET}"
     else
-        echo -e "${YELLOW} 状态   | 运行周期 (Cron)      | 项目名称 --> 路径${RESET}"
-        echo -e "${GREEN}---------------------------------------------${RESET}"
-        
-        # 逐行解析并高亮打印
+        # 逐行解析并按照你的树状模板打印
         echo "$cron_items" | while read -r line; do
             # 提取 cron 表达式（前5个字段）
             cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
@@ -261,17 +256,18 @@ list_update() {
             p_path=$(echo "$line" | awk '{print $7}')
             p_name=$(echo "$line" | awk '{print $8}')
             
-            # 美化输出
-            printf " [${GREEN}启用${RESET}]  | %-20s | ${GREEN}%-12s${RESET} --> %s\n" "$cron_exp" "$p_name" "$p_path"
+            # 严格套用你要求的 UI 模板结构映射数据
+            echo -e "${YELLOW}◈ 服务: ${RESET}${GREEN}${p_name}${RESET} ${GREEN}● 已启用${RESET}"
+            echo -e "  ├─ ${YELLOW}运行周期: ${RESET}${cron_exp}"
+            echo -e "  └─ ${YELLOW}项目路径: ${RESET}${p_path}"
+            echo -e "${YELLOW}----------------------------------------${RESET}"
         done
-        
-        echo -e "${GREEN}---------------------------------------------${RESET}"
     fi
     
     echo -e "${GREEN}=============================================${RESET}"
     echo
     
-    # 顺便展示最后 3 条日志，方便一眼看出最近有没有正常跑
+    # 顺便展示最后 3 条日志
     if [ -f "$LOG_FILE" ] && [ -s "$LOG_FILE" ]; then
         echo -e "${GREEN}📋 最近 3 条更新日志记录：${RESET}"
         tail -n 3 "$LOG_FILE"
@@ -280,6 +276,7 @@ list_update() {
     
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
+
 
 # 用于在主菜单内渲染任务看板的函数
 show_menu_cron_board() {
@@ -291,7 +288,8 @@ show_menu_cron_board() {
         echo "$cron_items" | while read -r line; do
             cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
             p_name=$(echo "$line" | awk '{print $8}')
-            printf "   🔹 %-12s | 周期: %-15s\n" "$p_name" "$cron_exp"
+            # 🔹 这里加入了 \033[0;33m 开启黄色，以及 \033[0m 恢复默认颜色
+            printf "   \033[0;33m🔹 %-12s | 周期: %-15s\033[0m\n" "$p_name" "$cron_exp"
         done
     fi
 }
