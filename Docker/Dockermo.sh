@@ -13,6 +13,20 @@ echo -e "${B}========================================${NC}"
 echo -e "${Y}       ◈  🐳 Docker 容器监控  ◈        ${NC}"
 echo -e "${B}========================================${NC}"
 
+# ==================== Docker 环境检查 ====================
+if ! command -v docker &> /dev/null; then
+    echo -e "${R}❌ 错误: 未检测到 Docker，请先安装 Docker！${NC}"
+    echo -e "${B}========================================${NC}"
+    exit 1
+fi
+
+if ! docker info &> /dev/null; then
+    echo -e "${R}❌ 错误: Docker 服务未启动，或当前用户无权限！${NC}"
+    echo -e "${Y}💡 提示: 请尝试执行 'sudo systemctl start docker' 启动服务。${NC}"
+    echo -e "${B}========================================${NC}"
+    exit 1
+fi
+
 # 获取并处理数据 (按内存排序)
 docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" | sort -k3 -hr | while IFS=$'\t' read -r name cpu mem net; do
     
