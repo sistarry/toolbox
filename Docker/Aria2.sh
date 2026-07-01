@@ -226,6 +226,7 @@ uninstall_aria2() {
         apk del aria2
     fi
     rm -rf "$CONFIG_DIR"
+    rm -rf "$DOWNLOAD_DIR"
     echo -e "${GREEN}卸载清理完成。${RESET}"
 }
 
