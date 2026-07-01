@@ -39,6 +39,13 @@ check_port(){
 
 # 动态获取容器整体状态和端口
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        status="${RED}未初始化${RESET}"
+        web_port="N/A"
+        return 0
+    fi
     if [ -f "$COMPOSE_FILE" ]; then
         if [ "$(docker ps -q -f name=ppanel-service)" ]; then
             status="${GREEN}运行中${RESET}"
