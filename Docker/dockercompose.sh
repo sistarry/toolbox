@@ -9,6 +9,24 @@ RED="\033[31m"
 ORANGE='\033[38;5;208m'
 RESET="\033[0m"
 
+
+# =============================
+# 脚本路径与代理配置
+# =============================
+SCRIPT_PATH="/etc/dockercompose.sh"
+SCRIPT_URL="raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockercompose.sh" # 去掉 https:// 方便拼接
+BIN_LINK_DIR="/usr/local/bin"
+
+GITHUB_PROXY=(
+    ''
+    'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+)
+
+
 # ---------------------------
 # 配置：需要扫描的项目根目录列表
 # ---------------------------
@@ -605,6 +623,32 @@ function network_menu() {
     done
 }
 
+
+# ---------------------------
+# 代理下载核心引擎（自动轮询尝试各节点）
+# ---------------------------
+function download_script() {
+    local success=false
+    for proxy in "${GITHUB_PROXY[@]}"; do
+        local url="${proxy}${SCRIPT_URL}"
+        if curl -fsSL --connect-timeout 6 -o "$SCRIPT_PATH" "$url"; then
+            success=true
+            break
+        fi
+        echo -e "${RED}节点连接超时或失败，尝试下一个...${RESET}"
+    done
+
+    if $success; then
+        chmod +x "$SCRIPT_PATH"
+        ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/p"
+        ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/P"
+        return 0
+    else
+        echo -e "${RED}❌ 所有节点下载均失败，请检查网络！${RESET}"
+        return 1
+    fi
+}
+
 # ---------------------------
 # 主菜单
 # ---------------------------
@@ -621,22 +665,25 @@ function main_menu() {
         # 统计自定义网络（排除自带的 bridge, host, none）
         local total_networks=$(docker network ls --filter "type=custom" -q 2>/dev/null | wc -l)
 
-        echo -e "${GREEN}================================${RESET}"
-        echo -e "${GREEN} ◈  Docker Compose 项目管理  ◈ ${RESET}"
-        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}======================================${RESET}"
+        echo -e "${GREEN}◈ Docker Compose 管理${RESET}${YELLOW}(快捷指令: P/p)${RESET} ${GREEN}◈ ${RESET}"
+        echo -e "${GREEN}======================================${RESET}"
         echo -e "${GREEN}🟢 运行容器:${RESET} ${YELLOW}$running_containers 个${RESET}"  
         echo -e "${GREEN}🔴 停止容器:${RESET} ${RED}$stopped_containers 个${RESET}"
         echo -e "${GREEN}💾 数据卷数:${RESET} ${YELLOW}$total_volumes 个${RESET}"    
         echo -e "${GREEN}🌐 网络数量:${RESET} ${YELLOW}$total_networks 个${RESET}"
         echo -e "${GREEN}📦 系统镜像:${RESET} ${YELLOW}$total_images 个${RESET}"
-        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}======================================${RESET}"
         echo -e "${GREEN}1) 管理项目${RESET}"
         echo -e "${GREEN}2) 网络管理${RESET}"
         echo -e "${GREEN}3) 查看容器运行状态${RESET}"
         echo -e "${GREEN}4) 多选删除项目${RESET}"
         echo -e "${GREEN}5) 删除未运行的项目${RESET}"
+        echo -e "${GREEN}6) 清理镜像卷${RESET}"
+        echo -e "${GREEN}7) 更新${RESET}"
+        echo -e "${GREEN}8) 卸载${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
-        echo -e "${GREEN}================================${RESET}"
+        echo -e "${GREEN}======================================${RESET}"
         read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
         case "$choice" in
             1) select_project ;;
@@ -644,11 +691,41 @@ function main_menu() {
             3) monitor_docker_containers ;;
             4) delete_multiple_projects ;;
             5) delete_all_stopped_projects ;;
+            6) docker image prune -a -f && docker volume prune -f ;;
+            7)
+               echo -e "${YELLOW}🔄 正在更新...${RESET}"
+               if download_script; then
+                   echo -e "${GREEN}✅ 已成功更新！${RESET}"
+                   sleep 1
+                   exec "$SCRIPT_PATH"
+               fi
+               read -p "$(echo -e "${GREEN}按回车返回主菜单...${RESET}")" temp
+               ;;
+            8)
+               echo -e "${YELLOW}正在卸载...${RESET}"
+               rm -f "$BIN_LINK_DIR/p" "$BIN_LINK_DIR/P" "$SCRIPT_PATH"
+               echo -e "${RED}✅ 卸载完成${RESET}"
+               exit 0
+               ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" && sleep 1 ;;
         esac
     done
 }
+
+# =============================
+# 首次运行自动安装检验
+# =============================
+if [ ! -f "$SCRIPT_PATH" ]; then
+    echo -e "${YELLOW}🚀 检测到首次运行，正在拉取完整组件...${RESET}"
+    if download_script; then
+        echo -e "${GREEN}✅ 安装完成！快捷键：p 或 P 可快速启动${RESET}"
+        sleep 1
+        exec "$SCRIPT_PATH"
+    else
+        exit 1
+    fi
+fi
 
 # 启动
 main_menu
