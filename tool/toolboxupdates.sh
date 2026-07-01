@@ -253,7 +253,7 @@ uninstall_manager() {
     [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器脚本${RESET}"
     [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE" && echo -e "${GREEN}✅ 已删除日志${RESET}"
     [ -f "$CONF" ] && rm -f "$CONF" && echo -e "${GREEN}✅ 已删除配置文件${RESET}"
-    echo -e "${GREEN✅}卸载完成${RESET}"
+    echo -e "${GREEN}✅ 卸载完成${RESET}"
     exit 0
 }
 
