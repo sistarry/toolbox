@@ -65,9 +65,13 @@ for cmd in $REQUIRED_CMDS; do
 done
 
 if [ -n "$MISSING_CMDS" ]; then
-    echo -e "${YELLOW}[INFO]检测到系统缺失必要组件:${YELLOW}$MISSING_CMDS${YELLOW}，正在自动安装...${RESET}"
-    apk update -q && apk add -q curl unzip openssl jq uuidgen gcompat libc6-compat bc >/dev/null 2>&1
-    echo -e "${GREEN}[OK]基础依赖补全成功！${RESET}"
+    echo -e "${YELLOW}[INFO] 检测到系统缺失必要组件:${YELLOW}$MISSING_CMDS${YELLOW}，正在自动安装...${RESET}"
+    
+    apk update -q && apk add -q \
+        curl unzip openssl jq gcompat libc6-compat bc \
+        iproute2 wget util-linux >/dev/null 2>&1
+        
+    echo -e "${GREEN}[OK] 基础依赖补全成功！${RESET}"
 fi
 
 # ── 安全验证组件 ─────────────────────────────────────
