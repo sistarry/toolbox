@@ -4,7 +4,7 @@ set -e
 #################################
 # 基础路径
 #################################
-ROOT="/root"
+ROOT="/etc"
 SCRIPT_PATH="$ROOT/toolboxupdate.sh"
 SCRIPT_URL="tool/toolboxupdates.sh"  # 提取相对路径，方便拼接代理
 CONF="/etc/toolbox-update.conf"
@@ -253,7 +253,7 @@ uninstall_manager() {
     [ -f "$SCRIPT_PATH" ] && rm -f "$SCRIPT_PATH" && echo -e "${GREEN}✅ 已删除管理器脚本${RESET}"
     [ -f "$LOG_FILE" ] && rm -f "$LOG_FILE" && echo -e "${GREEN}✅ 已删除日志${RESET}"
     [ -f "$CONF" ] && rm -f "$CONF" && echo -e "${GREEN}✅ 已删除配置文件${RESET}"
-    echo -e "${GREEN}卸载完成${RESET}"
+    echo -e "${GREEN✅}卸载完成${RESET}"
     exit 0
 }
 
