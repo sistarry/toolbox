@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# Docker 自动更新管理器
+# Docker 自动更新管理器 
 # ========================================
 
 RAW_SCRIPT_URL="raw.githubusercontent.com/sistarry/toolbox/main/Docker/dockerupdate.sh"
@@ -12,13 +12,23 @@ RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-PROJECTS_DIR="/opt"
 CONF_FILE="/etc/docker-update.conf"
 LOG_FILE="/var/log/docker-update.log"
 
-# GitHub 代理列表
+# ---------------------------
+# 配置：需要扫描的项目根目录列表
+# ---------------------------
+SEARCH_DIRS=(
+    "/opt/1panel/apps"
+    "/data"
+    "/date"
+    "/app"
+    "/root"
+    "/opt"
+)
+
+# GitHub 代理列表（去掉第一项空值，方便直接轮询）
 GITHUB_PROXIES=(
-    ''
     'https://v6.gh-proxy.org/'
     'https://ghfast.top/'
     'https://gh-proxy.com/'
@@ -27,38 +37,43 @@ GITHUB_PROXIES=(
 )
 
 # ========================================
-# 获取最快的 GitHub 下载链接
+# 不测速下载函数（直接轮询代理下载）
 # ========================================
-get_available_url() {
+download_script() {
     local target_path=$1
-    # 优先测试直连（第一个空字符串）
-    if curl -o /dev/null -s -m 3 --connect-timeout 2 "https://${target_path}"; then
-        echo "https://${target_path}"
+    local output_path=$2
+    local tmp_file=$(mktemp)
+
+    # 1. 优先尝试直连
+    echo -e "${YELLOW}📥 正在尝试直连下载...${RESET}"
+    if curl -fsSL -m 5 "https://${target_path}" -o "$tmp_file"; then
+        mv -f "$tmp_file" "$output_path"
         return 0
     fi
 
-    # 轮询测试其他代理，返回第一个可以接通的
-    for proxy in "${GITHUB_PROXIES[@]}"; do
-        [ -z "$proxy" ] && continue
-        if curl -o /dev/null -s -m 3 --connect-timeout 2 "${proxy}https://${target_path}"; then
-            echo "${proxy}https://${target_path}"
+    # 2. 直连失败，打乱代理顺序进行盲跑轮询（不测速）
+    # 将数组索引随机打乱实现真正轮询
+    local shuffled_indexes=($(shuf -i 0-$((${#GITHUB_PROXIES[@]} - 1))))
+    
+    for idx in "${shuffled_indexes[@]}"; do
+        local proxy="${GITHUB_PROXIES[$idx]}"
+        echo -e "${YELLOW}📥 直连未成功，正在通过代理下载: ${proxy}${RESET}"
+        if curl -fsSL -m 8 "${proxy}https://${target_path}" -o "$tmp_file"; then
+            mv -f "$tmp_file" "$output_path"
             return 0
         fi
     done
 
-    # 如果都失败了，保底返回直连
-    echo "https://${target_path}"
+    rm -f "$tmp_file"
+    return 1
 }
 
 # ========================================
 # 自动下载安装管理器
 # ========================================
 if [ ! -f "$SCRIPT_PATH" ]; then
-    SCRIPT_URL=$(get_available_url "$RAW_SCRIPT_URL")
-    
-    curl -sL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 安装失败，请检查网络或 URL${RESET}"
+    if ! download_script "$RAW_SCRIPT_URL" "$SCRIPT_PATH"; then
+        echo -e "${RED}❌ 安装失败，所有代理及直连均无法下载，请检查网络${RESET}"
         exit 1
     fi
     chmod +x "$SCRIPT_PATH"
@@ -130,9 +145,16 @@ run_update() {
     SERVER=${SERVER_NAME:-$(hostname)}
 
     [ ! -d "$PROJECT_DIR" ] && echo "$(date '+%F %T') $PROJECT_NAME 目录不存在" | tee -a "$LOG_FILE" && return
-    [ ! -f "$PROJECT_DIR/docker-compose.yml" ] && echo "$(date '+%F %T') $PROJECT_NAME docker-compose.yml 不存在" | tee -a "$LOG_FILE" && return
+    
+    if [ -f "$PROJECT_DIR/docker-compose.yml" ]; then
+        cd "$PROJECT_DIR" || return
+    elif [ -f "$PROJECT_DIR/docker-compose.yaml" ]; then
+        cd "$PROJECT_DIR" || return
+    else
+        echo "$(date '+%F %T') $PROJECT_NAME docker-compose 文件不存在" | tee -a "$LOG_FILE"
+        return
+    fi
 
-    cd "$PROJECT_DIR" || return
     [ ! -f "$LOG_FILE" ] && touch "$LOG_FILE"
 
     running=$(docker compose ps -q)
@@ -151,7 +173,6 @@ run_update() {
     fi
 }
 
-
 # ========================================
 # 定时任务模式
 # ========================================
@@ -164,15 +185,36 @@ fi
 # 项目扫描与选择
 # ========================================
 scan_projects() {
-    mapfile -t PROJECTS < <(
-        find "$PROJECTS_DIR" -mindepth 2 -maxdepth 2 -type f -name docker-compose.yml \
-        -exec dirname {} \; | sort
-    )
+    PROJECT_NAMES=()
+    PROJECT_PATHS=()
+    
+    for s_dir in "${SEARCH_DIRS[@]}"; do
+        if [ -d "$s_dir" ]; then
+            local base_search_dir=$(readlink -f "$s_dir")
+            
+            while IFS= read -r compose_file; do
+                [ -z "$compose_file" ] && continue
+                
+                local full_compose_path=$(readlink -f "$compose_file")
+                local app_path=$(dirname "$full_compose_path")
+                local app_name=""
+                
+                if [ "$app_path" == "$base_search_dir" ]; then
+                    app_name=$(basename "$base_search_dir")
+                else
+                    app_name=$(basename "$app_path")
+                fi
+                
+                PROJECT_NAMES+=("$app_name")
+                PROJECT_PATHS+=("$app_path")
+            done < <(find "$base_search_dir" -maxdepth 5 \( -name "docker-compose.yml" -o -name "docker-compose.yaml" \) 2>/dev/null | sort -u)
+        fi
+    done
 }
 
 choose_project() {
     scan_projects
-    if [ ${#PROJECTS[@]} -eq 0 ]; then
+    if [ ${#PROJECT_PATHS[@]} -eq 0 ]; then
         echo -e "${RED}未找到 docker-compose 项目${RESET}"
         sleep 2
         return 1
@@ -181,16 +223,18 @@ choose_project() {
     echo -e "${GREEN}==========================${RESET}"
     echo -e "${GREEN}    ◈   请选择项目   ◈   ${RESET}"
     echo -e "${GREEN}==========================${RESET}"
-    for i in "${!PROJECTS[@]}"; do
-        echo -e "${YELLOW}$((i+1))) $(basename "${PROJECTS[$i]}")${RESET}"
+    for i in "${!PROJECT_PATHS[@]}"; do
+        echo -e "${YELLOW}$((i+1))) ${PROJECT_NAMES[$i]}${RESET}"
     done
     echo -e "${GREEN}==========================${RESET}"
     echo -e "${GREEN}0) 返回${RESET}"
     echo -e "${GREEN}==========================${RESET}"
     read -p "$(echo -e ${GREEN}请输入编号:${RESET}) " n
-    [[ "$n" == "0" ]] && return 1
-    PROJECT_DIR="${PROJECTS[$((n-1))]}"
-    PROJECT_NAME=$(basename "$PROJECT_DIR")
+    [[ "$n" == "0" || -z "$n" ]] && return 1
+    
+    local index=$((n-1))
+    PROJECT_DIR="${PROJECT_PATHS[$index]}"
+    PROJECT_NAME="${PROJECT_NAMES[$index]}"
 }
 
 choose_time() {
@@ -224,7 +268,7 @@ add_update() {
     choose_project || return
     choose_time
     (crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME";
-     echo "$CRON_EXP $SCRIPT_PATH $PROJECT_DIR $PROJECT_NAME $CRON_TAG-$PROJECT_NAME") | crontab -
+     echo "$CRON_EXP $SCRIPT_PATH \"$PROJECT_DIR\" \"$PROJECT_NAME\" $CRON_TAG-$PROJECT_NAME") | crontab -
     echo -e "${GREEN}✅ 已添加 $PROJECT_NAME 定时更新 ($CRON_EXP)${RESET}"
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
@@ -242,43 +286,35 @@ list_update() {
     echo -e "${GREEN}      📂 当前生效的 Docker 定时更新任务         ${RESET}"
     echo -e "${GREEN}=============================================${RESET}"
     
-    # 获取属于管理器的 crontab 任务
     cron_items=$(crontab -l 2>/dev/null | grep "$CRON_TAG")
     
     if [ -z "$cron_items" ]; then
         echo -e "${RED}❌ 暂无任何自动更新任务。${RESET}"
     else
-        # 逐行解析并按照你的树状模板打印
         echo "$cron_items" | while read -r line; do
-            # 提取 cron 表达式（前5个字段）
             cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
-            # 提取项目路径和名称
-            p_path=$(echo "$line" | awk '{print $7}')
-            p_name=$(echo "$line" | awk '{print $8}')
+            # 重新提取路径与名称，并去除可能包裹的双引号
+            p_path=$(echo "$line" | awk '{print $7}' | tr -d '"')
+            p_name=$(echo "$line" | awk '{print $8}' | tr -d '"')
             
-            # 严格套用你要求的 UI 模板结构映射数据
             echo -e "${YELLOW}◈ 服务: ${RESET}${GREEN}${p_name}${RESET} ${GREEN}● 已启用${RESET}"
-            echo -e "  ├─ ${YELLOW}运行周期: ${RESET}${cron_exp}"
-            echo -e "  └─ ${YELLOW}项目路径: ${RESET}${p_path}"
+            echo -e "   ├─ ${YELLOW}运行周期: ${RESET}${cron_exp}"
+            echo -e "   └─ ${YELLOW}项目路径: ${RESET}${p_path}"
             echo -e "${YELLOW}----------------------------------------${RESET}"
         done
     fi
     
     echo -e "${GREEN}=============================================${RESET}"
     echo
-    
-    # 顺便展示最后 3 条日志
     if [ -f "$LOG_FILE" ] && [ -s "$LOG_FILE" ]; then
         echo -e "${GREEN}📋 最近 3 条更新日志记录：${RESET}"
         tail -n 3 "$LOG_FILE"
         echo
     fi
-    
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
 
-# 用于在主菜单内渲染任务看板的函数
 show_menu_cron_board() {
     cron_items=$(crontab -l 2>/dev/null | grep "$CRON_TAG")
     echo -e "${YELLOW}📅 [当前生效的定时更新任务]${RESET}"
@@ -287,8 +323,7 @@ show_menu_cron_board() {
     else
         echo "$cron_items" | while read -r line; do
             cron_exp=$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')
-            p_name=$(echo "$line" | awk '{print $8}')
-            # 🔹 这里加入了 \033[0;33m 开启黄色，以及 \033[0m 恢复默认颜色
+            p_name=$(echo "$line" | awk '{print $8}' | tr -d '"')
             printf "   \033[0;33m🔹 %-12s | 周期: %-15s\033[0m\n" "$p_name" "$cron_exp"
         done
     fi
@@ -302,33 +337,34 @@ run_now() {
 
 update_all() {
     scan_projects
-    for dir in "${PROJECTS[@]}"; do
-        name=$(basename "$dir")
-        run_update "$dir" "$name"
+    for i in "${!PROJECT_PATHS[@]}"; do
+        run_update "${PROJECT_PATHS[$i]}" "${PROJECT_NAMES[$i]}"
     done
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
-
 custom_folder_update() {
     read -p "$(echo -e ${GREEN}请输入要更新的文件夹路径: ${RESET})" CUSTOM_DIR
     [ ! -d "$CUSTOM_DIR" ] && { echo -e "${RED}❌ 文件夹不存在${RESET}"; read; return; }
-    [ ! -f "$CUSTOM_DIR/docker-compose.yml" ] && { echo -e "${RED}❌ docker-compose.yml 不存在${RESET}"; read; return; }
+    if [ ! -f "$CUSTOM_DIR/docker-compose.yml" ] && [ ! -f "$CUSTOM_DIR/docker-compose.yaml" ]; then
+        echo -e "${RED}❌ docker-compose 文件不存在${RESET}"; read; return;
+    fi
     PROJECT_NAME=$(basename "$CUSTOM_DIR")
     run_update "$CUSTOM_DIR" "$PROJECT_NAME"
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
-
 add_custom_update() {
     read -p "$(echo -e ${GREEN}请输入要添加定时更新的文件夹路径: ${RESET})" CUSTOM_DIR
     [ ! -d "$CUSTOM_DIR" ] && { echo -e "${RED}❌ 文件夹不存在${RESET}"; read; return; }
-    [ ! -f "$CUSTOM_DIR/docker-compose.yml" ] && { echo -e "${RED}❌ docker-compose.yml 不存在${RESET}"; read; return; }
+    if [ ! -f "$CUSTOM_DIR/docker-compose.yml" ] && [ ! -f "$CUSTOM_DIR/docker-compose.yaml" ]; then
+        echo -e "${RED}❌ docker-compose 文件不存在${RESET}"; read; return;
+    fi
     PROJECT_NAME=$(basename "$CUSTOM_DIR")
     choose_time
     (crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME";
-     echo "$CRON_EXP $SCRIPT_PATH $CUSTOM_DIR $PROJECT_NAME $CRON_TAG-$PROJECT_NAME") | crontab -
-    echo -e "${GREEN}✅ 已添加 $PROJECT_NAME 自定义文件夹定时更新 ($CRON_EXP)${RESET}"
+     echo "$CRON_EXP $SCRIPT_PATH \"$CUSTOM_DIR\" \"$PROJECT_NAME\" $CRON_TAG-$PROJECT_NAME") | crontab -
+    echo -e "${GREEN}✅ 已添加 $PROJECT_NAME 定时更新 ($CRON_EXP)${RESET}"
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
@@ -337,7 +373,7 @@ remove_custom_update() {
     [ ! -d "$CUSTOM_DIR" ] && { echo -e "${RED}❌ 文件夹不存在${RESET}"; read; return; }
     PROJECT_NAME=$(basename "$CUSTOM_DIR")
     crontab -l 2>/dev/null | grep -v "$CRON_TAG-$PROJECT_NAME" | crontab -
-    echo -e "${RED}已删除 $PROJECT_NAME 自定义文件夹定时更新${RESET}"
+    echo -e "${RED}已删除 $PROJECT_NAME 定时更新${RESET}"
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
@@ -349,24 +385,24 @@ delete_log() {
 
 add_all_updates() {
     scan_projects
-    if [ ${#PROJECTS[@]} -eq 0 ]; then
+    if [ ${#PROJECT_PATHS[@]} -eq 0 ]; then
         echo -e "${RED}未找到 docker-compose 项目${RESET}"
         read
         return
     fi
 
     echo -e "${GREEN}=== 扫描到项目列表 ===${RESET}"
-    for dir in "${PROJECTS[@]}"; do
-        echo "- $(basename "$dir")"
+    for name in "${PROJECT_NAMES[@]}"; do
+        echo "- $name"
     done
 
-    choose_time  # 统一选择 cron 时间
+    choose_time
 
-    for dir in "${PROJECTS[@]}"; do
-        name=$(basename "$dir")
-        # 添加到 crontab
+    for i in "${!PROJECT_PATHS[@]}"; do
+        local dir="${PROJECT_PATHS[$i]}"
+        local name="${PROJECT_NAMES[$i]}"
         (crontab -l 2>/dev/null | grep -v "$CRON_TAG-$name";
-         echo "$CRON_EXP $SCRIPT_PATH $dir $name $CRON_TAG-$name") | crontab -
+         echo "$CRON_EXP $SCRIPT_PATH \"$dir\" \"$name\" $CRON_TAG-$name") | crontab -
         echo -e "${GREEN}✅ 已添加 $name 定时更新 ($CRON_EXP)${RESET}"
     done
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
@@ -378,31 +414,20 @@ remove_all_updates() {
     read -p "$(echo -e ${GREEN}回车继续...${RESET})"
 }
 
-# ========================================
-# 管理器自更新（带代理测速覆盖版）
-# ========================================
 self_update() {
     load_conf
     SERVER=${SERVER_NAME:-$(hostname)}
 
     echo -e "${GREEN}🚀 正在检测更新管理器...${RESET}"
-    CURRENT_URL=$(get_available_url "$RAW_SCRIPT_URL")
-    echo -e "${YELLOW}📥 正在下载最新版本...${RESET}"
-
-    TMP=$(mktemp)
-
-    if ! curl -fsSL "$CURRENT_URL" -o "$TMP"; then
-        echo -e "${RED}❌ 下载失败${RESET}"
+    
+    # 🟢 同样调用盲跑轮询下载函数
+    if ! download_script "$RAW_SCRIPT_URL" "$SCRIPT_PATH"; then
+        echo -e "${RED}❌ 更新失败${RESET}"
         return
     fi
 
-    chmod +x "$TMP"
-    mv -f "$TMP" "$SCRIPT_PATH"
-
     tg_send "🚀 <b>Docker 管理器已更新</b>%0A服务器: $SERVER%0A时间: $(date '+%F %T')"
-
     echo -e "${GREEN}✅ 更新完成，重新启动...${RESET}"
-
     exec "$SCRIPT_PATH"
 }
 
@@ -450,7 +475,6 @@ while true; do
         12) delete_log ;;
         13) self_update ;;
         14) uninstall_manager ;;
-    
         0) exit 0 ;;
     esac
 done
