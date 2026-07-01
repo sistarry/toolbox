@@ -53,6 +53,13 @@ get_public_ip() {
 
 # 动态获取容器整体状态和端口
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        webui_port="N/A"
+        data_dir="N/A"
+        return 0
+    fi
     if [ -f "$COMPOSE_FILE" ]; then
         local container_id=$(docker ps -q -f "name=relaypanel-panel")
         if [ -n "$container_id" ]; then
