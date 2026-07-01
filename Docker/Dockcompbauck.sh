@@ -22,6 +22,27 @@ INSTALL_PATH="$(realpath "$0")"
 CRON_TAG="#docker_backup_cron"
 EXCLUDE_DIR_NAME="$(basename "$BASE_DIR")"
 
+# ---------------------------
+# 新增：配置需要扫描的 Docker 根目录列表
+# ---------------------------
+SEARCH_DIRS=(
+    "/opt/1panel/apps"
+    "/data"
+    "/date"
+    "/app"
+    "/root"
+    "/opt"
+)
+
+# 新增：GitHub 代理列表
+GITHUB_PROXIES=(
+    'https://v6.gh-proxy.org/'
+    'https://ghfast.top/'
+    'https://gh-proxy.com/'
+    'https://hub.glowp.xyz/'
+    'https://proxy.vvvv.ee/'
+)
+
 # 默认配置
 RETAIN_DAYS_DEFAULT=7
 TG_TOKEN_DEFAULT=""
@@ -33,9 +54,42 @@ REMOTE_DIR_DEFAULT="$BACKUP_DIR"
 
 mkdir -p "$SCRIPT_DIR" "$BACKUP_DIR"
 
+# ========================================
+# 新增：不测速下载函数（直接轮询代理下载）
+# ========================================
+download_script() {
+    local target_path=$1
+    local output_path=$2
+    local tmp_file=$(mktemp)
+
+    echo -e "${YELLOW}📥 正在尝试直连...${RESET}"
+    if curl -fsSL -m 5 "https://${target_path}" -o "$tmp_file"; then
+        mv -f "$tmp_file" "$output_path"
+        return 0
+    fi
+
+    # 直连失败，打乱代理顺序进行盲跑轮询
+    local shuffled_indexes=($(shuf -i 0-$((${#GITHUB_PROXIES[@]} - 1))))
+    for idx in "${shuffled_indexes[@]}"; do
+        local proxy="${GITHUB_PROXIES[$idx]}"
+        echo -e "${YELLOW}📥 直连未成功，正在通过代理: ${proxy}${RESET}"
+        if curl -fsSL -m 8 "${proxy}https://${target_path}" -o "$tmp_file"; then
+            mv -f "$tmp_file" "$output_path"
+            return 0
+        fi
+    done
+
+    rm -f "$tmp_file"
+    return 1
+}
+
 # ================== 首次运行下载远程脚本 ==================
 if [[ ! -f "$REMOTE_SCRIPT_PATH" ]]; then
-    curl -fsSL "https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh" -o "$REMOTE_SCRIPT_PATH"
+    # 替换为代理轮询下载
+    if ! download_script "raw.githubusercontent.com/sistarry/toolbox/main/Docker/Dockcompbauck.sh" "$REMOTE_SCRIPT_PATH"; then
+        echo -e "${RED}❌ 安装失败，请检查网络${RESET}"
+        exit 1
+    fi
     chmod +x "$REMOTE_SCRIPT_PATH"
     exec "$REMOTE_SCRIPT_PATH"
 fi
@@ -80,7 +134,6 @@ tg_send() {
         --data-urlencode "text=[$SERVER] $MESSAGE" >/dev/null 2>&1
 }
 
-
 # ================== SSH密钥自动生成 ==================
 setup_ssh_key() {
     if [[ ! -f "$SSH_KEY" ]]; then
@@ -89,31 +142,24 @@ setup_ssh_key() {
         echo -e "${GREEN}✅ 密钥生成完成: $SSH_KEY${RESET}"
     fi
 
-    # ---- 交互式读取远程信息 ----
-    # 1. 读取用户名（默认 root）
     read -rp "$(echo -e "${GREEN}请输入远程用户名（默认 root）: ${RESET}")" username
     username=${username:-root}
 
-    # 2. 读取服务器 IP 并校验
     read -rp "$(echo -e "${GREEN}请输入远程服务器 IP: ${RESET}")" ip_address
     if [ -z "$ip_address" ]; then
         echo -e "${RED}❌ 错误: 服务器 IP 不能为空！${RESET}"
-        return 1  # 使用 return 避免直接关闭整个菜单脚本
+        return 1
     fi
 
-    # 3. 读取 SSH 端口（默认 22）
     read -rp "$(echo -e "${GREEN}请输入SSH端口（默认 22）: ${RESET}")" port
     port=${port:-22}
 
     echo -e "${CYAN}🚀 正在将公钥部署到远程服务器 ${username}@${ip_address}:${port} ...${RESET}"
     
-    # 核心：将端口参数 -p 传递给 ssh-copy-id
     ssh-copy-id -i "$SSH_KEY.pub" -p "$port" -o StrictHostKeyChecking=no "${username}@${ip_address}"
 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✅ 密钥已成功部署到远程: ${username}@${ip_address}:${port}${RESET}"
-        
-        # 可选：顺便把这些信息同步到你的全局配置中，方便远程备份功能直接使用
         REMOTE_USER="$username"
         REMOTE_IP="$ip_address"
         save_config
@@ -122,43 +168,122 @@ setup_ssh_key() {
     fi
 }
 
-# ================== 本地备份 ==================
+# ========================================
+# 新增：动态扫描支持的 Docker 项目
+# ========================================
+scan_projects() {
+    PROJECT_NAMES=()
+    PROJECT_PATHS=()
+    
+    for s_dir in "${SEARCH_DIRS[@]}"; do
+        if [ -d "$s_dir" ]; then
+            local base_search_dir=$(readlink -f "$s_dir")
+            
+            while IFS= read -r compose_file; do
+                [ -z "$compose_file" ] && continue
+                
+                local full_compose_path=$(readlink -f "$compose_file")
+                local app_path=$(dirname "$full_compose_path")
+                local app_name=""
+                
+                if [ "$app_path" == "$base_search_dir" ]; then
+                    app_name=$(basename "$base_search_dir")
+                else
+                    app_name=$(basename "$app_path")
+                fi
+                
+                PROJECT_NAMES+=("$app_name")
+                PROJECT_PATHS+=("$app_path")
+            done < <(find "$base_search_dir" -maxdepth 5 \( -name "docker-compose.yml" -o -name "docker-compose.yaml" \) 2>/dev/null | sort -u)
+        fi
+    done
+}
+
+# ================== 本地备份（已重构为编号选择模式） ==================
 backup_local() {
-    read -rp "请输入要备份的 Docker Compose 项目目录（例如 /opt 多目录空格分隔）: " -a PROJECT_DIRS
-    [[ ${#PROJECT_DIRS[@]} -eq 0 ]] && { echo -e "${RED}❌ 没有输入目录${RESET}"; return; }
+    scan_projects
+    if [ ${#PROJECT_PATHS[@]} -eq 0 ]; then
+        echo -e "${RED}❌ 未找到任何符合条件的 Docker 目录。${RESET}"
+        return
+    fi
+
+    clear
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}        📂 请选择需要备份的项目       ${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    for i in "${!PROJECT_PATHS[@]}"; do
+        echo -e "${YELLOW}$((i+1))) ${PROJECT_NAMES[$i]}${RESET}"
+    done
+    echo -e "${GREEN}====================================${RESET}"
+    echo -e "${GREEN}all) 备份上面所有项目${RESET}"
+    echo -e "${GREEN}  0) 返回${RESET}"
+    echo -e "${GREEN}====================================${RESET}"
+    
+    read -rp "$(echo -e "${GREEN}请输入项目编号（支持空格分隔多个，或输入 all）: ${RESET}")" SELECTION
+
+    [[ "$SELECTION" == "0" || -z "$SELECTION" ]] && return
+
+    TARGET_PATHS=()
+    TARGET_NAMES=()
+
+    if [[ "$SELECTION" == "all" ]]; then
+        TARGET_PATHS=("${PROJECT_PATHS[@]}")
+        TARGET_NAMES=("${PROJECT_NAMES[@]}")
+    else
+        for num in $SELECTION; do
+            if [[ $num =~ ^[0-9]+$ ]] && (( num>=1 && num<=${#PROJECT_PATHS[@]} )); then
+                local idx=$((num-1))
+                TARGET_PATHS+=("${PROJECT_PATHS[$idx]}")
+                TARGET_NAMES+=("${PROJECT_NAMES[$idx]}")
+            else
+                echo -e "${RED}❌ 无效序号: $num 将被跳过${RESET}"
+            fi
+        done
+    fi
+
+    [[ ${#TARGET_PATHS[@]} -eq 0 ]] && { echo -e "${RED}❌ 未选择任何有效项目${RESET}"; return; }
 
     mkdir -p "$BACKUP_DIR"
-    for PROJECT_DIR in "${PROJECT_DIRS[@]}"; do
-        [[ ! -d "$PROJECT_DIR" ]] && { echo -e "${RED}❌ 目录不存在: $PROJECT_DIR${RESET}"; continue; }
+    for i in "${!TARGET_PATHS[@]}"; do
+        local PROJECT_DIR="${TARGET_PATHS[$i]}"
+        local PROJECT_NAME="${TARGET_NAMES[$i]}"
 
+        local compose_file=""
         if [[ -f "$PROJECT_DIR/docker-compose.yml" ]]; then
-            echo -e "${CYAN}⏸️ 暂停容器: $PROJECT_DIR${RESET}"
+            compose_file="$PROJECT_DIR/docker-compose.yml"
+        elif [[ -f "$PROJECT_DIR/docker-compose.yaml" ]]; then
+            compose_file="$PROJECT_DIR/docker-compose.yaml"
+        fi
+
+        if [[ -n "$compose_file" ]]; then
+            echo -e "${CYAN}⏸️ 暂停容器: $PROJECT_NAME${RESET}"
             cd "$PROJECT_DIR" || continue
             docker compose down
         fi
 
         TIMESTAMP=$(date +%F_%H-%M-%S)
-        BACKUP_FILE="$BACKUP_DIR/$(basename "$PROJECT_DIR")_backup_$TIMESTAMP.tar.gz"
-        echo -e "${CYAN}📦 正在备份 $PROJECT_DIR → $BACKUP_FILE${RESET}"
+        BACKUP_FILE="$BACKUP_DIR/${PROJECT_NAME}_backup_$TIMESTAMP.tar.gz"
+        echo -e "${CYAN}📦 正在备份 $PROJECT_NAME → $BACKUP_FILE${RESET}"
+        
         tar czf "$BACKUP_FILE" \
             --exclude="$EXCLUDE_DIR_NAME" \
             -C "$PROJECT_DIR" .
 
-        if [[ -f "$PROJECT_DIR/docker-compose.yml" ]]; then
-            echo -e "${CYAN}🚀 启动容器: $PROJECT_DIR${RESET}"
+        if [[ -n "$compose_file" ]]; then
+            echo -e "${CYAN}🚀 启动容器: $PROJECT_NAME${RESET}"
             cd "$PROJECT_DIR" || continue
             docker compose up -d
         fi
 
         echo -e "${GREEN}✅ 本地备份完成: $BACKUP_FILE${RESET}"
-        tg_send "本地备份完成: $(basename "$PROJECT_DIR")"
+        tg_send "本地备份完成: $PROJECT_NAME"
     done
 
     find "$BACKUP_DIR" -type f -name "*.tar.gz" -mtime +"$RETAIN_DAYS" -exec rm -f {} \;
     tg_send "🗑️ 已清理 $RETAIN_DAYS 天以上旧备份"
 }
 
-# ================== 远程上传（上传目录内所有备份文件，不解压） ==================
+# ================== 远程上传 ==================
 backup_remote_all() {
     [[ ! -d "$BACKUP_DIR" ]] && { echo -e "${RED}❌ 本地备份目录不存在: $BACKUP_DIR${RESET}"; return; }
 
@@ -167,10 +292,8 @@ backup_remote_all() {
 
     echo -e "${CYAN}📤 上传所有备份文件到远程: $REMOTE_USER@$REMOTE_IP:$REMOTE_DIR${RESET}"
 
-    # 远程删除旧备份
     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_IP" "mkdir -p \"$REMOTE_DIR\" && rm -f \"$REMOTE_DIR\"/*.tar.gz"
 
-    # 上传所有文件
     for FILE in "${FILE_LIST[@]}"; do
         scp -i "$SSH_KEY" "$FILE" "$REMOTE_USER@$REMOTE_IP:$REMOTE_DIR/" >> "$LOG_FILE" 2>&1
         tg_send "备份上传完成: $(basename "$FILE") → $REMOTE_IP"
@@ -215,14 +338,14 @@ restore() {
         echo -e "${CYAN}📂 解压备份 $(basename "$FILE") → $TARGET_DIR${RESET}"
         tar xzf "$FILE" -C "$TARGET_DIR"
 
-        if [[ -f "$TARGET_DIR/docker-compose.yml" ]]; then
+        if [[ -f "$TARGET_DIR/docker-compose.yml" ]] || [[ -f "$TARGET_DIR/docker-compose.yaml" ]]; then
             echo -e "${CYAN}🚀 启动容器...${RESET}"
             cd "$TARGET_DIR" || continue
             docker compose up -d
             echo -e "${GREEN}✅ 恢复完成: $TARGET_DIR${RESET}"
             tg_send "恢复完成: $BASE_NAME → $TARGET_DIR"
         else
-            echo -e "${RED}❌ docker-compose.yml 不存在，无法启动容器${RESET}"
+            echo -e "${RED}❌ docker-compose 文件不存在，无法启动容器${RESET}"
         fi
     done
 }
@@ -317,7 +440,7 @@ schedule_menu() {
     while true; do
         clear
         echo -e "${GREEN}====================================${RESET}"
-        echo -e "${GREEN}       ◈    定时任务管理    ◈       ${RESET}"
+        echo -e "${GREEN}        ◈    定时任务管理    ◈       ${RESET}"
         echo -e "${GREEN}====================================${RESET}"
         echo -e "${GREEN}------------------------------------${RESET}"
         list_cron
@@ -365,11 +488,15 @@ if [[ "$1" == "auto" ]]; then
     for PROJECT_DIR in "${DIRS[@]}"; do
         [[ ! -d "$PROJECT_DIR" ]] && continue
         TIMESTAMP=$(date +%F_%H-%M-%S)
-        BACKUP_FILE="$BACKUP_DIR/$(basename "$PROJECT_DIR")_backup_$TIMESTAMP.tar.gz"
+        
+        # 兼容获取项目名称
+        local P_NAME=$(basename "$PROJECT_DIR")
+        local BACKUP_FILE="$BACKUP_DIR/${P_NAME}_backup_$TIMESTAMP.tar.gz"
+        
         tar czf "$BACKUP_FILE" \
             --exclude="$EXCLUDE_DIR_NAME" \
             -C "$PROJECT_DIR" . >> "$LOG_FILE" 2>&1
-        tg_send "自动备份完成: $(basename "$PROJECT_DIR") → $BACKUP_FILE"
+        tg_send "自动备份完成: ${P_NAME} → $BACKUP_FILE"
     done
 
     find "$BACKUP_DIR" -type f -name "*.tar.gz" -mtime +"$RETAIN_DAYS" -exec rm -f {} \;
@@ -387,8 +514,6 @@ while true; do
     load_config
     clear
 
-    # ---- 动态获取状态 ----
-    # 检查 crontab 中是否存在该脚本的定时任务
     if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
         CRON_STATUS="${YELLOW}已开启${RESET}"
     else
