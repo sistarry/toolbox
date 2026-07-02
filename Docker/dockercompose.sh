@@ -32,7 +32,7 @@ GITHUB_PROXY=(
 # ---------------------------
 SEARCH_DIRS=(
 
-    "/opt/1panel/apps"
+    "/opt/1panel/apps/local"
     "/data"
     "/date"
     "/app"
