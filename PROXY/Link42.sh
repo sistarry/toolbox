@@ -247,6 +247,7 @@ menu() {
     echo -e "${GREEN}6. 重启容器${RESET}"
     echo -e "${GREEN}7. 查看日志${RESET}"
     echo -e "${GREEN}8. 查看配置${RESET}"
+    echo -e "${GREEN}9. ${RESET}${YELLOW}卸载节点${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
@@ -260,6 +261,7 @@ menu() {
         6) restart_link42 ;;
         7) logs_link42 ;;
         8) show_info ;;
+        9) curl -fsSL https://get.pmman.tech/sh/link42-agent.sh | sudo sh -s -- uninstall ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
