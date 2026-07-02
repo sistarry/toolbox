@@ -19,7 +19,7 @@ LOG_FILE="/var/log/docker-update.log"
 # 配置：需要扫描的项目根目录列表
 # ---------------------------
 SEARCH_DIRS=(
-    "/opt/1panel/apps"
+    "/opt/1panel/apps/local"
     "/data"
     "/date"
     "/app"
