@@ -1,0 +1,592 @@
+/* ================================================
+   Uptime Kuma Status Page — Custom Theme v4
+   新增：故障分组自动置顶
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* ══════════════════════════════════════════════
+   THEME VARIABLES
+   ══════════════════════════════════════════════ */
+
+:root,
+body:not(.dark) {
+    --text-primary:         #1c1c1e;
+    --text-secondary:       rgba(60, 60, 67, 0.6);
+    --apple-green:          #1a9c33;
+    --glass-border:         rgba(0, 0, 0, 0.1);
+    --glass-inset:          rgba(255, 255, 255, 0.8);
+    --glass-shadow:         0 4px 24px rgba(0, 0, 0, 0.08);
+    --item-bg:              rgba(255, 255, 255, 0.7);
+    --item-hover-bg:        rgba(255, 255, 255, 0.92);
+    --item-hover-border:    rgba(0, 0, 0, 0.18);
+    --item-hover-shadow:    0 12px 32px rgba(0, 0, 0, 0.13);
+    --dropdown-bg:          rgba(250, 250, 252, 0.88);
+    --badge-success-text:   #fff;
+    --status-bg:            rgba(26, 156, 51, 0.07);
+    --status-border:        rgba(26, 156, 51, 0.22);
+    --status-color:         #1a9c33;
+    --group-color:          rgba(60, 60, 67, 0.5);
+    --body-bg-color:        #e8eaf0;
+    --body-g1: hsla(210, 40%, 95%, 1);
+    --body-g2: hsla(220, 30%, 90%, 1);
+    --body-g3: hsla(200, 35%, 93%, 1);
+}
+
+body.dark {
+    --text-primary:         #ffffff;
+    --text-secondary:       rgba(255, 255, 255, 0.65);
+    --apple-green:          #32d74b;
+    --glass-border:         rgba(255, 255, 255, 0.13);
+    --glass-inset:          rgba(255, 255, 255, 0.07);
+    --glass-shadow:         0 8px 32px rgba(0, 0, 0, 0.35);
+    --item-bg:              rgba(255, 255, 255, 0.06);
+    --item-hover-bg:        rgba(255, 255, 255, 0.11);
+    --item-hover-border:    rgba(255, 255, 255, 0.28);
+    --item-hover-shadow:    0 20px 40px rgba(0, 0, 0, 0.45);
+    --dropdown-bg:          rgba(30, 30, 35, 0.85);
+    --badge-success-text:   #000;
+    --status-bg:            rgba(50, 215, 75, 0.09);
+    --status-border:        rgba(50, 215, 75, 0.28);
+    --status-color:         #32d74b;
+    --group-color:          rgba(255, 255, 255, 0.5);
+    --body-bg-color:        #08080c;
+    --body-g1: hsla(253, 16%, 7%, 1);
+    --body-g2: hsla(225, 39%, 30%, 1);
+    --body-g3: hsla(339, 49%, 30%, 1);
+}
+
+/* ══════════════════════════════════════════════
+   GLOBAL & LAYOUT RESET
+   ══════════════════════════════════════════════ */
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
+                 "Segoe UI", Helvetica, Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background:
+        radial-gradient(at 0%   0%, var(--body-g1) 0, transparent 50%),
+        radial-gradient(at 50%  0%, var(--body-g2) 0, transparent 50%),
+        radial-gradient(at 100% 0%, var(--body-g3) 0, transparent 50%) !important;
+    background-color: var(--body-bg-color) !important;
+    background-attachment: fixed !important;
+    color: var(--text-primary) !important;
+}
+
+h1, h2, h3, h4, h5, h6,
+.info, .name, .title, .text,
+.group-title, .item .info {
+    color: var(--text-primary) !important;
+}
+
+body > .container p,
+body > .container span,
+body > .container div,
+body > .container label,
+body > .container a {
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px !important;
+    padding-top: 50px;
+}
+
+/* ══════════════════════════════════════════════
+   TOOLTIP / POPOVER — 浅色模式修复
+   ══════════════════════════════════════════════ */
+
+.tooltip,
+.tooltip-inner,
+.tooltip .tooltip-inner,
+[role="tooltip"],
+[role="tooltip"] *,
+.bs-tooltip-top .tooltip-inner,
+.bs-tooltip-bottom .tooltip-inner,
+.bs-tooltip-start .tooltip-inner,
+.bs-tooltip-end .tooltip-inner,
+div.tooltip-inner,
+.apexcharts-tooltip,
+.apexcharts-tooltip *,
+.popover,
+.popover *,
+.popover-body,
+.popover-body * {
+    color: #ffffff !important;
+    background-color: rgba(30, 30, 30, 0.92) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.tooltip .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-top-color: rgba(30, 30, 30, 0.92) !important;
+    border-bottom-color: rgba(30, 30, 30, 0.92) !important;
+}
+
+body.dark .tooltip-inner,
+body.dark [role="tooltip"],
+body.dark [role="tooltip"] * {
+    color: #ffffff !important;
+    background-color: rgba(50, 50, 55, 0.92) !important;
+}
+
+/* ══════════════════════════════════════════════
+   HEADER — 头像 + 标题居中
+   ══════════════════════════════════════════════ */
+
+h1.title-flex {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+}
+
+.logo-wrapper {
+    flex-shrink: 0 !important;
+}
+
+.logo-wrapper img.logo {
+    margin: 0 12px 0 0 !important;
+}
+
+h1.title-flex > span:last-child {
+    white-space: nowrap !important;
+}
+
+/* ══════════════════════════════════════════════
+   SHADOW BOX & CARD RESET
+   ══════════════════════════════════════════════ */
+
+.shadow-box {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 24px 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.card, .card-body {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* ══════════════════════════════════════════════
+   STATUS BANNER
+   ══════════════════════════════════════════════ */
+
+.overall-status {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: var(--status-bg) !important;
+    border: 1px solid var(--status-border) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-inset),
+        var(--glass-shadow) !important;
+    border-radius: 18px !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--status-color) !important;
+    text-align: center !important;
+}
+
+.overall-status span,
+.overall-status p,
+.overall-status div {
+    color: var(--status-color) !important;
+}
+
+/* ══════════════════════════════════════════════
+   GROUP HEADERS
+   ══════════════════════════════════════════════ */
+
+.group-title {
+    font-size: 0.95rem !important;
+    font-weight: 600;
+    margin: 0 0 14px 0 !important;
+    padding-left: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: var(--group-color) !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* ══════════════════════════════════════════════
+   ★ 故障分组自动置顶
+   通过 :has() 检测含有故障卡片的分组，用 order 提到最前
+   故障恢复后 :has() 不再匹配，分组自动回到原位
+
+   Uptime Kuma 分组结构:
+   <Draggable>                         ← 分组容器（变 flex column）
+     <div class="mb-5">                ← 分组1
+     <div class="mb-5">                ← 分组2
+   ══════════════════════════════════════════════ */
+
+/* 让 Draggable 分组容器变成 flex 列，使 order 生效 */
+.container :has(> [data-testid="group"]) {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 含有故障卡片的分组自动置顶 */
+[data-testid="group"]:has(.bg-danger),
+[data-testid="group"]:has(.badge-danger),
+[data-testid="group"]:has(.text-danger) {
+    order: -1 !important;
+}
+
+/* ══════════════════════════════════════════════
+   MONITOR LIST — Flex 居中布局
+   ══════════════════════════════════════════════ */
+
+.monitor-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    background: transparent !important;
+    list-style: none !important;
+    margin: 0 !important;
+}
+
+/* ══════════════════════════════════════════════
+   GLASS CARD — 服务卡片
+   ══════════════════════════════════════════════ */
+
+.item {
+    background: var(--item-bg) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-inset),
+        var(--glass-shadow) !important;
+    border-radius: 18px !important;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                background 0.3s ease,
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    flex: 1 1 460px !important;
+    min-width: 460px !important;
+    max-width: 100% !important;
+}
+
+.item:hover {
+    transform: translateY(-4px) scale(1.01);
+    background: var(--item-hover-bg) !important;
+    border-color: var(--item-hover-border) !important;
+    box-shadow: var(--item-hover-shadow) !important;
+}
+
+/* ══════════════════════════════════════════════
+   CARD INNER — 三行布局
+   ══════════════════════════════════════════════ */
+
+.item .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    gap: 10px !important;
+}
+
+.item .col-9,
+.item .col-3,
+.item .col-xl-6,
+.item .small-padding {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.item .col-9,
+.item .small-padding {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* ══════════════════════════════════════════════
+   第一行: badge + 名字（同一行）
+   badge: 绝对定位左上角
+   名字: 居中
+   ══════════════════════════════════════════════ */
+
+.item .info {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+}
+
+.item .info .badge,
+.item .info > span:first-child {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    height: 24px !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    z-index: 1 !important;
+}
+
+.item-name {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    font-weight: 500;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    line-height: 24px !important;
+    color: var(--text-primary) !important;
+}
+
+/* ══════════════════════════════════════════════
+   第二行: TAGS / EXTRA-INFO
+   ══════════════════════════════════════════════ */
+
+.item .extra-info {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px 8px !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.item .extra-info > div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px 8px !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.item .tag-wrapper {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 3px 12px !important;
+    border-radius: 50px !important;
+    font-size: 0.7rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    white-space: nowrap !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.4 !important;
+}
+
+.item .tag-wrapper:hover {
+    opacity: 1 !important;
+    transform: scale(1.03);
+}
+
+.item .tag-wrapper .tag-text {
+    padding: 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* ══════════════════════════════════════════════
+   第三行: UPTIME BAR / HeartbeatBar
+   ══════════════════════════════════════════════ */
+
+.uptime-bar,
+.item .col-3 .uptime-bar,
+.item .col-3 > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 30px !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.uptime-bar svg,
+.item .col-3 svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+}
+
+.uptime-bar rect[fill="#28a745"],
+.uptime-bar rect[fill="#5cd65c"] {
+    fill: var(--apple-green) !important;
+}
+
+/* ══════════════════════════════════════════════
+   故障服务卡片智能高亮与置顶（卡片级别）
+   ══════════════════════════════════════════════ */
+
+.item:has(.bg-danger),
+.item:has(.text-danger),
+.item:has(.badge-danger) {
+    border-color: rgba(255, 59, 48, 0.6) !important;
+    background: rgba(255, 59, 48, 0.08) !important;
+    box-shadow: 0 4px 24px rgba(255, 59, 48, 0.15) !important;
+    order: -1 !important;
+}
+
+body.dark .item:has(.bg-danger),
+body.dark .item:has(.text-danger),
+body.dark .item:has(.badge-danger) {
+    border-color: rgba(255, 69, 58, 0.6) !important;
+    background: rgba(255, 69, 58, 0.15) !important;
+    box-shadow: 0 8px 32px rgba(255, 69, 58, 0.3) !important;
+}
+
+.item:has(.bg-danger):hover,
+.item:has(.text-danger):hover {
+    border-color: rgba(255, 59, 48, 0.8) !important;
+    background: rgba(255, 59, 48, 0.12) !important;
+}
+
+/* ══════════════════════════════════════════════
+   BUTTONS & BADGES
+   ══════════════════════════════════════════════ */
+
+.btn {
+    background: var(--item-bg) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: inset 0 1px 0 0 var(--glass-inset), var(--glass-shadow) !important;
+    border-radius: 18px !important;
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: all 0.25s ease;
+}
+
+.btn:hover {
+    background: var(--item-hover-bg) !important;
+    transform: scale(1.02);
+}
+
+.badge {
+    border-radius: 50px !important;
+    padding: 5px 11px !important;
+    font-weight: 600 !important;
+    font-size: 0.72rem !important;
+    backdrop-filter: none !important;
+    flex-shrink: 0 !important;
+}
+
+.badge-success {
+    background-color: var(--apple-green) !important;
+    color: var(--badge-success-text) !important;
+    box-shadow: 0 0 8px rgba(50, 215, 75, 0.3) !important;
+}
+
+/* ══════════════════════════════════════════════
+   DROPDOWNS
+   ══════════════════════════════════════════════ */
+
+.dropdown, .btn-group {
+    position: relative !important;
+    z-index: 9998 !important;
+}
+
+.dropdown-menu {
+    z-index: 9999 !important;
+    background: var(--dropdown-bg) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+    padding: 8px !important;
+}
+
+.dropdown-menu .dropdown-item {
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    transition: all 0.18s ease;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background: var(--item-hover-bg) !important;
+    color: var(--apple-green) !important;
+}
+
+/* ══════════════════════════════════════════════
+   FOOTER & SCROLLBAR
+   ══════════════════════════════════════════════ */
+
+footer {
+    margin-top: 60px !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.25); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.45); }
+
+/* ══════════════════════════════════════════════
+   MOBILE
+   ══════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+    .item {
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+        width: calc(100vw - 48px) !important;
+    }
+}
