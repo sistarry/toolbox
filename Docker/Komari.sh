@@ -97,7 +97,7 @@ install_utils() {
     DETECT_IP=$(get_public_ip)
 
     echo -e "${CYAN}====== 1. 目录挂载自定义配置 ======${RESET}"
-    echo -e "${YELLOW}提示: 直接回车将默认采用脚本同级路径下的 data 文件夹。${RESET}"
+    echo -e "${YELLOW}提示: 直接回车将默认采用同级路径下的 data 文件夹。${RESET}"
     
     echo -ne "${YELLOW}请输入数据(data)本地挂载路径 [默认: ./data]: ${RESET}"
     read -r input_data
