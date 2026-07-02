@@ -17,6 +17,7 @@ printf -- "| |/ // ____/ ___/ /  \n"
 printf -- "|___//_/     /____/   \n"
 printf -- "${re}"
 
+
 # ================== 系统检测函数 ==================
 detect_os(){
   if [ -f /etc/os-release ]; then
@@ -183,22 +184,22 @@ mem_usage_color=$(get_usage_color "$mem_percent_val")
 clear
 printf -- "%b系统信息详情%b\n" "$green" "$re"
 printf -- "------------------------\n"
-printf -- "%b主机名: %b%s%b\n" "$white" "$green" "$hostname" "$re"
-printf -- "%b运营商: %b%s%b\n" "$white" "$green" "${isp_info:-未知}" "$re"
+printf -- "%b主机名  : %b%s%b\n" "$white" "$green" "$hostname" "$re"
+printf -- "%b运营商  : %b%s%b\n" "$white" "$green" "${isp_info:-未知}" "$re"
 printf -- "------------------------\n"
 printf -- "%b系统版本: %b%s%b\n" "$white" "$yellow" "$os_info" "$re"
 printf -- "%b内核版本: %b%s%b\n" "$white" "$yellow" "$kernel_version" "$re"
 printf -- "------------------------\n"
-printf -- "%bCPU架构: %b%s%b\n" "$white" "$green" "$cpu_arch" "$re"
-printf -- "%bCPU型号: %b%s%b\n" "$white" "$green" "$cpu_info" "$re"
-printf -- "%bCPU核心: %b%s%b\n" "$white" "$green" "$cpu_cores" "$re"
+printf -- "%bCPU架构 : %b%s%b\n" "$white" "$green" "$cpu_arch" "$re"
+printf -- "%bCPU型号 : %b%s%b\n" "$white" "$green" "$cpu_info" "$re"
+printf -- "%bCPU核心 : %b%s%b\n" "$white" "$green" "$cpu_cores" "$re"
 printf -- "------------------------\n"
 printf -- "%bCPU占用 : %b%s%b\n" "$white" "$cpu_usage_color" "$cpu_usage_percent" "$re"
 printf -- "%b物理内存: %b%s%b\n" "$white" "$mem_usage_color" "$mem_info" "$re"
 printf -- "%b虚拟内存: %b%s%b\n" "$white" "$green" "$swap_info" "$re"
 printf -- "%b硬盘占用: %b%s%b\n" "$white" "$green" "$disk_info" "$re"
 printf -- "------------------------\n"
-printf -- "%b%s%b\n" "$green" "$net_output" "$re"
+printf -- "%b%s%b\n" "$yellow" "$net_output" "$re"
 printf -- "------------------------\n"
 printf -- "%b拥塞算法: %b%s %s%b\n" "$white" "$green" "$congestion_algorithm" "$queue_algorithm" "$re"
 printf -- "------------------------\n"
