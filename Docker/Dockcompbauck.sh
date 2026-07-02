@@ -26,7 +26,7 @@ EXCLUDE_DIR_NAME="$(basename "$BASE_DIR")"
 # 新增：配置需要扫描的 Docker 根目录列表
 # ---------------------------
 SEARCH_DIRS=(
-    "/opt/1panel/apps"
+    "/opt/1panel/apps/local"
     "/data"
     "/date"
     "/app"
