@@ -415,8 +415,9 @@ while true; do
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
     echo -e "${YELLOW}[01] WireGuard  WireGuard组网${RESET}"
     echo -e "${YELLOW}[02] WG-Easy    WireGuard面板${RESET}"
-    echo -e "${YELLOW}[03] Easytier   Easytier组网${RESET}"
-    echo -e "${YELLOW}[04] FRP-Panel  FRP面板${RESET}"
+    echo -e "${YELLOW}[03] Link42     WireGuard多节点面板${RESET}"
+    echo -e "${YELLOW}[04] Easytier   Easytier组网${RESET}"
+    echo -e "${YELLOW}[05] FRP-Panel  FRP面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -426,8 +427,9 @@ while true; do
     case "$sub" in
         01) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WireGuard.sh")) ;;
         02) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/wg-easy.sh")) ;;
-        03) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/EasyTierD.sh")) ;;
-        04) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frp-Panel.sh")) ;;
+        03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Link42.sh")) ;;
+        04) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/EasyTierD.sh")) ;;
+        05) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/frp-Panel.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
