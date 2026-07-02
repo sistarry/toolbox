@@ -147,8 +147,8 @@ get_net_traffic(){
     rx_total=$((rx_total + rx))
     tx_total=$((tx_total + tx))
   done < <(tail -n +3 /proc/net/dev)
-  echo "总接收: $(format_bytes $rx_total)"
-  echo "总发送: $(format_bytes $tx_total)"
+  echo "总接收  : $(format_bytes $rx_total)"
+  echo "总发送  : $(format_bytes $tx_total)"
 }
 
 # ================== 其他系统信息 ==================
