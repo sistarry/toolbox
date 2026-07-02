@@ -383,7 +383,7 @@ function delete_multiple_projects() {
     fi
 
     for i in "${!PROJECT_NAMES[@]}"; do
-        echo -e "${GREEN}$((i+1))) ${PROJECT_NAMES[$i]}${RESET}"
+        echo -e "${YELLOW}$((i+1))) ${PROJECT_NAMES[$i]}${RESET}"
     done
     echo -e "${GREEN}========================================${RESET}"
     echo -e "${GREEN}输入要删除的项目编号，用空格分隔（例如: 1 3 5）${RESET}"
