@@ -3,7 +3,7 @@
 set -e
 
 # ==================== 配置区 ====================
-CONFIG_FILE="/etc/vnstat_tg.conf"
+CONFIG_FILE="/etc/vnstattg.conf"
 PORT_DB_FILE="/etc/vnstat_tg_ports.db"
 PERM_SCRIPT_PATH="/usr/local/bin/vnstat_mgr.sh"
 REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/vnstat.sh"
@@ -41,66 +41,62 @@ IP6TABLES_CMD=$(which ip6tables 2>/dev/null || which /sbin/ip6tables 2>/dev/null
 
 # ==================== 智能防空降/落地克隆逻辑 ====================
 ensure_script_landed() {
-    local need_download=0
-
-    if [ ! -s "$PERM_SCRIPT_PATH" ]; then
-        need_download=1
-    else
-        if [ -f "$0" ] && ! cmp -s "$0" "$PERM_SCRIPT_PATH"; then
-            need_download=1
+    # 1. 核心检查：如果本地已经存在该脚本且大小不为 0
+    if [ -s "$PERM_SCRIPT_PATH" ]; then
+        # 如果当前运行的不是落地后的脚本，则直接切换到落地脚本运行，不再向下执行下载
+        if [ "$(realpath "$0" 2>/dev/null)" != "$(realpath "$PERM_SCRIPT_PATH" 2>/dev/null)" ]; then
+            chmod +x "$PERM_SCRIPT_PATH"
+            exec "$PERM_SCRIPT_PATH" "$@"
         fi
-        if [[ "$0" =~ "pipe" ]] || [[ "$0" =~ "fd" ]] || [ "$0" = "bash" ] || [ "$0" = "sh" ]; then
-            need_download=1
-        fi
+        # 如果已经是落地脚本在运行，直接返回 0 继续执行后续业务
+        return 0
     fi
 
-    if [ "$need_download" -eq 1 ]; then
-        mkdir -p "$(dirname "$PERM_SCRIPT_PATH")"
+    # 2. 只有本地没有脚本时，才触发下载逻辑
+    mkdir -p "$(dirname "$PERM_SCRIPT_PATH")"
 
-        # 内部重试下载函数
-        download_with_retry() {
-            # 提取 raw.githubusercontent.com 之后的路径
-            local url_path="${REMOTE_URL#https://raw.githubusercontent.com/}"
-            
-            for proxy in "${GITHUB_PROXY[@]}"; do
-                local final_url=""
-                if [ -z "$proxy" ]; then
-                    final_url="$REMOTE_URL"
-                else
-                    # 确保代理 URL 末尾有斜杠，避免拼接错误
-                    [[ "$proxy" != */ ]] && proxy="${proxy}/"
-                    final_url="${proxy}https://raw.githubusercontent.com/${url_path}"
-                fi
-
-                if command -v curl >/dev/null 2>&1; then
-                    curl -sL --connect-timeout 5 "$final_url" -o "$PERM_SCRIPT_PATH" && [ -s "$PERM_SCRIPT_PATH" ] && return 0
-                elif command -v wget >/dev/null 2>&1; then
-                    wget -qO "$PERM_SCRIPT_PATH" --timeout=5 "$final_url" && [ -s "$PERM_SCRIPT_PATH" ] && return 0
-                fi
-            done
-            return 1
-        }
-
-        # 执行多代理轮询下载
-        download_with_retry || true
-
-        # 兜底逻辑：如果所有代理都失败了，尝试从当前执行的命令/管道克隆
-        if [ ! -s "$PERM_SCRIPT_PATH" ] && [ -f "$0" ]; then
-            cat "$0" > "$PERM_SCRIPT_PATH" 2>/dev/null || true
-        fi
-
-        # 最终校验
-        if [ ! -s "$PERM_SCRIPT_PATH" ]; then
-            echo -e "${YELLOW}错误: 安装失败！所有 GitHub 代理均不可用，且无法从本地恢复。${RESET}"
-            echo -e "${YELLOW}请检查网络或确认拥有 /usr/local/bin 的写入权限。${RESET}"
-            exit 1
-        fi
-
-        chmod +x "$PERM_SCRIPT_PATH"
-        sleep 0.5
+    # 内部重试下载函数
+    download_with_retry() {
+        local url_path="${REMOTE_URL#https://raw.githubusercontent.com/}"
         
-        exec "$PERM_SCRIPT_PATH" "$@"
+        for proxy in "${GITHUB_PROXY[@]}"; do
+            local final_url=""
+            if [ -z "$proxy" ]; then
+                final_url="$REMOTE_URL"
+            else
+                [[ "$proxy" != */ ]] && proxy="${proxy}/"
+                final_url="${proxy}https://raw.githubusercontent.com/${url_path}"
+            fi
+
+            if command -v curl >/dev/null 2>&1; then
+                curl -sL --connect-timeout 5 "$final_url" -o "$PERM_SCRIPT_PATH" && [ -s "$PERM_SCRIPT_PATH" ] && return 0
+            elif command -v wget >/dev/null 2>&1; then
+                wget -qO "$PERM_SCRIPT_PATH" --timeout=5 "$final_url" && [ -s "$PERM_SCRIPT_PATH" ] && return 0
+            fi
+        done
+        return 1
+    }
+
+    # 执行多代理轮询下载
+    download_with_retry || true
+
+    # 3. 兜底逻辑：如果网络下载全失败，但当前运行的是个实体文件，就地克隆一份
+    if [ ! -s "$PERM_SCRIPT_PATH" ] && [ -f "$0" ] && [ "$0" != "bash" ] && [ "$0" != "sh" ]; then
+        cat "$0" > "$PERM_SCRIPT_PATH" 2>/dev/null || true
     fi
+
+    # 4. 最终校验
+    if [ ! -s "$PERM_SCRIPT_PATH" ]; then
+        echo -e "${YELLOW}错误: 本地无脚本且所有 GitHub 下载代理均不可用！${RESET}"
+        echo -e "${YELLOW}请检查网络或确认拥有 /usr/local/bin 的写入权限。${RESET}"
+        exit 1
+    fi
+
+    chmod +x "$PERM_SCRIPT_PATH"
+    sleep 0.2
+    
+    # 第一次下载成功后，切换到落地后的脚本执行
+    exec "$PERM_SCRIPT_PATH" "$@"
 }
 
 load_config() {
