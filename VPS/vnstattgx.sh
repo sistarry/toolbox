@@ -3,7 +3,7 @@
 set -e
 
 # ==================== 配置区 ====================
-CONFIG_FILE="/etc/vnstattg.conf"
+CONFIG_FILE="/etc/vnstat_tg.conf"
 PORT_DB_FILE="/etc/vnstat_tg_ports.db"
 PERM_SCRIPT_PATH="/usr/local/bin/vnstat_mgr.sh"
 REMOTE_URL="https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/vnstat.sh"
