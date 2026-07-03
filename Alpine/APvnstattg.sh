@@ -313,9 +313,9 @@ while true; do
         
         # 检查 crontab 中是否有该定时任务
         if crontab -l 2>/dev/null | grep -Fq "$BIN_PATH"; then
-            echo -e "${GREEN} ⏰ 定时任务:${NC} ${YELLOW}已开启(每日$RUN_TIME)${NC}"
+            echo -e "${GREEN} ⏰  定时任务:${NC} ${YELLOW}已开启(每日$RUN_TIME)${NC}"
         else
-            echo -e "${GREEN} ⏰ 定时任务:${NC} ${RED}未开启(无定时任务)${NC}"
+            echo -e "${GREEN} ⏰  定时任务:${NC} ${RED}未开启(无定时任务)${NC}"
         fi
     else
         echo -e "${GREEN} 📊 当前状态:${NC} ${YELLOW}未检测到有效配置文件${NC}"
