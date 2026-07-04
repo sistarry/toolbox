@@ -189,7 +189,7 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}       ◈  WebSSH 管理面板  ◈    ${RESET}"
+    echo -e "${GREEN}     ◈  WebSSH 管理面板  ◈      ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态 :${RESET} $status"
     echo -e "${GREEN}端口 :${RESET} ${YELLOW}${port_display}${RESET}"
