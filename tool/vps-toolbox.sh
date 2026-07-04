@@ -534,7 +534,7 @@ execute_choice() {
         60) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Store.sh) ;;
         61) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/Baotax.sh) ;;
         62) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/1Panelx.sh) ;;
-        63) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/MCSManager.sh) ;;
+        63) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Games/MCSManager.sh) ;;
         64) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/NAT/CLICD.sh) ;;
         65) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenClaw.sh) ;;
         66) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Hermes.sh) ;;
