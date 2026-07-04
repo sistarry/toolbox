@@ -16,16 +16,11 @@ IMAGE="registry.gitlab.com/mr-potato/ipquality-proxy:latest"
 # 检测 Docker
 # ========================================
 
-check_docker() {
-
-    if ! command -v docker &>/dev/null; then
-
-        echo -e "${YELLOW}未检测到 Docker，正在安装...${RESET}"
-
-        curl -fsSL https://get.docker.com | bash
-
-        systemctl enable docker
-        systemctl start docker
+# 检测依赖
+check_dependencies() {
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}错误: 未检测到 Docker，请先安装 Docker！${RESET}"
+        exit 1
     fi
 }
 
@@ -47,14 +42,15 @@ pull_image() {
 run_test() {
 
     clear
-
-    echo -e "${GREEN}=== 订阅节点检测 ===${RESET}"
+    echo -e "${GREEN}========================${RESET}"
+    echo -e "${GREEN}    ◈ 订阅节点检测 ◈    ${RESET}"
+    echo -e "${GREEN}========================${RESET}"
     echo
     echo -e "${YELLOW}支持协议:${RESET}"
-    echo -e "VLESS / VMess / Trojan / SS / SOCKS / WireGuard / Hysteria2"
+    echo -e "${YELLOW}VLESS / VMess / Trojan / SS / SOCKS / WireGuard / Hysteria2${RESET}"
     echo
 
-    read -p "请输入节点链接: " PROXY_URL
+    read -p "$(echo -e "${YELLOW}请输入节点链接: ${RESET}")" PROXY_URL
 
     if [ -z "$PROXY_URL" ]; then
 
@@ -77,7 +73,7 @@ run_test() {
     echo -e "${GREEN}检测结束，已自动删除${RESET}"
     echo
 
-    read -p "按回车继续..."
+    read -p "$(echo -e "${YELLOW}按回车继续...${RESET}")"
 }
 
 # ========================================
@@ -86,7 +82,7 @@ run_test() {
 
 menu() {
 
-    check_docker
+    check_dependencies
 
     while true; do
 
@@ -102,7 +98,7 @@ menu() {
 
         case $choice in
             1) run_test ;;
-            2) pull_image ; read -p "按回车继续..." ;;
+            2) pull_image ; read -p "$(echo -e "${YELLOW}按回车继续...${RESET}")" ;;
             0) exit 0 ;;
             *) echo -e "${RED}无效选择${RESET}" ; sleep 1 ;;
         esac
