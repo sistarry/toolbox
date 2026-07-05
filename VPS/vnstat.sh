@@ -568,7 +568,10 @@ show_menu() {
     echo -ne "${GREEN}请输入选项: ${RESET}"
 }
 
+
+
 main() {
+    # 优先拦截定时任务参数，执行完直接退出，绝不向下走任何落地切换逻辑
     if [ "$1" = "--cron-report" ]; then
         send_traffic_report
         exit 0
@@ -590,7 +593,8 @@ main() {
         done
         exit 0
     fi
-    
+
+    # 只有非定时任务（即人工交互模式）才允许走落地和加载菜单
     require_root
     ensure_script_landed "$@"
     
@@ -601,7 +605,7 @@ main() {
     fi
     
     init_port_iptables
-    
+
     while true; do
         show_menu; read -r choice
         case "$choice" in
