@@ -172,16 +172,17 @@ init_port_iptables() {
     for port in $MONITOR_PORTS; do
         [ -z "$port" ] && continue
         if [ -n "$IPTABLES_CMD" ] && [ -x "$IPTABLES_CMD" ]; then
-            if ! "$IPTABLES_CMD" -L INPUT -nvx 2>/dev/null | grep -q "tcp.*dpt:$port"; then "$IPTABLES_CMD" -A INPUT -p tcp --dport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IPTABLES_CMD" -L INPUT -nvx 2>/dev/null | grep -q "udp.*dpt:$port"; then "$IPTABLES_CMD" -A INPUT -p udp --dport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IPTABLES_CMD" -L OUTPUT -nvx 2>/dev/null | grep -q "tcp.*spt:$port"; then "$IPTABLES_CMD" -A OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IPTABLES_CMD" -L OUTPUT -nvx 2>/dev/null | grep -q "udp.*spt:$port"; then "$IPTABLES_CMD" -A OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || true; fi
+            # -C 检查是否存在，如果不存在（返回非0），才执行 -A 添加
+            "$IPTABLES_CMD" -C INPUT -p tcp --dport "$port" >/dev/null 2>&1 || "$IPTABLES_CMD" -A INPUT -p tcp --dport "$port" >/dev/null 2>&1 || true
+            "$IPTABLES_CMD" -C INPUT -p udp --dport "$port" >/dev/null 2>&1 || "$IPTABLES_CMD" -A INPUT -p udp --dport "$port" >/dev/null 2>&1 || true
+            "$IPTABLES_CMD" -C OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || "$IPTABLES_CMD" -A OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || true
+            "$IPTABLES_CMD" -C OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || "$IPTABLES_CMD" -A OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || true
         fi
         if [ -n "$IP6TABLES_CMD" ] && [ -x "$IP6TABLES_CMD" ]; then
-            if ! "$IP6TABLES_CMD" -L INPUT -nvx 2>/dev/null | grep -q "tcp.*dpt:$port"; then "$IP6TABLES_CMD" -A INPUT -p tcp --dport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IP6TABLES_CMD" -L INPUT -nvx 2>/dev/null | grep -q "udp.*dpt:$port"; then "$IP6TABLES_CMD" -A INPUT -p udp --dport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IP6TABLES_CMD" -L OUTPUT -nvx 2>/dev/null | grep -q "tcp.*spt:$port"; then "$IP6TABLES_CMD" -A OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || true; fi
-            if ! "$IP6TABLES_CMD" -L OUTPUT -nvx 2>/dev/null | grep -q "udp.*spt:$port"; then "$IP6TABLES_CMD" -A OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || true; fi
+            "$IP6TABLES_CMD" -C INPUT -p tcp --dport "$port" >/dev/null 2>&1 || "$IP6TABLES_CMD" -A INPUT -p tcp --dport "$port" >/dev/null 2>&1 || true
+            "$IP6TABLES_CMD" -C INPUT -p udp --dport "$port" >/dev/null 2>&1 || "$IP6TABLES_CMD" -A INPUT -p udp --dport "$port" >/dev/null 2>&1 || true
+            "$IP6TABLES_CMD" -C OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || "$IP6TABLES_CMD" -A OUTPUT -p tcp --sport "$port" >/dev/null 2>&1 || true
+            "$IP6TABLES_CMD" -C OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || "$IP6TABLES_CMD" -A OUTPUT -p udp --sport "$port" >/dev/null 2>&1 || true
         fi
     done
 }
@@ -570,8 +571,9 @@ show_menu() {
 
 
 
+
 main() {
-    # 优先拦截定时任务参数，执行完直接退出，绝不向下走任何落地切换逻辑
+    # 核心：不管什么路径进来的 Cron 任务，直接在这里处理完毕并 exit 退出，绝不下流
     if [ "$1" = "--cron-report" ]; then
         send_traffic_report
         exit 0
@@ -593,8 +595,8 @@ main() {
         done
         exit 0
     fi
-
-    # 只有非定时任务（即人工交互模式）才允许走落地和加载菜单
+    
+    # 只有手动执行脚本进入菜单时，才允许走落地克隆逻辑
     require_root
     ensure_script_landed "$@"
     
@@ -605,7 +607,7 @@ main() {
     fi
     
     init_port_iptables
-
+    
     while true; do
         show_menu; read -r choice
         case "$choice" in
