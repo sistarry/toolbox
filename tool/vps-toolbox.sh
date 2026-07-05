@@ -522,7 +522,7 @@ execute_choice() {
         48) bash <(curl -Ls https://Net.Check.Place) -P ;;
         49) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ;;
         50) bash <(curl -Ls https://Net.Check.Place) -R ;;
-        51) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ;;
+        51) bash <(curl -Ls unlock.icmp.ing/scripts/test.sh) ;;
         52) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/ecsspeed.sh) ;;
         53) bash <(wget -qO- https://raw.githubusercontent.com/Cd1s/network-latency-tester/main/latency.sh) ;;
         54) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/Telnet.sh) ;;
