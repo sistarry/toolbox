@@ -95,6 +95,13 @@ check_and_install() {
             elif command -v yum >/dev/null 2>&1; then yum install -y mtr
             fi
             ;;
+        nping)
+            if [ -f /etc/alpine-release ]; then apk add --no-cache nmap-nping || apk add --no-cache nmap
+            elif command -v apt-get >/dev/null 2>&1; then apt-get install -y nmap
+            elif command -v dnf >/dev/null 2>&1; then dnf install -y nmap
+            elif command -v yum >/dev/null 2>&1; then yum install -y nmap
+            fi
+            ;;
         inetspeed)
             echo -e "${YELLOW}📦 正在安装 iNetSpeed-CLI (Apple CDN 测速)...${RESET}"
             # 使用 echo "inetspeed" 管道输入，自动回应安装器的命令名询问
@@ -327,8 +334,25 @@ run_mtr() {
     done
 }
 
+
 # ==========================================
-# 5) iNetSpeed-CLI 模块 
+# 5) TcpQuality 模块
+#    check_and_install nping
+# ==========================================
+run_nping() {
+    clear
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}   ◈ TcpQuality TCP重传探测 ◈  ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo "-------------------------------------"
+    bash <(curl -sL https://raw.githubusercontent.com/ibsgss/TcpQuality/main/runTcpQuality.sh)
+    echo "-------------------------------------"
+    read -p "测试完成，按回车返回面板..." dummy
+}
+
+
+# ==========================================
+# 6) iNetSpeed-CLI 模块 
 # ==========================================
 run_inetspeed() {
     clear
@@ -344,7 +368,7 @@ run_inetspeed() {
 }
 
 # ==========================================
-# 6) Cloudflare Speedtest Rust 模块
+# 7) Cloudflare Speedtest Rust 模块
 # ==========================================
 run_cloudflare_cli() {
     clear
@@ -375,14 +399,16 @@ while true; do
     echo -e "${GREEN}NextTrace :${RESET} $(get_status nexttrace)"
     echo -e "${GREEN}iperf3    :${RESET} $(get_status iperf3)"
     echo -e "${GREEN}MTR       :${RESET} $(get_status mtr)"
+    echo -e "${GREEN}nping     :${RESET} $(get_status nping)"
     echo -e "${GREEN}================================${RESET}"
     echo -e " ${GREEN}1) 运行 Speedtest  网速测试${RESET}"
     echo -e " ${GREEN}2) 运行 NextTrace  路由追踪${RESET}"
     echo -e " ${GREEN}3) 运行 iperf3     测速${RESET}"
     echo -e " ${GREEN}4) 运行 MTR        链路诊断${RESET}"
+    echo -e " ${GREEN}5) 运行 nping      重传探测${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
-    echo -e " ${GREEN}5) 运行 iNetSpeed  测速 (Apple CDN)${RESET}"
-    echo -e " ${GREEN}6) 运行 Cloudflare 测速${RESET}"
+    echo -e " ${GREEN}6) 运行 iNetSpeed  测速 (AppleCDN)${RESET}"
+    echo -e " ${GREEN}7) 运行 Cloudflare 测速${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
     echo -e " ${GREEN}0) 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
@@ -393,8 +419,9 @@ while true; do
         2) run_nexttrace ;;
         3) run_iperf3 ;;
         4) run_mtr ;;
-        5) run_inetspeed ;;
-        6) run_cloudflare_cli ;;
+        5) run_nping ;;
+        6) run_inetspeed ;;
+        7) run_cloudflare_cli ;;
         0) exit 0 ;;
         *) echo -e "${RED}输入错误,重新输入${RESET}"; sleep 1 ;;
     esac
