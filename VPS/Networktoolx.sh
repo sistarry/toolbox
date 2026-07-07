@@ -345,7 +345,7 @@ run_nping() {
     echo -e "${GREEN}   ◈ TcpQuality TCP重传探测 ◈  ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo "-------------------------------------"
-    bash <(curl -sL https://raw.githubusercontent.com/ibsgss/TcpQuality/main/runTcpQuality.sh)
+    bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/TcpQuality.sh)
     echo "-------------------------------------"
     read -p "测试完成，按回车返回面板..." dummy
 }
