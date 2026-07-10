@@ -239,16 +239,17 @@ menu() {
     echo -e "${GREEN}状态 :${RESET} $status"
     echo -e "${GREEN}端口 :${RESET} ${YELLOW}${webui_port}${RESET}"
     echo -e "${GREEN}==============================${RESET}"
-    echo -e "${GREEN}1. 部署启动${RESET}"
-    echo -e "${GREEN}2. 更新容器${RESET}"
-    echo -e "${GREEN}3. 卸载容器${RESET}"
-    echo -e "${GREEN}4. 启动容器${RESET}"
-    echo -e "${GREEN}5. 停止容器${RESET}"
-    echo -e "${GREEN}6. 重启容器${RESET}"
-    echo -e "${GREEN}7. 查看日志${RESET}"
-    echo -e "${GREEN}8. 查看配置${RESET}"
-    echo -e "${GREEN}9. ${RESET}${YELLOW}卸载节点${RESET}"
-    echo -e "${GREEN}0. 退出${RESET}"
+    echo -e "${GREEN} 1. 部署启动${RESET}"
+    echo -e "${GREEN} 2. 更新容器${RESET}"
+    echo -e "${GREEN} 3. 卸载容器${RESET}"
+    echo -e "${GREEN} 4. 启动容器${RESET}"
+    echo -e "${GREEN} 5. 停止容器${RESET}"
+    echo -e "${GREEN} 6. 重启容器${RESET}"
+    echo -e "${GREEN} 7. 查看日志${RESET}"
+    echo -e "${GREEN} 8. 查看配置${RESET}"
+    echo -e "${GREEN} 9. LookingGlass${RESET}"
+    echo -e "${GREEN}10. ${RESET}${YELLOW}卸载节点${RESET}"
+    echo -e "${GREEN} 0. 退出${RESET}"
     echo -e "${GREEN}==============================${RESET}"
     echo -ne "${GREEN}请输入选项: ${RESET}"
     read -r choice
@@ -261,7 +262,8 @@ menu() {
         6) restart_link42 ;;
         7) logs_link42 ;;
         8) show_info ;;
-        9) curl -fsSL https://get.pmman.tech/sh/link42-agent.sh | sudo sh -s -- uninstall ;;
+        9) bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Link42-lg.sh) ;;
+        10) curl -fsSL https://get.pmman.tech/sh/link42-agent.sh | sudo sh -s -- uninstall ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项${RESET}" ;;
     esac
