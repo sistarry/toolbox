@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# Komari 监控服务 Docker Compose 独立管理面板 (支持 CF Tunnel)
+# Komari 监控服务 Docker Compose 管理面板 
 # =================================================================
 
 # 颜色
@@ -24,6 +24,12 @@ check_dependencies() {
 
 # 动态获取容器状态与映射端口
 get_status_info() {
+    if ! command -v docker &> /dev/null; then
+        status="${RED}未安装 Docker${RESET}"
+        img_version="${RED}未安装${RESET}"
+        port_display="N/A"
+        return 0
+    fi
     if [ "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
         status="${GREEN}运行中${RESET}"
     elif [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
@@ -36,16 +42,9 @@ get_status_info() {
         img_version=$(docker inspect -f '{{.Config.Image}}' "$CONTAINER_NAME" 2>/dev/null)
         [[ -z "$img_version" ]] && img_version="已安装"
 
-        # 检测是否通过环境变量开启了 Cloudflared
-        local cf_enabled=$(docker inspect -f '{{range .Config.Env}}{{if eq (index (split . "=") 0) "KOMARI_ENABLE_CLOUDFLARED"}}{{index (split . "=") 1}}{{end}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
-        
-        if [ "$cf_enabled" = "true" ]; then
-            port_display="Cloudflare Tunnel 托管中"
-        else
-            webui_port=$(docker inspect -f '{{(index (index .NetworkSettings.Ports "25774/tcp") 0).HostPort}}' "$CONTAINER_NAME" 2>/dev/null)
-            [[ -z "$webui_port" ]] && webui_port="25774"
-            port_display="${webui_port}"
-        fi
+        webui_port=$(docker inspect -f '{{(index (index .NetworkSettings.Ports "25774/tcp") 0).HostPort}}' "$CONTAINER_NAME" 2>/dev/null)
+        [[ -z "$webui_port" ]] && webui_port="25774"
+        port_display="${webui_port}"
     else
         img_version="${RED}未安装${RESET}"
         port_display="N/A"
@@ -116,40 +115,13 @@ install_utils() {
     read -r admin_pass
     [[ -z "$admin_pass" ]] && admin_pass="komari123"
 
-    echo -e "\n${CYAN}====== 3. 网络与穿透安全配置 ======${RESET}"
-    echo -ne "${YELLOW}是否需要启用 Cloudflare Tunnel 穿透？(y/n) [默认: n]: ${RESET}"
-    read -r cf_choice
-
-    local port_block=""
-    local env_cf_block=""
-
-    if [[ "$cf_choice" == "y" || "$cf_choice" == "Y" ]]; then
-        echo -ne "${CYAN}请输入您的 Cloudflared Tunnel Token: ${RESET}"
-        read -r cf_token
-        if [[ -z "$cf_token" ]]; then
-            echo -e "${RED}错误: Token 不能为空，自动降级为常规端口模式！${RESET}"
-            cf_choice="n"
-        else
-            # 开启 CF 时：不生成 ports 映射，追加环境变量
-            port_block=""
-            env_cf_block="- KOMARI_ENABLE_CLOUDFLARED=true
-      - KOMARI_CLOUDFLARED_TOKEN=${cf_token}"
-            echo -e "${GREEN}已成功启用 CF Tunnel！本地端口物理隔离已开启。${RESET}"
-        fi
-    fi
-
-    # 如果没开 CF，则使用常规端口映射逻辑
-    if [[ "$cf_choice" != "y" && "$cf_choice" != "Y" ]]; then
-        echo -ne "${YELLOW}请输入 Komari 访问端口 [默认: 25774]: ${RESET}"
-        read -r custom_port
-        [[ -z "$custom_port" ]] && custom_port="25774"
-        if ! [[ "$custom_port" =~ ^[0-9]+$ ]]; then
-            echo -e "${RED}错误: 端口必须是纯数字！${RESET}"
-            return
-        fi
-        port_block="ports:
-      - \"${custom_port}:25774\""
-        env_cf_block="- KOMARI_ENABLE_CLOUDFLARED=false"
+    echo -e "\n${CYAN}====== 3. 网络端口配置 ======${RESET}"
+    echo -ne "${YELLOW}请输入 Komari 访问端口 [默认: 25774]: ${RESET}"
+    read -r custom_port
+    [[ -z "$custom_port" ]] && custom_port="25774"
+    if ! [[ "$custom_port" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}错误: 端口必须是纯数字！${RESET}"
+        return
     fi
 
     # 动态生成纯净版 docker-compose.yml 配置文件
@@ -160,13 +132,13 @@ services:
     image: ghcr.io/komari-monitor/komari:latest
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
-    ${port_block}
+    ports:
+      - "${custom_port}:25774"
     volumes:
       - ${path_data_raw}:/app/data
     environment:
       - ADMIN_USERNAME=${admin_user}
       - ADMIN_PASSWORD=${admin_pass}
-      ${env_cf_block}
 EOF
 
     echo -e "${YELLOW}正在通过 Docker Compose 启动 Komari...${RESET}"
@@ -178,13 +150,9 @@ EOF
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}          Komari 部署成功！       ${RESET}"
     echo -e "${GREEN}================================${RESET}"
-    if [[ "$cf_choice" == "y" || "$cf_choice" == "Y" ]]; then
-        echo -e "${GREEN}访问模式       : 请通过您在 Cloudflare 面板绑定的域名访问${RESET}"
-    else
-        echo -e "${YELLOW}访问模式       : http://${DETECT_IP}:${custom_port}${RESET}"
-    fi
+    echo -e "${YELLOW}访问地址       : http://${DETECT_IP}:${custom_port}${RESET}"
     echo -e "${YELLOW}管理员账号     : ${admin_user}${RESET}"
-    echo -e "${YELLOW}管理员密码     : ${admin_pass}${RESET}"
+    echo -e "${YELLOW}管理员密码     : ${pass_display:-$admin_pass}${RESET}"
     echo -e "${YELLOW}数据直挂路径   : ${real_path_data}${RESET}"
     echo -e "${YELLOW}配置文件路径   : $COMPOSE_FILE${RESET}"
     echo -e "${GREEN}================================${RESET}"
@@ -235,7 +203,10 @@ show_info() {
     echo -e "${GREEN}================================${RESET}"
     echo -e "${YELLOW}当前状态       : $status"
     echo -e "${YELLOW}镜像名称       : ${img_version}${RESET}"
-    echo -e "${YELLOW}当前活动端口   : ${port_display}${RESET}"
+    echo -e "${YELLOW}访问地址       : http://${DETECT_IP}:${custom_port}${RESET}"
+    echo -e "${YELLOW}管理员账号     : ${admin_user}${RESET}"
+    echo -e "${YELLOW}管理员密码     : ${pass_display:-$admin_pass}${RESET}"
+    echo -e "${YELLOW}配置文件路径   : $COMPOSE_FILE${RESET}"
     echo -e "${GREEN}================================${RESET}"
 }
 
@@ -243,10 +214,10 @@ menu() {
     clear
     get_status_info
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}      ◈  Komari 管理面板  ◈     ${RESET}"
+    echo -e "${GREEN}     ◈  Komari 管理面板  ◈     ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}状态 :${RESET} $status"
-    echo -e "${GREEN}映射 :${RESET} ${YELLOW}${port_display}${RESET}"
+    echo -e "${GREEN}端口 :${RESET} ${YELLOW}${port_display}${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo -e "${GREEN}1. 部署启动${RESET}"
     echo -e "${GREEN}2. 更新容器${RESET}"
