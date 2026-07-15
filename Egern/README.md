@@ -176,3 +176,9 @@ https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/EGHL.js
 ```bash
 https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/NetworkSC.js
 ```
+
+### VPS监控
+```bash
+https://raw.githubusercontent.com/sistarry/toolbox/refs/heads/main/Egern/server-monitor-widget.js
+```
+
