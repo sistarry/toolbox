@@ -564,7 +564,7 @@ execute_choice() {
         92) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/yasuo.sh) ;;
         93) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/VPS/tarzip.sh) ;;
         100) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/CN/CNGProxy.sh) ;;
-        101) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Cloudflare.sh) ;;
+        101) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Cloudflarehp2.sh) ;;
         102) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/Aria2.sh) ;;
         103) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/yt-dlp.sh) ;;
         104) bash <(smart_curl https://raw.githubusercontent.com/sistarry/toolbox/main/toy/JCQD.sh) ;;
