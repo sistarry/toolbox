@@ -336,16 +336,15 @@ run_mtr() {
 
 
 # ==========================================
-# 5) TcpQuality 模块
-#    check_and_install nping
+# 5) Telegram-Speedtest
 # ==========================================
-run_nping() {
+run_Telegram() {
     clear
     echo -e "${GREEN}================================${RESET}"
-    echo -e "${GREEN}  ◈ TcpQuality  TCP重传探测 ◈  ${RESET}"
+    echo -e "${GREEN}    ◈ Telegram-Speedtest ◈     ${RESET}"
     echo -e "${GREEN}================================${RESET}"
     echo "-------------------------------------"
-    bash <(curl -fsSL https://tcpquality.ibsgss.uk/run) --only-speedtest
+    bash <(curl -fsSL https://raw.githubusercontent.com/cazi-cc/Telegram-Speedtest/main/telegram-speedtest.sh)
     echo "-------------------------------------"
     read -p "测试完成，按回车返回面板..." dummy
 }
@@ -399,13 +398,12 @@ while true; do
     echo -e "${GREEN}NextTrace :${RESET} $(get_status nexttrace)"
     echo -e "${GREEN}iperf3    :${RESET} $(get_status iperf3)"
     echo -e "${GREEN}MTR       :${RESET} $(get_status mtr)"
-    echo -e "${GREEN}nping     :${RESET} $(get_status nping)"
     echo -e "${GREEN}================================${RESET}"
     echo -e " ${GREEN}1) 运行 Speedtest  网速测试${RESET}"
     echo -e " ${GREEN}2) 运行 NextTrace  路由追踪${RESET}"
     echo -e " ${GREEN}3) 运行 iperf3     测速${RESET}"
     echo -e " ${GREEN}4) 运行 MTR        链路诊断${RESET}"
-    echo -e " ${GREEN}5) 运行 TcpQuality 国内测速${RESET}"
+    echo -e " ${GREEN}5) 运行 Telegram   TG测速${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
     echo -e " ${GREEN}6) 运行 iNetSpeed  测速 (AppleCDN)${RESET}"
     echo -e " ${GREEN}7) 运行 Cloudflare 测速${RESET}"
@@ -419,7 +417,7 @@ while true; do
         2) run_nexttrace ;;
         3) run_iperf3 ;;
         4) run_mtr ;;
-        5) run_nping ;;
+        5) run_Telegram ;;
         6) run_inetspeed ;;
         7) run_cloudflare_cli ;;
         0) exit 0 ;;
