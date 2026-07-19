@@ -137,6 +137,7 @@ declare -A apps=(
     [5,7]="SamWaf       网络防御"
     [5,8]="GHProxy      代理加速"
     [5,9]="Hubroxy      代理加速"
+    [5,10]="Apple        Apple网络定位修改"
     [6,1]="AList-TvBox     小雅AList"
     [6,2]="小雅全家桶      小雅Emby"
     [6,3]="Emby官方版      多媒体管理系统"
@@ -311,14 +312,15 @@ declare -A apps=(
     [15,17]="ImagePlayground    图片生成"
     [15,18]="ModelStatus        模型监控"
     [15,19]="CPAUsageKeeperCPA  用量追踪"
-    [15,20]="DrissionPage       网页自动化工具"
-    [15,21]="Open  WebUI        Web面板"
-    [15,22]="Codex WebUI        Web面板"
-    [15,23]="Gemini CLI         CLI工具"
-    [15,24]="Open Code          CLI工具"
-    [15,25]="Code Whale         CLI工具"
-    [15,26]="Claude Code        CLI工具"
-    [15,27]="Codex CLI          CLI工具"
+    [15,20]="GptSession         Sub2API&CPA凭证转换工具"
+    [15,21]="DrissionPage       网页自动化工具"
+    [15,22]="Open  WebUI        Web面板"
+    [15,23]="Codex WebUI        Web面板"
+    [15,24]="Gemini CLI         CLI工具"
+    [15,25]="Open Code          CLI工具"
+    [15,26]="Code Whale         CLI工具"
+    [15,27]="Claude Code        CLI工具"
+    [15,28]="Codex CLI          CLI工具"
 )
 
 # ================== 二级菜单命令 ==================
@@ -373,6 +375,7 @@ declare -A commands=(
     [5,7]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Panel/SamWAF.sh)'
     [5,8]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/GHProxy.sh)'
     [5,9]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HubProxy.sh)'
+    [5,10]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/HomeLocationEndpoint.sh)'
     [6,1]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/AList-TvBox.sh)'
     [6,2]='bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)"'
     [6,3]='bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Docker/EmbyServerGF.sh)'
@@ -547,14 +550,15 @@ declare -A commands=(
     [15,17]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GPTImagePlayground.sh)'
     [15,18]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Model-Status.sh)'
     [15,19]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CPAUsageKeeper.sh)'
-    [15,20]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DrissionPage.sh)'
-    [15,21]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenWebUI.sh)'
-    [15,22]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
-    [15,23]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiCLI.sh)'
-    [15,24]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenCodeCLI.sh)'
-    [15,25]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodeWhale.sh)'
-    [15,26]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/ClaudeCode.sh)'
-    [15,27]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexCLI.sh)'
+    [15,20]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/Gptsession.sh)'
+    [15,21]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/DrissionPage.sh)'
+    [15,22]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenWebUI.sh)'
+    [15,23]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexWebUI.sh)'
+    [15,24]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/GeminiCLI.sh)'
+    [15,25]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/OpenCodeCLI.sh)'
+    [15,26]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodeWhale.sh)'
+    [15,27]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/ClaudeCode.sh)'
+    [15,28]='bash <(curl -fsSL https://raw.githubusercontent.com/sistarry/toolbox/main/AI/CodexCLI.sh)'
 
 )
 
@@ -750,4 +754,4 @@ uninstall_script() {
 # ================== 主循环 ==================
 while true; do
     category_menu_handler
-done 
+done
