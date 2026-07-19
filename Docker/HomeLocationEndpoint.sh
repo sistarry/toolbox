@@ -63,12 +63,12 @@ get_status_info() {
 # --- 脚本入口检查 ---
 # 检查 hle 是否安装，如果没有则引导安装
 if ! command -v hle &> /dev/null; then
-    echo -e "${YELLOW}检测到系统未安装 Home-Location-Endpoint (hle)${PLAIN}"
+    echo -e "${YELLOW}检测到系统未安装 Home-Location-Endpoint${PLAIN}"
     read -p "$(echo -e "${GREEN}是否现在开始安装？[y/n]: ${PLAIN}")" init_ins
     if [[ "$init_ins" == [yY] ]]; then
         install_hle
     else
-        echo -e "${YELLOW} 已取消安装，退出。${PLAIN}"
+        echo -e "${YELLOW}已取消安装，退出。${PLAIN}"
         exit 0
     fi
 fi
