@@ -385,6 +385,38 @@ run_cloudflare_cli() {
 
 
 # ==========================================
+# 8) TCPBench 模块
+# ==========================================
+run_TCPBench() {
+    clear
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}  ◈ 全球主流站点 TCP握手延迟 ◈  ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo "-------------------------------------"
+    curl -sL https://tcpbench.com/run.sh | bash
+    echo "-------------------------------------"
+    read -p "测试完成，按回车返回面板..." dummy
+}
+
+
+# ==========================================
+# 9) nws.sh 模块
+# ==========================================
+run_nwssh() {
+    clear
+    echo -e "${GREEN}================================${RESET}"
+    echo -e "${GREEN}      ◈   网络性能测试   ◈     ${RESET}"
+    echo -e "${GREEN}================================${RESET}"
+    echo "-------------------------------------"
+    wget -qO- nws.sh | bash
+    echo "-------------------------------------"
+    read -p "测试完成，按回车返回面板..." dummy
+}
+
+
+
+
+# ==========================================
 # 工具箱主面板循环
 # ==========================================
 while true; do
@@ -408,6 +440,9 @@ while true; do
     echo -e " ${GREEN}6) 运行 iNetSpeed  测速 (AppleCDN)${RESET}"
     echo -e " ${GREEN}7) 运行 Cloudflare 测速${RESET}"
     echo -e "${GREEN}--------------------------------${RESET}"
+    echo -e " ${GREEN}8) 运行 TCPBench   全球主流站点TCP延迟${RESET}"
+    echo -e " ${GREEN}9) 运行 nws.sh     测速${RESET}"
+    echo -e "${GREEN}--------------------------------${RESET}"
     echo -e " ${GREEN}0) 退出${RESET}"
     echo -e "${GREEN}================================${RESET}"
     read -p $'\033[32m 请选择: \033[0m' choice
@@ -420,6 +455,8 @@ while true; do
         5) run_Telegram ;;
         6) run_inetspeed ;;
         7) run_cloudflare_cli ;;
+        8) run_TCPBench ;;
+        9) run_nwssh ;;
         0) exit 0 ;;
         *) echo -e "${RED}输入错误,重新输入${RESET}"; sleep 1 ;;
     esac
