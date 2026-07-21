@@ -25,7 +25,7 @@ LOG_FILE="/var/log/snellv6_manager.log"
 SNELL_USER="snellv6"
 
 # Snell v6 默认保底版本号
-SNELL_DEFAULT_VERSION="v6.0.0rc"
+SNELL_DEFAULT_VERSION="6.0.0rc"
 
 # ================== 工具函数 ==================
 create_user() {
@@ -284,7 +284,7 @@ _download_and_install_binary() {
             _err "所有下载源均被防火墙拦截，请稍后再试！"
             rm -rf "$tmp"; return 1
         fi
-        version="v6.0.0rc"
+        version="6.0.0rc"
     fi
 
     if unzip -oq "$tmp/snell.zip" -d "$tmp/"; then
