@@ -25,7 +25,7 @@ LOG_FILE="/var/log/snellv6_manager.log"
 SNELL_USER="snellv6"
 
 # Snell v6 默认保底版本号
-SNELL_DEFAULT_VERSION="6.0.0b4"
+SNELL_DEFAULT_VERSION="v6.0.0rc"
 
 # ================== 工具函数 ==================
 create_user() {
@@ -270,7 +270,7 @@ _download_and_install_binary() {
     local tmp=$(mktemp -d)
     local download_url_A="https://dl.nssurge.com/snell/snell-server-v${version}-linux-${sarch}.zip"
     local download_url_B="https://dl.nssurge.com/snell/snell-server-${version}-linux-${sarch}.zip"
-    local download_url_C="https://dl.nssurge.com/snell/snell-server-v6.0.0b4-linux-${sarch}.zip"
+    local download_url_C="https://dl.nssurge.com/snell/snell-server-v6.0.0rc-linux-${sarch}.zip"
 
     _info "正在通过智能路由下载 Snell v6 核心组件..."
     
@@ -279,12 +279,12 @@ _download_and_install_binary() {
     elif curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -o "$tmp/snell.zip" --connect-timeout 15 "$download_url_B" && unzip -t "$tmp/snell.zip" >/dev/null 2>&1; then
         _info "方案 B 下载并校验成功！"
     else
-        _warn "官方链接探测受限，启动回滚，下载 v6.0.0b4 保底包..."
+        _warn "官方链接探测受限，启动回滚，下载 v6.0.0rc 保底包..."
         if ! curl -sL -A "Mozilla/5.0" -o "$tmp/snell.zip" --connect-timeout 20 "$download_url_C" || ! unzip -t "$tmp/snell.zip" >/dev/null 2>&1; then
             _err "所有下载源均被防火墙拦截，请稍后再试！"
             rm -rf "$tmp"; return 1
         fi
-        version="6.0.0b4"
+        version="v6.0.0rc"
     fi
 
     if unzip -oq "$tmp/snell.zip" -d "$tmp/"; then
@@ -322,7 +322,7 @@ EOF
     rc-update add snellv6 default >/dev/null 2>&1 || true
 }
 
-install_snell_v5() {
+install_snell_v6() {
     if [ -x /usr/local/bin/snell-server-v6 ]; then
         _ok "Snell v6 独立实例已安装，如需更新请使用选项 2，修改配置请用选项 4。"; return 0
     fi
@@ -355,7 +355,7 @@ install_snell_v5() {
     echo
 }
 
-update_snell_v5() {
+update_snell_v6() {
     if [ ! -x /usr/local/bin/snell-server-v6 ]; then
         _err "检测到系统未安装 Snell v6 ，请先选择选项 1 进行安装！"; return 1
     fi
@@ -437,8 +437,8 @@ while true; do
     echo -e -n "${GREEN}请输入选项: ${RESET}"
     read -r choice
     case $choice in
-        1) install_snell_v5; pause ;;
-        2) update_snell_v5; pause ;;
+        1) install_snell_v6; pause ;;
+        2) update_snell_v6; pause ;;
         3) uninstall_snell; pause ;;
         4) 
             if [ ! -f "$SNELL_CONFIG" ]; then 
