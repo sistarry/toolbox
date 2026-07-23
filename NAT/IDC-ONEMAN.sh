@@ -179,12 +179,13 @@ EOF
     get_status_info
     DETECT_IP=$(get_public_ip)
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${GREEN}        VPS-ONE 容器编译并启动成功！        ${RESET}"
+    echo -e "${GREEN}        VPS-ONE 容器编译并启动成功！                  ${RESET}"
     echo -e "${GREEN}====================================================${RESET}"
-    echo -e "${YELLOW}面板访问地址 : http://${DETECT_IP}:${custom_port}/install${RESET}"
-    echo -e "${YELLOW}本地数据路径 : ${SRC_DIR}/data${RESET}"
-    echo -e "${YELLOW}配置公开地址 : ${custom_base_url}/install${RESET}"
-    echo -e "${YELLOW}项目所在路径 : ${SRC_DIR}${RESET}"
+    echo -e "${YELLOW}面板访问地址    : http://${DETECT_IP}:${custom_port}/install${RESET}"
+    echo -e "${YELLOW}本地数据路径    : ${SRC_DIR}/data${RESET}"
+    echo -e "${YELLOW}配置公开地址    : ${custom_base_url}/install${RESET}"
+    echo -e "${YELLOW}HashPay回调地址 : https://你的域名/hashpay/callback${RESET}"
+    echo -e "${YELLOW}项目所在路径    : ${SRC_DIR}${RESET}"
     echo -e "${GREEN}----------------------------------------------------${RESET}"
     echo -e "${CYAN}📝 后续配置提示：${RESET}"
     echo -e "${YELLOW}   - SQLite 数据库及系统文件已保存在本地路径：${SRC_DIR}/data/vps-one.sqlite${RESET}"
