@@ -314,7 +314,7 @@ while true; do
         02) bash <(wget -qO- -o- $(proxy_url "https://github.com/233boy/sing-box/raw/main/install.sh")) ; pause_return ;;
         03) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh")) ;;
         04) wget -O sb.sh $(proxy_url "https://raw.githubusercontent.com/Tangfffyx/sing-box/main/sb.sh") && bash sb.sh ;;
-        05) wget -O vless-server.sh $(proxy_url "https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh") && chmod +x vless-server.sh && ./vless-server.sh ;;
+        05) wget -O vless-server.sh $(proxy_url "https://raw.githubusercontent.com/mozisen/surge/main/vless-server.sh") && chmod +x vless-server.sh && ./vless-server.sh ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
