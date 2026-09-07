@@ -587,7 +587,7 @@ status_check() {
     # =============================
     echo -e "${YELLOW}▶ Docker${RESET}"
     if command -v docker &>/dev/null; then
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vmess|xray-vmesstls|clash|mihomo|warp|glash|conflux|heki|microwarp|nodepassdash|ppanel|wg-easy|wireguard|gostpanel|vite-frontend|xboard|xtrafficdash|lumina-client|freegfw|Mihomo')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|forwardxplus-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend|onebord|nodepassdash')
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
             echo -e "${YELLOW}容器:${RESET} $(echo "$containers" | tr '\n' ' ')"
