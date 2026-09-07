@@ -376,16 +376,17 @@ while true; do
     echo -e "${ORANGE}╔══════════════════════╗${RESET}"
     echo -e "${ORANGE}      转发管理类        ${RESET}"
     echo -e "${ORANGE}╚══════════════════════╝${RESET}"
-    echo -e "${YELLOW}[01] EZGost      Gost转发${RESET}"
-    echo -e "${YELLOW}[02] Realm-xwPF  Realm转发${RESET}"
-    echo -e "${YELLOW}[03] hia-realm   Realm转发${RESET}"
-    echo -e "${YELLOW}[04] Zelay       Realm转发面板${RESET}"
-    echo -e "${YELLOW}[05] RelayPanel  端口转发面板${RESET}"
-    echo -e "${YELLOW}[06] ForwardX    端口转发面板${RESET}"
-    echo -e "${YELLOW}[07] nft-forward 端口转发面板${RESET}"
-    echo -e "${YELLOW}[08] 哆啦A梦     Gost转发面板${RESET}"
-    echo -e "${YELLOW}[09] FLVX        Gost转发面板${RESET}"
-    echo -e "${YELLOW}[10] NodePass    隧道转发面板${RESET}"
+    echo -e "${YELLOW}[01] EZGost       Gost转发${RESET}"
+    echo -e "${YELLOW}[02] Realm-xwPF   Realm转发${RESET}"
+    echo -e "${YELLOW}[03] hia-realm    Realm转发${RESET}"
+    echo -e "${YELLOW}[04] Zelay        Realm转发面板${RESET}"
+    echo -e "${YELLOW}[05] RelayPanel   端口转发面板${RESET}"
+    echo -e "${YELLOW}[06] ForwardX     端口转发面板${RESET}"
+    echo -e "${YELLOW}[07] nft-forward  端口转发面板${RESET}"
+    echo -e "${YELLOW}[08] 哆啦A梦      Gost转发面板${RESET}"
+    echo -e "${YELLOW}[09] FLVX         Gost转发面板${RESET}"
+    echo -e "${YELLOW}[10] NodePass     隧道转发面板${RESET}"
+    echo -e "${YELLOW}[11] ForwardXPlus 端口转发面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -402,6 +403,7 @@ while true; do
         08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/flux-panel.sh")) ;;
         09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/flvx-panel.sh")) ;;
         10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/NodePassDash.sh")) ;;
+        11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/ForwardXplus.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -1460,7 +1462,7 @@ check_panel() {
 
     if command -v docker &>/dev/null; then
         # Docker 已安装
-        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend|onebord|nodepassdash')
+        containers=$(docker ps --format "{{.Names}}" | grep -Ei 'xray|sing|hysteria|tuic|snell|3xui_app|AnyTLSD|MTProto|shadowsocks|sshadow-tls|shadow-tls|Singbox-AnyReality|Singbox-AnyTLS|Singbox-TUICv5|Xray-Reality|Xray-Realityxhttp|xray-socks5|xray-vlesshttpupgrade|xray-vmess|mtg-proxy|xray-vmesstls|clash|mihomo|warp|microwarp|easytier|ppanel-service|wg-easy|wireguard|xboard|xboard-node-1|miaomiaowux|Mihomo|remnawave|remnawave-subscription-page|sui-traffic-reset|forwardx-panel|forwardxplus-panel|frpp-master|frp-panel-server|frp-panel-client|relaypanel-panel|vite-frontend|onebord|nodepassdash')
 
         if [[ -n "$containers" ]]; then
             echo -e "状态: ${GREEN}运行中${RESET}"
