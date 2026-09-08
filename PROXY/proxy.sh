@@ -1584,6 +1584,7 @@ while true; do
     echo -e "${YELLOW}[10] 卸载 ACME${RESET}"
     echo -e "${YELLOW}[11] 卸载 CFWARP${RESET}"
     echo -e "${YELLOW}[12] 卸载 CFTunnel${RESET}"
+    echo -e "${YELLOW}[13] 卸载 代理容器${RESET}"
     echo -e "${GREEN}[0] 返回${RESET}"
     echo -e "${GREEN}[x] 退出${RESET}"
 
@@ -1602,6 +1603,7 @@ while true; do
         10) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallAcme.sh")) ; pause_return ;;
         11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFWARP.sh")) ; pause_return ;;
         12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallCFArgo.sh")) ; pause_return ;;
+        13) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/uninstallDocker.sh")) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
