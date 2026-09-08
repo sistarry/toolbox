@@ -49,13 +49,13 @@ done <<< "$containers_raw"
 matched_containers=($(printf "%s\n" "${matched_containers[@]}" | sort -u))
 
 if [ ${#matched_containers[@]} -eq 0 ]; then
-    echo -e "${YELLOW}没有找到与列表中任何关键词相匹配的容器。${PLAIN}"
+    echo -e "${YELLOW}没有找到代理容器。${PLAIN}"
     exit 0
 fi
 
 # 显示黄色菜单
 echo -e "${YELLOW}========================================${PLAIN}"
-echo -e "${YELLOW}       检测到以下已安装的匹配容器       ${PLAIN}"
+echo -e "${YELLOW}       检测到以下已安装的代理容器       ${PLAIN}"
 echo -e "${YELLOW}========================================${PLAIN}"
 
 i=1
