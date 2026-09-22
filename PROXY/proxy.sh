@@ -342,6 +342,7 @@ while true; do
     echo -e "${YELLOW}[11] MiGate     代理面板${RESET}"
     echo -e "${YELLOW}[12] 1S-UI      代理面板${RESET}"
     echo -e "${YELLOW}[13] 2S-UI      代理面板${RESET}"
+    echo -e "${YELLOW}[14] 3m-UI      代理面板${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -361,6 +362,7 @@ while true; do
         11) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/MiGate.sh")) ;;
         12) bash <(curl -Ls https://raw.githubusercontent.com/Hhz0823/1s-ui/main/install.sh) ; pause_return ;;
         13) bash <(curl -Ls https://raw.githubusercontent.com/shenaba/2s-ui/main/install.sh) ; pause_return ;;
+        14) bash <(curl -fsSL https://raw.githubusercontent.com/kazeyukiro/3m-ui/main/scripts/install.sh) ; pause_return ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
@@ -461,7 +463,6 @@ while true; do
     echo -e "${YELLOW}[09] Redsocks     透明代理${RESET}"
     echo -e "${YELLOW}[10] IP屏蔽       屏蔽国内IP${RESET}"
     echo -e "${YELLOW}[11] Realmtimeout Realm优化${RESET}"
-    echo -e "${YELLOW}[12] WARP-monitor 状态监控与自动修复${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
     
@@ -479,7 +480,6 @@ while true; do
         09) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Redsocksos.sh")) ;;
         10) curl -fsSL $(proxy_url "https://raw.githubusercontent.com/Henry00123/china_blocker/main/china_blocker.sh") -o china_blocker.sh && chmod +x china_blocker.sh && sudo ./china_blocker.sh ;;
         11) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/Realmtimeout.sh")) ;;
-        12) bash <(curl -sL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WARPmonitor.sh")) ;;
         0) return ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
