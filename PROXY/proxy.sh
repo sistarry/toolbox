@@ -256,6 +256,7 @@ while true; do
     echo -e "${YELLOW}[21] Vless-Encryption-Reality${RESET}"
     echo -e "${YELLOW}[22] Snellv6${RESET}"
     echo -e "${YELLOW}[23] Snellv6+ShadowTLS${RESET}"
+    echo -e "${YELLOW}[24] Telegram-WEBProxy${RESET}"
     echo -e "${GREEN}[0]  返回${RESET}"
     echo -e "${GREEN}[x]  退出${RESET}"
 
@@ -285,6 +286,7 @@ while true; do
         21) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessEncryptionRealityos.sh")) ;;
         22) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Snellv6os.sh")) ;;
         23) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Snellv6ShadowTLSos.sh")) ;;
+        24) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/WebProxy.sh")) ;;
         *) echo -e "${RED}无效选项${RESET}"; sleep 1 ;;
     esac
 done
