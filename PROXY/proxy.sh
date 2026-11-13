@@ -269,7 +269,7 @@ while true; do
         04) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/SnellShadowTLSos.sh")) ;;
         05) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/VlessRealityos.sh")) ;;
         06) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Hy2os.sh")) ;;
-        07) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/AnyTLSos.sh.sh")) ;;
+        07) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/AnyTLSos.sh")) ;;
         08) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/AnyRealityos.sh")) ;;
         09) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/Tuicv5os.sh")) ;;
         10) bash <(curl -fsSL $(proxy_url "https://raw.githubusercontent.com/sistarry/toolbox/main/OS/MTProtoos.sh")) ;;
